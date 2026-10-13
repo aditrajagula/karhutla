@@ -1,0 +1,53 @@
+/* Reset & Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Palet Warna Variabel CSS Berdasarkan DESIGN.md */
+:root {
+  --color-bg-base: #F8FAFC;
+  --color-bg-panel: #FFFFFF;
+  --color-bg-subtle: #F1F5F9;
+  --color-text-main: #0F172A;
+  --color-text-muted: #475569;
+  --color-border: #CBD5E1;
+  --color-forest: #1E3A2F;
+  --color-forest-dark: #134E4A;
+  --color-amber-accent: #D97706;
+  --color-amber-light: #FEF3C7;
+  --color-focus: #2563EB;
+}
+
+.theme-dark, html.dark {
+  --color-bg-base: #0F172A;
+  --color-bg-panel: #1E293B;
+  --color-bg-subtle: #090E17;
+  --color-text-main: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-border: #334155;
+  --color-forest: #134E4A;
+  --color-forest-dark: #0F766E;
+  --color-amber-accent: #F59E0B;
+  --color-amber-light: #78350F;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

@@ -1,0 +1,103 @@
+import React, { useEffect } from 'react';
+import type { Hotspot } from '../../types/hotspot';
+
+interface HotspotDetailModalProps {
+  hotspot: Hotspot | null;
+  onClose: () => void;
+}
+
+export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
+  hotspot,
+  onClose,
+}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  if (!hotspot) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-title"
+      className="modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="modal-card">
+        <div className="modal-header">
+          <h3 id="detail-title" className="modal-title">
+            Detail Deteksi Anomali Termal
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Tutup detail modal"
+            className="modal-close-btn"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <div className="detail-row">
+            <span className="detail-label">Koordinat:</span>
+            <span className="detail-val font-mono">
+              {hotspot.latitude.toFixed(5)}, {hotspot.longitude.toFixed(5)}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Waktu Observasi:</span>
+            <span className="detail-val">
+              {hotspot.acq_date} {hotspot.acq_time} UTC
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Platform Satelit & Sensor:</span>
+            <span className="detail-val">
+              {hotspot.satellite} ({hotspot.instrument})
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Tingkat Keyakinan (Confidence):</span>
+            <span className={`detail-val capitalize conf-text-${hotspot.confidence}`}>
+              {hotspot.confidence}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">FRP (Fire Radiative Power):</span>
+            <span className="detail-val">
+              {hotspot.frp !== undefined && hotspot.frp !== null ? `${hotspot.frp} MW` : 'Tidak tersedia'}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Orbit / Waktu:</span>
+            <span className="detail-val">
+              {hotspot.daynight === 'D' ? 'Siang Hari (Day)' : 'Malam Hari (Night)'}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Sumber Provenance:</span>
+            <span className="detail-val">
+              {hotspot.source_provenance === 'NASA_FIRMS_API'
+                ? 'Deteksi Satelit VIIRS NASA FIRMS'
+                : 'Data Statis (Snapshot Benchmark JOINTS 2026)'}
+            </span>
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <p className="disclaimer-text">
+            Catatan: Anomali termal adalah indikasi sensor satelit untuk ditinjau lapangan, bukan bukti pasti kebakaran lahan.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};

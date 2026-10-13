@@ -32,6 +32,7 @@ export const DetectionList: React.FC<DetectionListProps> = ({
               <div className="detection-item-info">
                 <span className="detection-coord font-mono">
                   {h.latitude.toFixed(4)}, {h.longitude.toFixed(4)}
+                  {h.province && <span style={{ marginLeft: '6px', fontWeight: 'normal', opacity: 0.85 }}>• {h.province}</span>}
                 </span>
                 <span className="detection-time">
                   {h.acq_date} | {h.acq_time} UTC

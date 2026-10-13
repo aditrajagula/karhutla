@@ -29,7 +29,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             mode === 'live' ? 'badge-live' : 'badge-snapshot'
           }`}
         >
-          {mode === 'live' ? 'Mode: Live NASA FIRMS' : 'Mode: Snapshot Statis (JOINTS 2026)'}
+          {mode === 'live' ? 'Mode: Live NASA FIRMS' : 'Mode: Snapshot Mandiri Tim'}
         </span>
         {totalCount !== undefined && (
           <span className="badge-count">

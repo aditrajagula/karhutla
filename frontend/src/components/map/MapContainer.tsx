@@ -116,12 +116,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             Anomali Termal Satelit
           </div>
           <div><b>Koordinat:</b> ${h.latitude.toFixed(4)}, ${h.longitude.toFixed(4)}</div>
+          ${h.province ? `<div><b>Provinsi:</b> ${h.province}</div>` : ''}
           <div><b>Waktu:</b> ${h.acq_date} ${h.acq_time} UTC</div>
           <div><b>Satelit:</b> ${h.satellite} (${h.instrument})</div>
           <div><b>Keyakinan:</b> ${h.confidence}</div>
           <div><b>FRP:</b> ${h.frp !== undefined && h.frp !== null ? `${h.frp} MW` : '-'}</div>
           <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #E2E8F0; font-size: 11px; color: #64748B;">
-            Sumber: ${h.source_provenance === 'NASA_FIRMS_API' ? 'NASA FIRMS VIIRS' : 'Snapshot JOINTS'}
+            Sumber: ${h.source_provenance === 'NASA_FIRMS_API' ? 'NASA FIRMS VIIRS (Live)' : 'Snapshot Mandiri Tim'}
           </div>
         </div>
       `;

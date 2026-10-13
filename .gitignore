@@ -1,17 +1,10 @@
-# Environment files
-.env
-.env.*
-*.env
-*.env.*
-!.env.example
-!**/.env.example
-
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -24,34 +17,35 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-.venv
+.venv/
 venv/
 ENV/
-env/
 
-# Node / Frontend
-node_modules/
-frontend/dist/
-frontend/node_modules/
-.npm
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# Environment variables & secrets (CRITICAL: DO NOT COMMIT REAL KEYS)
+.env
+*.env.local
 
-# Database / Docker
-pgdata/
+# Testing & Linting
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
 
-# IDE / OS
-.idea/
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
-.DS_Store
+
+# OS
 Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary & raw cache (snapshots committed intentionally if manifest present)
+data/raw/

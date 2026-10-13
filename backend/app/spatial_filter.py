@@ -1,0 +1,107 @@
+"""
+Modul Filter Geospasial Wilayah Indonesia (Point-in-Polygon).
+Menggunakan Shapely 2.x STRtree untuk mengecek apakah titik anomali termal
+berada di dalam poligon wilayah daratan Indonesia (EPSG:4326).
+"""
+
+import json
+from pathlib import Path
+from typing import List, Optional, Tuple
+from shapely.geometry import Point, shape
+from shapely.validation import make_valid
+from shapely.strtree import STRtree
+
+from .models import HotspotRecord, RejectionStats
+
+
+class IndonesiaSpatialFilter:
+    """
+    Filter spasial Point-in-Polygon menggunakan batas administratif terverifikasi.
+    """
+
+    def __init__(self, geojson_path: Path):
+        self.geojson_path = Path(geojson_path)
+        self.geometries = []
+        self.feature_props = []
+        self.tree: Optional[STRtree] = None
+        self._load_boundaries()
+
+    def _load_boundaries(self) -> None:
+        if not self.geojson_path.exists():
+            raise FileNotFoundError(
+                f"File batas wilayah tidak ditemukan di: {self.geojson_path}. "
+                "Periksa dokumentasi data/boundaries/SOURCES.md untuk petunjuk sumber data."
+            )
+
+        with open(self.geojson_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        features = data.get("features", [])
+        if not features:
+            raise ValueError(f"File {self.geojson_path} tidak memiliki fitur poligon.")
+
+        for feat in features:
+            raw_geom = shape(feat["geometry"])
+            # Perbaiki self-intersection atau artefak topologi agar 100% valid
+            valid_geom = make_valid(raw_geom)
+            self.geometries.append(valid_geom)
+            self.feature_props.append(feat.get("properties", {}))
+
+        # Bangun spatial index STRtree (vektorisasi C)
+        self.tree = STRtree(self.geometries)
+
+    def is_inside(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
+        """
+        Memeriksa apakah koordinat (lon, lat) berada di dalam poligon Indonesia.
+        Mengembalikan (True, nama_provinsi) jika di dalam, atau (False, None) jika di luar.
+        """
+        if self.tree is None:
+            return False, None
+
+        # Point dalam WGS84: (longitude, latitude)
+        pt = Point(lon, lat)
+
+        # Kueri calon geometri poligon yang melingkupi titik via bounding box index
+        candidate_indices = self.tree.query(pt)
+
+        for idx in candidate_indices:
+            geom = self.geometries[idx]
+            # Uji Point-in-Polygon eksak
+            if geom.contains(pt) or geom.touches(pt):
+                props = self.feature_props[idx]
+                province_name = props.get("state") or props.get("NAME_1") or props.get("name")
+                return True, province_name
+
+        return False, None
+
+    def filter_records(
+        self, records: List[HotspotRecord], stats: Optional[RejectionStats] = None
+    ) -> Tuple[List[HotspotRecord], RejectionStats]:
+        """
+        Menyaring daftar rekaman dan membuang titik yang berada di luar Indonesia.
+        Memperbarui objek RejectionStats.
+        """
+        if stats is None:
+            stats = RejectionStats(
+                total_initial_records=len(records),
+                total_valid_records=0,
+                total_rejected_records=0,
+                reasons={}
+            )
+
+        filtered_records: List[HotspotRecord] = []
+
+        for rec in records:
+            inside, prov_name = self.is_inside(rec.longitude, rec.latitude)
+            if inside:
+                # Simpan konteks nama wilayah
+                rec.province = prov_name
+                filtered_records.append(rec)
+            else:
+                stats.total_rejected_records += 1
+                stats.reasons["outside_indonesia_boundary"] = (
+                    stats.reasons.get("outside_indonesia_boundary", 0) + 1
+                )
+
+        stats.total_valid_records = len(filtered_records)
+        return filtered_records, stats

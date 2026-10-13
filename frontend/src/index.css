@@ -1,8 +1,86 @@
-/* Reset & Base Setup */
+/* DSG — FireGuard Design System v2.0 Tokens */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+:root {
+  /* Netral & Permukaan (Dark GIS Modern Default) */
+  --fg: #FAFAFA;
+  --fg-muted: #A1A1AA;
+  --surface-0: #0D0E11;
+  --surface-1: #16171B;
+  --surface-2: #222328;
+  --border: #33353D;
+  --border-subtle: #24252B;
+
+  /* Skala Hotspot Termal Tiga Tingkat (§1.2) */
+  --ev-hotspot-low: #EAB308;        /* Kuning: Suhu/FRP Rendah (<15 MW) */
+  --ev-hotspot-low-halo: rgba(234, 179, 8, 0.28);
+  --ev-hotspot-mid: #F97316;        /* Oranye: Suhu/FRP Sedang (15-50 MW) */
+  --ev-hotspot-mid-halo: rgba(249, 115, 22, 0.32);
+  --ev-hotspot-high: #EF4444;       /* Merah: Suhu/FRP Tinggi (>50 MW) */
+  --ev-hotspot-high-halo: rgba(239, 68, 68, 0.40);
+
+  /* Aksen Hijau (Brand, Status API Live, Tutupan Hutan) */
+  --brand: #10B981;
+  --accent-mint: #10B981;
+  --status-live: #10B981;
+  --status-live-bg: rgba(16, 185, 129, 0.15);
+  --ctx-forest: rgba(16, 185, 129, 0.12);
+  --st-verified: #059669;
+
+  /* Kelas Bukti Tambahan */
+  --ev-report: #818CF8;             /* Diamond Laporan Warga */
+  --ev-coverchange: #06B6D4;        /* Poligon Perubahan Tutupan */
+  --ctx-peat: rgba(180, 83, 9, 0.14);
+  --ctx-admin: #52525B;
+  --nodata: rgba(161, 161, 170, 0.35);
+
+  /* Semantik */
+  --danger: #EF4444;
+  --warning: #F97316;
+  --focus: #10B981;
+
+  /* Radius Elemen Berdasarkan Hierarki */
+  --r-tag: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* Elevasi Modern */
+  --e-floating: 0 16px 36px -4px rgba(0, 0, 0, 0.55), 0 6px 16px -2px rgba(0, 0, 0, 0.40);
+  --e-card: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Tipografi */
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 180ms;
+}
+
+/* Light Theme Companion */
+.theme-light {
+  --fg: #111827;
+  --fg-muted: #64748B;
+  --surface-0: #F8FAFC;
+  --surface-1: #FFFFFF;
+  --surface-2: #F1F5F9;
+  --border: #E2E8F0;
+  --border-subtle: #CBD5E1;
+  --status-live-bg: #D1FAE5;
+  --e-floating: 0 12px 32px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  --e-card: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 html, body {
@@ -11,43 +89,115 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-ui);
+  color: var(--fg);
+  background-color: var(--surface-0);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Palet Warna Variabel CSS Berdasarkan DESIGN.md */
-:root {
-  --color-bg-base: #F8FAFC;
-  --color-bg-panel: #FFFFFF;
-  --color-bg-subtle: #F1F5F9;
-  --color-text-main: #0F172A;
-  --color-text-muted: #475569;
-  --color-border: #CBD5E1;
-  --color-forest: #1E3A2F;
-  --color-forest-dark: #134E4A;
-  --color-amber-accent: #D97706;
-  --color-amber-light: #FEF3C7;
-  --color-focus: #2563EB;
+/* ==============================================================================
+   Kustom Scrollbar Gelap Modern (Menghilangkan Scrollbar Putih Default Windows)
+   ============================================================================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
-.theme-dark, html.dark {
-  --color-bg-base: #0F172A;
-  --color-bg-panel: #1E293B;
-  --color-bg-subtle: #090E17;
-  --color-text-main: #F8FAFC;
-  --color-text-muted: #94A3B8;
-  --color-border: #334155;
-  --color-forest: #134E4A;
-  --color-forest-dark: #0F766E;
-  --color-amber-accent: #F59E0B;
-  --color-amber-light: #78350F;
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-muted);
+}
+
+/* ==============================================================================
+   Leaflet Modern Dark UI Overrides
+   ============================================================================== */
+.leaflet-container {
+  font-family: var(--font-ui) !important;
+  background-color: #0E0F12 !important;
+}
+
+/* Tombol Zoom Modern Gelap (+ / -) */
+.leaflet-bar {
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.5) !important;
+  border-radius: var(--r-md) !important;
+  overflow: hidden !important;
+  background-color: var(--surface-1) !important;
+}
+
+.leaflet-bar a {
+  background-color: var(--surface-1) !important;
+  color: var(--fg) !important;
+  border-bottom: 1px solid var(--border) !important;
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all var(--dur) var(--ease) !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: var(--surface-2) !important;
+  color: var(--brand) !important;
+}
+
+.leaflet-bar a:last-child {
+  border-bottom: none !important;
+}
+
+/* Atribusi Peta Halus */
+.leaflet-control-attribution {
+  background: rgba(14, 15, 18, 0.75) !important;
+  color: var(--fg-muted) !important;
+  font-size: 10px !important;
+  backdrop-filter: blur(4px) !important;
+  border-top-left-radius: var(--r-sm) !important;
+  padding: 2px 6px !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--fg-muted) !important;
+  text-decoration: none !important;
+}
+
+.leaflet-control-attribution a:hover {
+  color: var(--brand) !important;
 }
 
 .font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

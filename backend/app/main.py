@@ -6,6 +6,7 @@ Menyediakan REST API untuk data hotspot, metadata provenance, dan status layer k
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel, Field
 
 from .config import (
@@ -256,6 +257,16 @@ def get_context_layers() -> ContextLayersResponse:
             feature_count=len(pipeline_instance.spatial_filter.geometries)
         )
     )
+
+
+@app.get("/", summary="Root endpoint - redirect ke dokumentasi Swagger API", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 
 @app.get("/health", summary="Health check endpoint")

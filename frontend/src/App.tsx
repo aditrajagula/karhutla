@@ -1,21 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Hotspot, HotspotFilterParams } from './types/hotspot';
 import type { DataSourceMode, SystemStatus } from './types/status';
+import { getThermalCategory } from './types/hotspot';
 import { fetchHotspots, fetchSystemStatus } from './services/api';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
 import { DetectionList } from './components/detection/DetectionList';
-import { HotspotDetailModal } from './components/detection/HotspotDetailModal';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { EmptyState } from './components/common/EmptyState';
 import { ErrorBanner } from './components/common/ErrorBanner';
 import './App.css';
 
 export function App() {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [isDark, setIsDark] = useState<boolean>(true); // Default Dark GIS Theme sesuai DSG v2.0 §1.1
 
   const [mode, setMode] = useState<DataSourceMode>('live');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -28,19 +26,25 @@ export function App() {
 
   const [filters, setFilters] = useState<HotspotFilterParams>({
     dayRange: 2,
+    searchQuery: '',
     startDate: '',
     endDate: '',
     minConfidence: undefined,
+    thermalTier: undefined,
   });
 
   // Sinkronisasi kelas tema di root document
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('theme-light');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('theme-light');
     }
   }, [isDark]);
+
+  const { dayRange, startDate, endDate, minConfidence, satellite } = filters;
 
   // Muat data dari backend
   useEffect(() => {
@@ -59,7 +63,11 @@ export function App() {
         }
 
         const res = await fetchHotspots({
-          ...filters,
+          dayRange,
+          startDate,
+          endDate,
+          minConfidence,
+          satellite,
           mode,
         });
 
@@ -79,12 +87,16 @@ export function App() {
           if (mode === 'live') {
             try {
               const snapshotRes = await fetchHotspots({
-                ...filters,
+                dayRange,
+                startDate,
+                endDate,
+                minConfidence,
+                satellite,
                 mode: 'snapshot',
               });
               setHotspots(snapshotRes.records || []);
               setMode('snapshot');
-              setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan snapshot lokal 7 hari (Benchmark JOINTS 2026).');
+              setErrorMessage('Data live tidak dapat diambil. Kami menampilkan snapshot statis benchmark.');
             } catch {
               setHotspots([]);
             }
@@ -102,7 +114,24 @@ export function App() {
     return () => {
       ignore = true;
     };
-  }, [mode, filters, reloadTrigger]);
+  }, [mode, dayRange, startDate, endDate, minConfidence, satellite, reloadTrigger]);
+
+  // Filter client-side untuk pencarian kata kunci dan tingkat suhu (reaktif instan)
+  const filteredHotspots = useMemo(() => {
+    return hotspots.filter((h) => {
+      if (filters.searchQuery) {
+        const q = filters.searchQuery.toLowerCase().trim();
+        const matchesProv = h.province && h.province.toLowerCase().includes(q);
+        const matchesCoord = `${h.latitude},${h.longitude}`.includes(q);
+        if (!matchesProv && !matchesCoord) return false;
+      }
+      if (filters.thermalTier) {
+        const cat = getThermalCategory(h.frp);
+        if (cat.tier !== filters.thermalTier) return false;
+      }
+      return true;
+    });
+  }, [hotspots, filters.searchQuery, filters.thermalTier]);
 
   const handleToggleMode = () => {
     const nextMode: DataSourceMode = mode === 'live' ? 'snapshot' : 'live';
@@ -112,33 +141,35 @@ export function App() {
   const handleResetFilters = () => {
     setFilters({
       dayRange: 2,
+      searchQuery: '',
       startDate: '',
       endDate: '',
       minConfidence: undefined,
+      thermalTier: undefined,
     });
   };
 
   return (
-    <div className={`app-root ${isDark ? 'theme-dark' : 'theme-light'}`}>
-      {/* Top Bar Header */}
-      <StatusBar
-        mode={mode}
-        lastSyncUtc={systemStatus?.lastSyncUtc || null}
-        onToggleMode={handleToggleMode}
-        isDark={isDark}
-        onToggleTheme={() => setIsDark((prev) => !prev)}
-        totalCount={hotspots.length}
-      />
+    <div className={`app-root ${isDark ? 'dark' : 'theme-light'}`}>
+      <main className="dashboard-layout">
+        {/* Sidebar Kontrol (Sisi Kiri sesuai DSG v2.0 §5.1) */}
+        <aside className={`sidebar-control-left ${isMobilePanelOpen ? 'mobile-open' : ''}`}>
+          {/* Header Brand & Live Status Badge */}
+          <StatusBar
+            mode={mode}
+            lastSyncUtc={systemStatus?.lastSyncUtc || null}
+            onToggleMode={handleToggleMode}
+            isDark={isDark}
+            onToggleTheme={() => setIsDark((prev) => !prev)}
+            totalCount={filteredHotspots.length}
+          />
 
-      {/* Main Container: Map-first Full Viewport Layout */}
-      <main className="main-viewport">
-        {/* Sidebar Kontrol (Desktop) & Collapsible Drawer (Mobile) */}
-        <aside className={`sidebar-container ${isMobilePanelOpen ? 'mobile-open' : ''}`}>
-          <div className="sidebar-inner">
+          <div className="sidebar-scrollable-content">
             {/* Banner Error / Notifikasi Fallback */}
             {errorMessage && (
               <div className="sidebar-section">
                 <ErrorBanner
+                  title="Data live tidak dapat diambil"
                   message={errorMessage}
                   onRetry={() => {
                     setMode('live');
@@ -152,71 +183,66 @@ export function App() {
               </div>
             )}
 
-            {/* Panel Filter */}
+            {/* Filter Bar (Search + Pill Dropdowns) Sesuai DSG §5.1 */}
             <div className="sidebar-section">
               <FilterPanel
                 filters={filters}
                 onFilterChange={(newFilters) => setFilters(newFilters)}
                 onReset={handleResetFilters}
-                totalFiltered={hotspots.length}
+                totalFiltered={filteredHotspots.length}
               />
             </div>
 
-            {/* List Deteksi / Loading / Empty */}
+            {/* Hotspot Item Cards / Loading / Empty */}
             <div className="sidebar-section list-section">
               {isLoading ? (
-                <LoadingSpinner label="Mengambil deteksi satelit FIRMS untuk wilayah terpilih..." />
-              ) : hotspots.length === 0 ? (
+                <LoadingSpinner label="Memuat deteksi anomali satelit…" />
+              ) : filteredHotspots.length === 0 ? (
                 <EmptyState
-                  message="Tidak ada anomali termal terdeteksi oleh satelit VIIRS pada rentang waktu terpilih di wilayah Indonesia."
-                  actionLabel="Perluas Rentang ke 7 Hari"
-                  onAction={() => setFilters((f) => ({ ...f, dayRange: 7, startDate: '', endDate: '' }))}
+                  title="Tidak ada deteksi pada periode ini"
+                  message="Tidak ada anomali termal terdeteksi pada filter ini. Hal ini bukan jaminan ketiadaan api di lapangan."
+                  actionLabel="Perluas ke 7 Hari"
+                  onAction={() => setFilters((f) => ({ ...f, dayRange: 7, searchQuery: '', thermalTier: undefined }))}
                 />
               ) : (
                 <DetectionList
-                  hotspots={hotspots}
+                  hotspots={filteredHotspots}
                   onSelectHotspot={(h) => setSelectedHotspot(h)}
                   selectedId={selectedHotspot?.id}
                 />
               )}
             </div>
+          </div>
 
-            {/* Disclaimer Faktual */}
-            <div className="sidebar-footer">
-              <p>
-                Data satelit NASA FIRMS VIIRS (NOAA-20 / Suomi NPP).
-                Anomali termal merupakan indikasi sensor satelit, bukan kepastian kebakaran.
-              </p>
-            </div>
+          {/* Disclaimer Faktual Sesuai DSG §6 */}
+          <div className="sidebar-footer">
+            <p>
+              Data satelit NASA FIRMS VIIRS (NOAA-20 / Suomi NPP).
+              Anomali termal mengindikasikan suhu sensorik, bukan kepastian kebakaran lahan.
+            </p>
           </div>
         </aside>
 
-        {/* Tombol Toggle Drawer untuk Mobile */}
+        {/* Mobile Toggle Button */}
         <button
           type="button"
           className="mobile-drawer-toggle"
           onClick={() => setIsMobilePanelOpen((prev) => !prev)}
           aria-label={isMobilePanelOpen ? 'Tutup panel kontrol' : 'Buka panel kontrol'}
         >
-          {isMobilePanelOpen ? 'Tutup Panel' : `Kontrol & Deteksi (${hotspots.length})`}
+          {isMobilePanelOpen ? 'Tutup Panel' : `Daftar Deteksi (${filteredHotspots.length})`}
         </button>
 
-        {/* Map Canvas Kanvas Peta Interaktif */}
-        <section className="map-section" aria-label="Peta Interaktif Hotspot Indonesia">
+        {/* Kanvas Peta Interaktif (Sisi Kanan / Penuh) */}
+        <section className="map-view-right" aria-label="Peta Interaktif Hotspot Indonesia">
           <MapContainer
-            hotspots={hotspots}
+            hotspots={filteredHotspots}
             selectedHotspot={selectedHotspot}
             onSelectHotspot={(h) => setSelectedHotspot(h)}
             isDark={isDark}
           />
         </section>
       </main>
-
-      {/* Modal Detail Titik Terpilih */}
-      <HotspotDetailModal
-        hotspot={selectedHotspot}
-        onClose={() => setSelectedHotspot(null)}
-      />
     </div>
   );
 }

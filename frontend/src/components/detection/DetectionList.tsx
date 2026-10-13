@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Hotspot } from '../../types/hotspot';
+import { getThermalCategory } from '../../types/hotspot';
 
 interface DetectionListProps {
   hotspots: Hotspot[];
@@ -13,48 +14,68 @@ export const DetectionList: React.FC<DetectionListProps> = ({
   selectedId,
 }) => {
   return (
-    <div className="detection-list-wrapper">
-      <div className="detection-list-header">
-        <span className="detection-list-title">Daftar Deteksi Terpilih</span>
-        <span className="detection-list-meta">{hotspots.length} rekaman</span>
-      </div>
+    <div className="hotspot-cards-list">
+      {hotspots.slice(0, 100).map((h) => {
+        const isSelected = selectedId === h.id;
+        const cat = getThermalCategory(h.frp);
 
-      <div className="detection-items-scroll">
-        {hotspots.slice(0, 100).map((h) => {
-          const isSelected = selectedId === h.id;
-          return (
-            <button
-              key={h.id}
-              type="button"
-              onClick={() => onSelectHotspot(h)}
-              className={`detection-item-btn ${isSelected ? 'selected' : ''}`}
+        return (
+          <button
+            key={h.id}
+            type="button"
+            onClick={() => onSelectHotspot(h)}
+            className={`hotspot-item-card ${isSelected ? 'selected' : ''}`}
+          >
+            {/* Avatar Sirkular Berwarna Tingkat Suhu (Kuning/Oranye/Merah) */}
+            <div
+              className="tier-avatar"
+              style={{
+                backgroundColor: cat.color,
+                boxShadow: `0 0 0 3px ${cat.halo}`,
+              }}
+              title={cat.label}
             >
-              <div className="detection-item-info">
-                <span className="detection-coord font-mono">
-                  {h.latitude.toFixed(4)}, {h.longitude.toFixed(4)}
-                  {h.province && <span style={{ marginLeft: '6px', fontWeight: 'normal', opacity: 0.85 }}>• {h.province}</span>}
+              <span className="tier-avatar-dot" />
+            </div>
+
+            {/* Informasi Kartu Dua Baris */}
+            <div className="card-info-col">
+              {/* Baris 1: Wilayah / Koordinat & Nilai FRP */}
+              <div className="card-row-top">
+                <span className="card-title font-mono tabular-nums">
+                  {h.province ? `Prov. ${h.province}` : `${h.latitude.toFixed(4)}, ${h.longitude.toFixed(4)}`}
                 </span>
-                <span className="detection-time">
-                  {h.acq_date} | {h.acq_time} UTC
-                </span>
-              </div>
-              <div className="detection-item-badges">
                 {h.frp !== undefined && h.frp !== null && (
-                  <span className="badge-frp">
-                    {h.frp} MW
+                  <span className="card-frp-badge tabular-nums">
+                    🔥 {h.frp} MW
                   </span>
                 )}
-                <span className={`badge-conf conf-${h.confidence}`}>
+              </div>
+
+              {/* Baris 2: Waktu Observasi UTC & Tingkat Keyakinan */}
+              <div className="card-row-bottom">
+                <span className="card-meta tabular-nums">
+                  {h.acq_date} · {h.acq_time} UTC
+                </span>
+                <span className="card-conf-tag">
                   {h.confidence}
                 </span>
               </div>
-            </button>
-          );
-        })}
-      </div>
+            </div>
+
+            {/* Sisi Kanan: Tag Status Ringkas */}
+            <div className="card-right-status">
+              <span className={`status-badge-chip tier-${cat.tier}`}>
+                {cat.shortLabel}
+              </span>
+            </div>
+          </button>
+        );
+      })}
+
       {hotspots.length > 100 && (
-        <div className="detection-list-footer">
-          Menampilkan 100 dari {hotspots.length} titik pada daftar ringkas.
+        <div className="cards-list-footer">
+          Menampilkan 100 dari {hotspots.length.toLocaleString('id-ID')} titik untuk performa optimal.
         </div>
       )}
     </div>

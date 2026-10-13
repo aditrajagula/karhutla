@@ -24,17 +24,24 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="detail-title"
+      aria-labelledby="pointdetail-title"
       className="modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="modal-card">
-        <div className="modal-header">
-          <h3 id="detail-title" className="modal-title">
-            Detail Deteksi Anomali Termal
-          </h3>
+      <div className="point-detail-card">
+        <div className="point-detail-header">
+          <div>
+            <div className="evidence-class-tag">
+              <span className="dot-sat" />
+              <span>Kelas A: Deteksi Satelit (FIRMS)</span>
+            </div>
+            {/* Headline wajib sesuai DSG §5 */}
+            <h3 id="pointdetail-title" className="point-detail-headline">
+              Deteksi aktivitas termal — bukan konfirmasi kebakaran
+            </h3>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -45,64 +52,61 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="point-detail-body">
           <div className="detail-row">
-            <span className="detail-label">Koordinat:</span>
-            <span className="detail-val font-mono">
+            <span className="detail-label">Koordinat Geospasial</span>
+            <span className="detail-val font-mono tabular-nums">
               {hotspot.latitude.toFixed(5)}, {hotspot.longitude.toFixed(5)}
             </span>
           </div>
-          {hotspot.province && (
-            <div className="detail-row">
-              <span className="detail-label">Provinsi Daratan:</span>
-              <span className="detail-val">
-                {hotspot.province}
-              </span>
-            </div>
-          )}
           <div className="detail-row">
-            <span className="detail-label">Waktu Observasi:</span>
-            <span className="detail-val">
+            <span className="detail-label">Waktu Akuisisi Satelit</span>
+            <span className="detail-val tabular-nums">
               {hotspot.acq_date} {hotspot.acq_time} UTC
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Platform Satelit & Sensor:</span>
+            <span className="detail-label">Satelit & Instrumen</span>
             <span className="detail-val">
               {hotspot.satellite} ({hotspot.instrument})
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Tingkat Keyakinan (Confidence):</span>
-            <span className={`detail-val capitalize conf-text-${hotspot.confidence}`}>
-              {hotspot.confidence}
-            </span>
+            <span className="detail-label">Mutu Deteksi (Confidence)</span>
+            <div className="detail-val-col">
+              <span className={`conf-badge conf-${hotspot.confidence}`}>
+                {hotspot.confidence}
+              </span>
+              <span className="conf-clarification">
+                Confidence adalah mutu sinyal sensor, bukan kepastian kebakaran.
+              </span>
+            </div>
           </div>
           <div className="detail-row">
-            <span className="detail-label">FRP (Fire Radiative Power):</span>
-            <span className="detail-val">
+            <span className="detail-label">Fire Radiative Power (FRP)</span>
+            <span className="detail-val tabular-nums">
               {hotspot.frp !== undefined && hotspot.frp !== null ? `${hotspot.frp} MW` : 'Tidak tersedia'}
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Orbit / Waktu:</span>
+            <span className="detail-label">Waktu Lintasan Satelit</span>
             <span className="detail-val">
-              {hotspot.daynight === 'D' ? 'Siang Hari (Day)' : 'Malam Hari (Night)'}
+              {hotspot.daynight === 'D' ? 'Siang Hari (Day Pass)' : 'Malam Hari (Night Pass)'}
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Sumber Provenance:</span>
+            <span className="detail-label">Sumber & Provenance</span>
             <span className="detail-val">
               {hotspot.source_provenance === 'NASA_FIRMS_API'
-                ? 'Deteksi Satelit VIIRS NASA FIRMS (Live API)'
-                : 'Snapshot Hasil Pengambilan Mandiri Tim (Bukan Benchmark Panitia)'}
+                ? 'NASA FIRMS VIIRS (Live API Pipeline)'
+                : 'Snapshot Statis Tim (Benchmark JOINTS 2026)'}
             </span>
           </div>
         </div>
 
-        <div className="modal-footer">
-          <p className="disclaimer-text">
-            Catatan: Anomali termal adalah indikasi sensor satelit untuk ditinjau lapangan, bukan bukti pasti kebakaran lahan.
+        <div className="point-detail-footer">
+          <p className="provenance-disclaimer">
+            Data ini menunjukkan anomali radiasi panas yang diindikasikan sensor satelit pada saat melintas. Verifikasi lapangan oleh relawan atau instansi berwenang tetap diperlukan sebelum menarik kesimpulan kondisi di darat.
           </p>
         </div>
       </div>

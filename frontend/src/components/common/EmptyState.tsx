@@ -1,26 +1,33 @@
 import React from 'react';
 
 interface EmptyStateProps {
+  title?: string;
   message?: string;
   onAction?: () => void;
   actionLabel?: string;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  message = 'Tidak ada anomali termal terdeteksi pada wilayah dan rentang waktu yang dipilih.',
+  title = 'Tidak ada deteksi pada periode ini',
+  message = 'Coba perluas rentang tanggal atau wilayah. Tidak adanya deteksi bukan bukti tidak ada kebakaran.',
   onAction,
-  actionLabel = 'Perluas Rentang Waktu',
+  actionLabel = 'Perluas Periode',
 }) => {
   return (
-    <div className="p-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-md">
-      <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-        {message}
-      </p>
+    <div className="state-card state-empty">
+      <div className="state-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </div>
+      <h3 className="state-title">{title}</h3>
+      <p className="state-desc">{message}</p>
       {onAction && (
         <button
           type="button"
           onClick={onAction}
-          className="text-xs px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 min-h-[44px]"
+          className="state-action-btn"
         >
           {actionLabel}
         </button>

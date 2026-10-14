@@ -10,3 +10,4 @@ shapely>=2.0.4
 numpy>=1.26.0
 python-dotenv>=1.0.1
 pytest>=8.2.0
+rasterio>=1.4.0

@@ -1,5 +1,13 @@
 import type { ConfidenceLevel, Hotspot, HotspotFilterParams, HotspotResponse } from '../types/hotspot';
 import type { DataSourceMode, SystemStatus } from '../types/status';
+import type {
+  CitizenReport,
+  CitizenReportsResponse,
+  CreateCitizenReportPayload,
+  CreateReportResponse,
+  UpdateReportResponse,
+  UpdateReportStatusPayload,
+} from '../types/report';
 
 const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 // Pastikan tidak ada trailing slash dan sertakan prefix /api/v1
@@ -155,3 +163,105 @@ export async function fetchContextLayers(): Promise<ContextLayersStatus> {
   }
   return res.json();
 }
+
+/**
+ * Mengambil daftar laporan masyarakat dari backend.
+ */
+export async function fetchCitizenReports(filters?: {
+  category?: string;
+  status?: string;
+  province?: string;
+  region?: string;
+}): Promise<CitizenReportsResponse> {
+  const query = new URLSearchParams();
+  if (filters?.category) query.append('category', filters.category);
+  if (filters?.status) query.append('status', filters.status);
+  if (filters?.province) query.append('province', filters.province);
+  if (filters?.region) query.append('region', filters.region);
+
+  const res = await fetch(`${API_BASE_URL}/reports?${query.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Gagal memuat laporan masyarakat dari server (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Mengambil detail satu laporan masyarakat.
+ */
+export async function fetchCitizenReportDetail(reportId: string): Promise<CitizenReport> {
+  const res = await fetch(`${API_BASE_URL}/reports/${reportId}`);
+  if (!res.ok) {
+    throw new Error(`Laporan tidak ditemukan atau gagal dimuat (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Mengirimkan laporan baru dari masyarakat.
+ */
+export async function submitCitizenReport(
+  payload: CreateCitizenReportPayload
+): Promise<CreateReportResponse> {
+  const res = await fetch(`${API_BASE_URL}/reports`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const errorMsg = data?.detail || `Gagal menyimpan laporan (HTTP ${res.status})`;
+    throw new Error(errorMsg);
+  }
+  return data;
+}
+
+/**
+ * Memperbarui status verifikasi laporan oleh operator (dipertahankan untuk kompatibilitas).
+ */
+export async function updateReportStatus(
+  reportId: string,
+  payload: UpdateReportStatusPayload
+): Promise<UpdateReportResponse> {
+  const res = await fetch(`${API_BASE_URL}/reports/${reportId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const errorMsg = data?.detail || `Gagal memperbarui status laporan (HTTP ${res.status})`;
+    throw new Error(errorMsg);
+  }
+  return data;
+}
+
+/**
+ * Mengambil ringkasan data kehilangan tutupan pohon Hansen GFC 2025 v1.13 untuk 5 provinsi Kalimantan.
+ */
+export async function fetchForestLossSummary(): Promise<import('../types/forest').ForestLossSummary> {
+  const res = await fetch(`${API_BASE_URL}/forest-loss/summary`);
+  if (!res.ok) {
+    throw new Error(`Gagal memuat ringkasan tutupan pohon Hansen GFC (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Mengambil poligon batas 5 provinsi Kalimantan Indonesia (GeoJSON).
+ */
+export async function fetchKalimantanBoundaries(): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/boundaries/kalimantan`);
+  if (!res.ok) {
+    throw new Error(`Gagal memuat batas wilayah 5 provinsi Kalimantan (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+

@@ -22,14 +22,20 @@ def test_frontend_backend_integration():
     except (httpx.ConnectError, httpx.TimeoutException):
         pass
 
-    # 2. CORS Preflight
-    r_cors = httpx.options(
-        "http://127.0.0.1:8000/api/v1/hotspots",
-        headers={
-            "Origin": origin,
-            "Access-Control-Request-Method": "GET"
-        }
-    )
+    # 2. CORS Preflight & Backend Live Check
+    try:
+        r_cors = httpx.options(
+            "http://127.0.0.1:8000/api/v1/hotspots",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "GET"
+            },
+            timeout=2.0
+        )
+    except (httpx.ConnectError, httpx.TimeoutException):
+        import pytest
+        pytest.skip("Backend live server (port 8000) tidak aktif, pengujian live server di-skip.")
+
     assert r_cors.status_code == 200
     assert r_cors.headers.get("access-control-allow-origin") == origin
 
@@ -81,3 +87,16 @@ def test_frontend_backend_integration():
     assert c_data["peatland_layer"]["available"] is False
     assert c_data["boundary_layer"]["available"] is True
     assert c_data["boundary_layer"]["feature_count"] == 34
+
+    # 6. Citizen Reports API via Frontend Origin
+    r_rep = httpx.get(
+        "http://127.0.0.1:8000/api/v1/reports",
+        headers={"Origin": origin},
+        timeout=10.0
+    )
+    assert r_rep.status_code == 200
+    assert r_rep.headers.get("access-control-allow-origin") == origin
+    rep_data = r_rep.json()
+    assert "records" in rep_data
+    assert "features" in rep_data
+

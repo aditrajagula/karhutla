@@ -49,3 +49,6 @@ Desktop.ini
 
 # Temporary & raw cache (snapshots committed intentionally if manifest present)
 data/raw/
+data/uploads/
+*.db
+*.sqlite3

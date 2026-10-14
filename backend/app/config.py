@@ -32,12 +32,26 @@ FIRMS_BACKUP_SOURCE = os.getenv("FIRMS_BACKUP_SOURCE", "VIIRS_NOAA21_NRT")
 FIRMS_AREA_BBOX = os.getenv("FIRMS_AREA_BBOX", "95.0,-11.0,141.5,6.0")
 FIRMS_REQUEST_TIMEOUT_SECONDS = int(os.getenv("FIRMS_REQUEST_TIMEOUT_SECONDS", "20"))
 
-# Path direktori dan data
+# Direktori Data, Database, dan Uploads
 BOUNDARIES_PATH = BASE_DIR / os.getenv("BOUNDARIES_PATH", "data/boundaries/indonesia_provinces.geojson")
 SNAPSHOTS_DIR = BASE_DIR / os.getenv("SNAPSHOTS_DIR", "data/snapshots")
+REPORTS_DB_PATH = BASE_DIR / os.getenv("REPORTS_DB_PATH", "data/citizen_reports.db")
+UPLOADS_DIR = BASE_DIR / os.getenv("UPLOADS_DIR", "data/uploads/reports")
 
 # Mode eksekusi
 FORCE_SNAPSHOT_MODE = os.getenv("FORCE_SNAPSHOT_MODE", "false").lower() in ("true", "1", "yes")
 
-# Pastikan direktori snapshot ada
+# Hansen Global Forest Change Configurations
+HANSEN_DATASET_VERSION = os.getenv("HANSEN_DATASET_VERSION", "GFC-2025-v1.13")
+HANSEN_TILES_DIR = BASE_DIR / os.getenv("HANSEN_TILES_DIR", "data/raster/hansen")
+HANSEN_ENABLE_REMOTE_ACCESS = os.getenv("HANSEN_ENABLE_REMOTE_ACCESS", "false").lower() in ("true", "1", "yes")
+HANSEN_REMOTE_BASE_URL = os.getenv(
+    "HANSEN_REMOTE_BASE_URL",
+    "https://storage.googleapis.com/earthenginepartners-hansen/{version}/"
+)
+
+# Pastikan direktori penting ada
 SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+HANSEN_TILES_DIR.mkdir(parents=True, exist_ok=True)

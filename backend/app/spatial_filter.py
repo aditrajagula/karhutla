@@ -74,6 +74,24 @@ class IndonesiaSpatialFilter:
 
         return False, None
 
+    def is_inside_kalimantan(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
+        """
+        Memeriksa apakah koordinat (lon, lat) berada di dalam 5 provinsi Kalimantan Indonesia:
+        Kalimantan Barat, Kalimantan Tengah, Kalimantan Selatan, Kalimantan Timur, Kalimantan Utara.
+        Wilayah Malaysia (Sarawak, Sabah) dan Brunei Darussalam secara tegas mengembalikan (False, None).
+        """
+        kalimantan_provinces = {
+            "Kalimantan Barat",
+            "Kalimantan Tengah",
+            "Kalimantan Selatan",
+            "Kalimantan Timur",
+            "Kalimantan Utara",
+        }
+        inside, prov_name = self.is_inside(lon, lat)
+        if inside and prov_name in kalimantan_provinces:
+            return True, prov_name
+        return False, None
+
     def filter_records(
         self, records: List[HotspotRecord], stats: Optional[RejectionStats] = None
     ) -> Tuple[List[HotspotRecord], RejectionStats]:
@@ -105,3 +123,35 @@ class IndonesiaSpatialFilter:
 
         stats.total_valid_records = len(filtered_records)
         return filtered_records, stats
+
+    def filter_kalimantan_records(
+        self, records: List[HotspotRecord], stats: Optional[RejectionStats] = None
+    ) -> Tuple[List[HotspotRecord], RejectionStats]:
+        """
+        Menyaring rekaman khusus untuk 5 provinsi Kalimantan Indonesia.
+        Membuang titik yang berada di luar Kalimantan (termasuk Malaysia dan Brunei).
+        """
+        if stats is None:
+            stats = RejectionStats(
+                total_initial_records=len(records),
+                total_valid_records=0,
+                total_rejected_records=0,
+                reasons={}
+            )
+
+        filtered_records: List[HotspotRecord] = []
+
+        for rec in records:
+            inside, prov_name = self.is_inside_kalimantan(rec.longitude, rec.latitude)
+            if inside:
+                rec.province = prov_name
+                filtered_records.append(rec)
+            else:
+                stats.total_rejected_records += 1
+                stats.reasons["outside_kalimantan_boundary"] = (
+                    stats.reasons.get("outside_kalimantan_boundary", 0) + 1
+                )
+
+        stats.total_valid_records = len(filtered_records)
+        return filtered_records, stats
+

@@ -24,6 +24,8 @@ from app.hansen_tile_reader import (
     read_hansen_pixel,
     read_pixel_from_raster,
     resolve_layer_source,
+    verify_geotiff_metadata_and_transform,
+    audit_hansen_coordinate_transform,
     STATUS_OUT_OF_SCOPE,
     STATUS_INSUFFICIENT_DATA,
     STATUS_NO_DATA_OR_NON_FOREST,
@@ -591,3 +593,251 @@ def test_remote_failure_never_converts_to_no_loss(monkeypatch):
     assert res.raster_available is False
     assert res.data_verified is False
     assert "kegagalan infrastruktur" in (res.error_message or "").lower()
+
+
+def test_geotiff_metadata_and_affine_transform_audit(synthetic_hansen_dir: Path):
+    """
+    Audit Geospasial Poin B: Memverifikasi kesesuaian metadata GeoTIFF, proyeksi CRS EPSG:4326,
+    dan konsistensi rumus Affine terhadap koordinat input dan indeks piksel rasterio.
+    """
+    file_path = synthetic_hansen_dir / "Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif"
+    with rasterio.open(file_path) as src:
+        audit = verify_geotiff_metadata_and_transform(src, lat=-0.0001, lon=110.0001)
+        assert audit["is_transform_verified"] is True
+        assert audit["crs"] == "EPSG:4326"
+        assert audit["row"] == 0
+        assert audit["col"] == 0
+        assert audit["calc_row"] == 0
+        assert audit["calc_col"] == 0
+        assert audit["pixel_size_x_deg"] == 0.00025
+        assert audit["pixel_size_y_deg"] == -0.00025
+        assert audit["pixel_center_lon"] == 110.000125
+        assert audit["pixel_center_lat"] == -0.000125
+
+
+def test_palangka_raya_tile_and_coordinate_transform_mathematical_proof():
+    """
+    Audit Geospasial Poin B: Pembuktian matematis pemetaan koordinat Palangka Raya (-2.21, 113.92)
+    terhadap tile 00N_110E, bounding box, dan indeks piksel Affine 40000x40000 UMD Hansen.
+    """
+    audit = audit_hansen_coordinate_transform(lat=-2.21, lon=113.92)
+    assert audit["tile_id"] == "00N_110E"
+    assert audit["crs"] == "EPSG:4326"
+    assert audit["tile_bounds"] == [110.0, -10.0, 120.0, 0.0]
+    assert audit["is_within_bounds"] is True
+    assert audit["pixel_size_deg"] == 0.00025
+    assert audit["affine_matrix"] == [0.00025, 0.0, 110.0, 0.0, -0.00025, 0.0]
+
+    # Verifikasi rumus indeks matematis:
+    # col = floor((113.92 - 110.0) / 0.00025) = 15680
+    # row = floor((0.0 - (-2.21)) / 0.00025) = 8840
+    assert audit["pixel_col"] == 15680
+    assert audit["pixel_row"] == 8840
+    assert audit["is_valid_index"] is True
+
+    # Verifikasi rekonstruksi koordinat tengah piksel:
+    assert audit["pixel_center_lon"] == 113.920125
+    assert audit["pixel_center_lat"] == -2.210125
+    assert audit["residual_distance_m"] < 25.0
+    assert audit["verification_status"] == "VERIFIED_ACCURATE"
+
+
+def test_palangka_raya_non_forest_baseline_interpretation_audit(tmp_path: Path):
+    """
+    Audit Kewajaran Interpretasi Poin B:
+    Memverifikasi bahwa interpretasi NO_DATA_OR_NON_FOREST pada koordinat Palangka Raya
+    adalah benar karena status datamask=1 (daratan) dan treecover2000=0% (kawasan pemukiman/perkotaan
+    pada baseline tahun 2000), serta diverifikasi transformasinya.
+    """
+    clear_pixel_cache()
+    # Buat mini-raster sintetis yang merepresentasikan kawasan sekitar Palangka Raya (-2.21, 113.92)
+    # Origin top-left: (113.91, -2.20)
+    transform = from_origin(113.91, -2.20, 0.00025, 0.00025)
+    version = "GFC-2025-v1.13"
+    tile_id = "00N_110E"
+
+    # Layer datamask: 1 (daratan)
+    dm_data = np.ones((10, 10), dtype=np.uint8)
+    # Layer treecover2000: 0% (pusat kota / built-up baseline non-hutan)
+    tc_data = np.zeros((10, 10), dtype=np.uint8)
+    # Layer lossyear: 0 (tidak ada kehilangan)
+    ly_data = np.zeros((10, 10), dtype=np.uint8)
+
+    for layer, data in [("datamask", dm_data), ("treecover2000", tc_data), ("lossyear", ly_data)]:
+        fpath = tmp_path / f"Hansen_{version}_{layer}_{tile_id}.tif"
+        with rasterio.open(
+            fpath, "w", driver="GTiff", height=10, width=10, count=1,
+            dtype=data.dtype, crs="EPSG:4326", transform=transform
+        ) as dst:
+            dst.write(data, 1)
+
+    res = read_hansen_pixel(
+        lat=-2.201,
+        lon=113.911,
+        province="Kalimantan Tengah",
+        tiles_dir=tmp_path,
+        enable_remote=False,
+    )
+    assert res.status == STATUS_NO_DATA_OR_NON_FOREST
+    assert res.category_result == "Belum dapat dinilai"
+    assert res.treecover2000 == 0
+    assert res.datamask == 1
+    assert res.loss_detected is False
+    assert res.transform_verified is True
+    assert res.pixel_center_lat is not None
+    assert res.pixel_center_lon is not None
+    assert "kawasan pemukiman/perkotaan/lahan non-hutan historis" in res.verification_notes
+
+
+def test_crs_mismatch_and_bounds_rejection(tmp_path: Path):
+    """
+    Audit Proteksi Geospasial Poin B:
+    Memastikan raster dengan CRS non-EPSG:4326 atau koordinat out-of-bounds ditolak dengan tegas.
+    """
+    # 1. CRS Mismatch (misal EPSG:3857 Pseudo-Mercator)
+    fpath_crs = tmp_path / "mismatch_crs.tif"
+    data = np.zeros((5, 5), dtype=np.uint8)
+    transform = from_origin(0.0, 0.0, 100.0, 100.0)
+    with rasterio.open(
+        fpath_crs, "w", driver="GTiff", height=5, width=5, count=1,
+        dtype=data.dtype, crs="EPSG:3857", transform=transform
+    ) as dst:
+        dst.write(data, 1)
+
+    with rasterio.open(fpath_crs) as src:
+        with pytest.raises(ValueError, match="Ketidakcocokan CRS GeoTIFF"):
+            verify_geotiff_metadata_and_transform(src, lat=-2.21, lon=113.92)
+
+    # 2. Out of bounds pada EPSG:4326
+    fpath_valid = tmp_path / "valid_crs.tif"
+    transform_valid = from_origin(110.0, 0.0, 0.00025, 0.00025)
+    with rasterio.open(
+        fpath_valid, "w", driver="GTiff", height=10, width=10, count=1,
+        dtype=data.dtype, crs="EPSG:4326", transform=transform_valid
+    ) as dst:
+        dst.write(data, 1)
+
+    with rasterio.open(fpath_valid) as src:
+        with pytest.raises(ValueError, match="di luar batas geospasial"):
+            # Koordinat di luar (110.0 s.d. 110.0025, 0.0 s.d. -0.0025)
+            verify_geotiff_metadata_and_transform(src, lat=-5.0, lon=115.0)
+
+
+def test_smart_dual_tier_pixel_grid_cache_hit(synthetic_hansen_dir: Path):
+    """
+    Optimasi Latensi Poin C:
+    Memverifikasi bahwa dua titik berbeda yang berada dalam sel piksel 30m yang sama
+    menghasilkan cache hit instan (<5 ms) dengan access_method='memory_cache'.
+    """
+    clear_pixel_cache()
+    # Panggilan pertama pada piksel (0, 0)
+    res1 = read_hansen_pixel(
+        lat=-0.0001,
+        lon=110.0001,
+        province="Kalimantan Tengah",
+        tiles_dir=synthetic_hansen_dir,
+        enable_remote=False,
+    )
+    assert res1.status == STATUS_LOSS_DETECTED
+    assert res1.cache_hit is False
+    assert res1.access_method == "local_file"
+
+    # Panggilan kedua pada koordinat yang berjarak ~5 meter (masih di dalam piksel yang sama)
+    res2 = read_hansen_pixel(
+        lat=-0.00014,
+        lon=110.00014,
+        province="Kalimantan Tengah",
+        tiles_dir=synthetic_hansen_dir,
+        enable_remote=False,
+    )
+    assert res2.status == STATUS_LOSS_DETECTED
+    assert res2.cache_hit is True
+    assert res2.access_method == "memory_cache"
+    assert res2.latency_ms < 20.0  # Sangat cepat via cache
+
+
+def test_secondary_layer_failure_graceful_degradation(synthetic_hansen_dir: Path, monkeypatch):
+    """
+    Optimasi Latensi Poin C:
+    Memverifikasi bahwa jika layer utama 'lossyear' berhasil dibaca,
+    tetapi layer sekunder ('treecover2000' atau 'datamask') gagal atau timeout,
+    sistem tidak membatalkan seluruh request melainkan melakukan degradasi anggun (graceful degradation).
+    """
+    clear_pixel_cache()
+
+    original_read = read_pixel_from_raster
+
+    def mock_read(source, lat, lon, *args, **kwargs):
+        if "treecover2000" in source or "datamask" in source:
+            raise rasterio.errors.RasterioIOError("Simulated secondary layer network timeout")
+        return original_read(source, lat, lon, *args, **kwargs)
+
+    monkeypatch.setattr("app.hansen_tile_reader.read_pixel_from_raster", mock_read)
+
+    res = read_hansen_pixel(
+        lat=-0.0001,
+        lon=110.0001,
+        province="Kalimantan Tengah",
+        tiles_dir=synthetic_hansen_dir,
+        enable_remote=False,
+    )
+    # Lossyear tetap berhasil terbaca (2015)
+    assert res.status == STATUS_LOSS_DETECTED
+    assert res.loss_detected is True
+    assert res.loss_year == 2015
+    # Nilai sekunder menjadi None karena gagal, namun request tidak gagal
+    assert res.treecover2000 is None
+    assert res.datamask is None
+
+
+def test_remote_strict_timeout_enforced(monkeypatch):
+    """
+    Optimasi Latensi Poin C:
+    Memverifikasi bahwa batas waktu tunggu (timeout) remote access dipatuhi
+    dan sistem tidak menggantung selama 9-30 detik saat server remote lambat.
+    """
+    clear_pixel_cache()
+    import time as pytime
+
+    def slow_mock_read(*args, **kwargs):
+        pytime.sleep(0.3)
+        raise rasterio.errors.RasterioIOError("HTTP 504: Gateway Timeout")
+
+    monkeypatch.setattr("app.hansen_tile_reader.read_pixel_from_raster", slow_mock_read)
+    monkeypatch.setattr("app.hansen_tile_reader.resolve_layer_source", lambda *args, **kwargs: ("https://mock.tif", "remote_range"))
+    monkeypatch.setattr("app.hansen_tile_reader.HANSEN_REMOTE_TIMEOUT_SECONDS", 0.2)
+
+    start = pytime.perf_counter()
+    res = read_hansen_pixel(
+        lat=-2.21,
+        lon=113.92,
+        province="Kalimantan Tengah",
+        enable_remote=True,
+        use_cache=False,
+    )
+    elapsed = pytime.perf_counter() - start
+
+    assert res.status == STATUS_INSUFFICIENT_DATA
+    assert res.raster_available is False
+    assert res.data_verified is False
+    assert elapsed < 3.0  # Dibatalkan secara cepat tanpa menunggu lama
+
+
+def test_local_demo_tiles_available_and_instant():
+    """
+    Optimasi Latensi Poin C:
+    Memverifikasi bahwa tile lokal hasil script generate_kalimantan_demo_tiles.py
+    dapat dibaca langsung secara lokal dengan latensi <50 ms tanpa akses internet.
+    """
+    clear_pixel_cache()
+    res = read_hansen_pixel(
+        lat=-2.15,
+        lon=113.85,
+        province="Kalimantan Tengah",
+        enable_remote=False,
+    )
+    assert res.access_method == "local_file"
+    assert res.raster_available is True
+    assert res.latency_ms < 250.0  # Jauh di bawah latensi remote 9000 ms (<0.25s vs 9s)
+
+

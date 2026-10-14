@@ -315,7 +315,15 @@ def evaluate_forest_change_point(
                 "datamask": res.datamask,
             },
             "matching_rule": res.matching_rule or f"Pemeriksaan piksel raster terverifikasi resolusi 30m di {prov_resolved}.",
+            "verification_notes": res.verification_notes,
             "scientific_caveat": res.scientific_caveat,
+            "pixel_center_lat": res.pixel_center_lat,
+            "pixel_center_lon": res.pixel_center_lon,
+            "transform_verified": res.transform_verified,
+            "coordinate_audit": res.coordinate_audit,
+            "latency_ms": res.latency_ms,
+            "cache_hit": res.cache_hit,
+            "access_method": res.access_method,
         }
 
     if res.status == STATUS_NO_LOSS_DETECTED:
@@ -341,7 +349,15 @@ def evaluate_forest_change_point(
                 "datamask": res.datamask,
             },
             "matching_rule": res.matching_rule or f"Pemeriksaan piksel 30m di {prov_resolved}: tidak terdeteksi kehilangan tutupan pohon.",
+            "verification_notes": res.verification_notes,
             "scientific_caveat": res.scientific_caveat,
+            "pixel_center_lat": res.pixel_center_lat,
+            "pixel_center_lon": res.pixel_center_lon,
+            "transform_verified": res.transform_verified,
+            "coordinate_audit": res.coordinate_audit,
+            "latency_ms": res.latency_ms,
+            "cache_hit": res.cache_hit,
+            "access_method": res.access_method,
         }
 
     if res.status == STATUS_NO_DATA_OR_NON_FOREST:
@@ -369,6 +385,13 @@ def evaluate_forest_change_point(
             "matching_rule": res.matching_rule,
             "verification_notes": res.verification_notes,
             "scientific_caveat": res.scientific_caveat,
+            "pixel_center_lat": res.pixel_center_lat,
+            "pixel_center_lon": res.pixel_center_lon,
+            "transform_verified": res.transform_verified,
+            "coordinate_audit": res.coordinate_audit,
+            "latency_ms": res.latency_ms,
+            "cache_hit": res.cache_hit,
+            "access_method": res.access_method,
         }
 
     # Kasus fallback: STATUS_INSUFFICIENT_DATA (tile tidak ada lokal, corrupt, atau error)
@@ -396,4 +419,7 @@ def evaluate_forest_change_point(
             "Sistem tidak dapat menyimpulkan kondisi fisik tutupan pohon di suatu titik hanya berdasarkan statistik agregat provinsi."
         ),
         "scientific_caveat": res.scientific_caveat,
+        "latency_ms": res.latency_ms,
+        "cache_hit": res.cache_hit,
+        "access_method": res.access_method,
     }

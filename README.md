@@ -103,7 +103,28 @@ Pastikan `FIRMS_MAP_KEY` terisi di `.env`:
 FIRMS_MAP_KEY=d4208fc31485aff61dda184dc5f1a4c8
 ```
 
-### C. Jalankan Server FastAPI Backend
+### C. Inisialisasi & Manajemen Database (SQLite)
+Aplikasi menggunakan database SQLite tertanam (*embedded*) melalui SQLAlchemy ORM. **Tidak memerlukan instalasi server database eksternal** (PostgreSQL/MySQL terpisah).
+
+1. **Lokasi File Database:**
+   File database disimpan di `data/citizen_reports.db` (dikonfigurasi melalui `REPORTS_DB_PATH` di `.env`).
+2. **Inisialisasi Otomatis:**
+   Skema tabel `citizen_reports` otomatis dibuat saat backend pertama kali dijalankan.
+3. **Verifikasi Koneksi / Inisialisasi Manual:**
+   ```powershell
+   .\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0, 'backend'); from app.reports_storage import reports_repo; print('Database terhubung di:', reports_repo.db_path)"
+   ```
+4. **Melihat / Monitoring Isi Database Laporan Warga:**
+   ```powershell
+   .\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0, 'backend'); from app.reports_storage import reports_repo, CitizenReportModel; s = reports_repo.SessionLocal(); print(f'Total Laporan: {s.query(CitizenReportModel).count()}'); [print(f'- [{r.id}] {r.province} | {r.category} | {r.created_at_utc}') for r in s.query(CitizenReportModel).all()]; s.close()"
+   ```
+5. **Reset Database Bersih (Opsional):**
+   Jika ingin mengosongkan data uji coba dan memulai database dari awal:
+   ```powershell
+   Remove-Item data\citizen_reports.db -ErrorAction SilentlyContinue
+   ```
+
+### D. Jalankan Server FastAPI Backend
 ```powershell
 .\.venv\Scripts\uvicorn backend.app.main:app --reload --port 8000
 ```
@@ -112,7 +133,7 @@ Server aktif di:
 * **Dokumentasi Interaktif (Swagger UI):** `http://localhost:8000/docs`
 * **Health Check:** `http://localhost:8000/health`
 
-### D. Jalankan Dashboard Frontend
+### E. Jalankan Dashboard Frontend
 Pada terminal terpisah:
 ```powershell
 cd frontend
@@ -238,10 +259,36 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
 
 ## 6. Menjalankan Pengujian (Testing)
 
+### A. Eksekusi Seluruh Suite Backend (113 Tests)
 Jalankan seluruh test suite otomatis:
 ```powershell
 .\.venv\Scripts\pytest -v
 ```
+Atau menggunakan runner script:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run_tests.ps1
+```
 
-Hasil pengujian aktual:
-* **50 tests passed (100% lulus)** mencakup unit validator, deduplikasi 5 desimal, STRtree Point-in-Polygon 34 provinsi daratan Indonesia, snapshot integritas SHA-256, integrasi NASA FIRMS API live, integrasi frontend, dan seluruh kontrak endpoint REST API.
+### B. Eksekusi Berdasarkan Modul
+```powershell
+# 1. Modul Inti FIRMS & Geospasial 34 Provinsi (50 tests)
+powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 core
+
+# 2. Modul Raster Hansen GFC & Analisis Kalimantan (43 tests)
+powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 raster
+
+# 3. Modul Laporan Bukti Warga & Proteksi Privasi (20 tests)
+powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 citizen
+```
+
+### C. Pembuatan Tile Lokal untuk Demo (<5 ms Latency)
+Untuk demonstrasi offline tanpa ketergantungan internet dan tanpa latensi remote 9 detik:
+```powershell
+.\.venv\Scripts\python.exe scripts/generate_kalimantan_demo_tiles.py
+```
+
+### D. Hasil Pengujian Aktual
+* **113 tests passed (100% lulus)** mencakup 15 file pengujian:
+  1. **Modul Inti FIRMS & Geospasial Nasional (50 tests):** Unit validator (`test_validation.py`), deduplikasi 5 desimal (`test_cleaner.py`), STRtree Point-in-Polygon 34 provinsi daratan Indonesia (`test_spatial_filter.py`), snapshot integritas SHA-256 (`test_snapshot_manager.py`), integrasi NASA FIRMS API live (`test_firms_integration.py`), orkestrasi pipeline (`test_pipeline.py`), kontrak endpoint REST API & health (`test_api_endpoints.py`, `test_hotspots.py`), audit pipeline independen (`test_audit_pipeline_independent.py`), dan integrasi frontend live (`test_frontend_integration_live.py`).
+  2. **Modul Raster Hansen GFC & Kalimantan (43 tests):** Batas spasial 5 provinsi Kalimantan & eksklusi wilayah luar (`test_kalimantan_spatial.py`), pembacaan piksel GeoTIFF & isolasi status data demo (`test_hansen_raster_integration.py`), kalkulasi tutupan hutan (`test_forest_change.py`), verifikasi analitik transformasi koordinat GeoTIFF EPSG:4326, audit kewajaran baseline non-hutan perkotaan Palangka Raya, pembacaan paralel multi-layer (*ThreadPoolExecutor*), batas waktu tunggu ketat (*strict timeout* 3.0s), dan *dual-tier caching* memori grid 30m.
+  3. **Modul Laporan Bukti Warga & Privasi (20 tests):** Siklus hidup laporan warga, anti-duplikasi, & status verifikasi operator (`test_citizen_reports.py`), serta proteksi kontak pelapor, penyamaran koordinat publik (*privacy obfuscation*), dan penilaian bukti (*evidence assessment*) terpisah (`test_citizen_evidence_and_privacy.py`).

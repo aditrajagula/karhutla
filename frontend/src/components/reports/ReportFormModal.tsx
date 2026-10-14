@@ -45,11 +45,25 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
   } | null>(null);
   const [isLocating, setIsLocating] = useState<boolean>(false);
 
+  // Reset state saat modal dibuka
+  React.useEffect(() => {
+    if (isOpen) {
+      setSuccessInfo(null);
+      setErrorMessage(null);
+      if (!initialCoords) {
+        setDescription('');
+        setPhotoBase64(null);
+        setPhotoFileName('');
+      }
+    }
+  }, [isOpen, initialCoords]);
+
   // Perbarui koordinat jika initialCoords berubah dari klik peta
   React.useEffect(() => {
     if (initialCoords) {
       setLatitude(initialCoords.lat.toFixed(5));
       setLongitude(initialCoords.lng.toFixed(5));
+      setSuccessInfo(null);
     }
   }, [initialCoords]);
 
@@ -155,6 +169,9 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
         message: res.message,
         isDuplicate: res.is_duplicate_suspect,
       });
+      setDescription('');
+      setPhotoBase64(null);
+      setPhotoFileName('');
       onSuccess();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kegagalan saat mengirim laporan.';
@@ -224,14 +241,37 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
             <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
               Laporan warga digunakan sebagai informasi awal untuk ditinjau oleh operator, bukan sebagai konfirmasi otomatis kebakaran atau deforestasi.
             </p>
-            <button
-              type="button"
-              className="btn-action"
-              style={{ minWidth: '140px', background: 'var(--color-forest-dark)', color: '#fff', border: 'none' }}
-              onClick={onClose}
-            >
-              Selesai & Tutup
-            </button>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn-action"
+                style={{
+                  minWidth: '130px',
+                  background: 'var(--color-bg-subtle)',
+                  color: 'var(--color-text-main)',
+                  border: '1px solid var(--color-border)',
+                }}
+                onClick={() => {
+                  setSuccessInfo(null);
+                  setDescription('');
+                  setPhotoBase64(null);
+                  setPhotoFileName('');
+                }}
+              >
+                ➕ Buat Laporan Baru
+              </button>
+              <button
+                type="button"
+                className="btn-action"
+                style={{ minWidth: '130px', background: 'var(--color-forest-dark)', color: '#fff', border: 'none' }}
+                onClick={() => {
+                  setSuccessInfo(null);
+                  onClose();
+                }}
+              >
+                Selesai & Tutup
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>

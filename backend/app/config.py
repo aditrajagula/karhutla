@@ -45,6 +45,9 @@ FORCE_SNAPSHOT_MODE = os.getenv("FORCE_SNAPSHOT_MODE", "false").lower() in ("tru
 HANSEN_DATASET_VERSION = os.getenv("HANSEN_DATASET_VERSION", "GFC-2025-v1.13")
 HANSEN_TILES_DIR = BASE_DIR / os.getenv("HANSEN_TILES_DIR", "data/raster/hansen")
 HANSEN_ENABLE_REMOTE_ACCESS = os.getenv("HANSEN_ENABLE_REMOTE_ACCESS", "false").lower() in ("true", "1", "yes")
+HANSEN_REMOTE_TIMEOUT_SECONDS = float(os.getenv("HANSEN_REMOTE_TIMEOUT_SECONDS", "3.0"))
+HANSEN_MAX_PARALLEL_WORKERS = int(os.getenv("HANSEN_MAX_PARALLEL_WORKERS", "3"))
+HANSEN_CACHE_MAX_ENTRIES = int(os.getenv("HANSEN_CACHE_MAX_ENTRIES", "10000"))
 HANSEN_REMOTE_BASE_URL = os.getenv(
     "HANSEN_REMOTE_BASE_URL",
     "https://storage.googleapis.com/earthenginepartners-hansen/{version}/"

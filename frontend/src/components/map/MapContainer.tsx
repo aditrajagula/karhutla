@@ -92,11 +92,21 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (!map) return;
 
     if (isPickingLocation && onLocationPicked) {
+      const overlayPane = container?.querySelector('.leaflet-overlay-pane') as HTMLElement | null;
+      const markerPane = container?.querySelector('.leaflet-marker-pane') as HTMLElement | null;
+
       if (container) {
         container.style.cursor = 'crosshair';
       }
+      if (overlayPane) {
+        overlayPane.style.pointerEvents = 'none';
+      }
+      if (markerPane) {
+        markerPane.style.pointerEvents = 'none';
+      }
 
       const handleClick = (e: L.LeafletMouseEvent) => {
+        map.closePopup();
         onLocationPicked({
           lat: e.latlng.lat,
           lng: e.latlng.lng,
@@ -108,6 +118,12 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         map.off('click', handleClick);
         if (container) {
           container.style.cursor = '';
+        }
+        if (overlayPane) {
+          overlayPane.style.pointerEvents = '';
+        }
+        if (markerPane) {
+          markerPane.style.pointerEvents = '';
         }
       };
     }

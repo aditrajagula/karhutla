@@ -1,12 +1,37 @@
-import { StrictMode, useState } from 'react'
+import { StrictMode, useCallback, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import './fonts.css'
 import './index.css'
 import App from './App.tsx'
 import { LandingPage } from './components/landing/LandingPage.tsx'
+import { LoginPage } from './components/login/LoginPage.tsx'
+
+type Route = '/' | '/login' | '/app'
+
+const ROUTES: Route[] = ['/', '/login', '/app']
+
+function currentRoute(): Route {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  return (ROUTES as string[]).includes(path) ? (path as Route) : '/'
+}
 
 function Root() {
-  const [entered, setEntered] = useState<boolean>(false)
-  return entered ? <App /> : <LandingPage onEnter={() => setEntered(true)} />
+  const [route, setRoute] = useState<Route>(currentRoute)
+
+  useEffect(() => {
+    const onPop = () => setRoute(currentRoute())
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  const navigate = useCallback((to: Route) => {
+    window.history.pushState(null, '', to)
+    setRoute(to)
+  }, [])
+
+  if (route === '/login') return <LoginPage onLogin={() => navigate('/app')} />
+  if (route === '/app') return <App />
+  return <LandingPage onEnter={() => navigate('/login')} />
 }
 
 createRoot(document.getElementById('root')!).render(

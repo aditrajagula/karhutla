@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import logoOrange from '../../assets/landing/logo-orange.svg';
+import logoOrange from '../../assets/landing/logo-orange.png';
 import arrowRight from '../../assets/landing/arrow-right.svg';
-import lightModeIcon from '../../assets/landing/light-mode.svg';
-import darkModeIcon from '../../assets/landing/dark-mode.svg';
+import { ThemeToggle } from '../common/ThemeToggle';
+import { useTheme } from '../../hooks/useTheme';
 import './LandingPage.css';
 
 interface LandingPageProps {
@@ -10,35 +9,15 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onEnter }: LandingPageProps) {
-  const [isDark, setIsDark] = useState<boolean>(false);
+  const [isDark, toggleTheme] = useTheme();
 
   return (
     <div className={`landing ${isDark ? 'landing--dark' : 'landing--light'}`}>
-      <button
-        type="button"
-        className="landing__toggle"
-        onClick={() => setIsDark((prev) => !prev)}
-        aria-label={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-      >
-        <span className="landing__toggle-knob">
-          {isDark ? (
-            <span
-              className="landing__toggle-icon"
-              style={{ ['--icon' as string]: `url("${darkModeIcon}")` }}
-            />
-          ) : (
-            <img src={lightModeIcon} alt="" width={24} height={24} />
-          )}
-        </span>
-      </button>
+      <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
 
       <main className="landing__content">
         <header className="landing__brand">
-          <img
-            className="landing__logo"
-            src={logoOrange}
-            alt="Logo JagaBorneo"
-          />
+          <img className="landing__logo" src={logoOrange} alt="Logo JagaBorneo" />
           <h1 className="landing__title">JagaBorneo</h1>
         </header>
 

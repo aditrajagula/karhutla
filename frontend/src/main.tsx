@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { LandingPage } from './components/landing/LandingPage.tsx'
 import { LoginPage } from './components/login/LoginPage.tsx'
+import { isLoggedIn } from './services/dummyAuth.ts'
 
 type Route = '/' | '/login' | '/app'
 
@@ -29,8 +30,12 @@ function Root() {
     setRoute(to)
   }, [])
 
+  useEffect(() => {
+    if (route === '/app' && !isLoggedIn()) navigate('/login')
+  }, [route, navigate])
+
   if (route === '/login') return <LoginPage onLogin={() => navigate('/app')} />
-  if (route === '/app') return <App />
+  if (route === '/app') return isLoggedIn() ? <App /> : null
   return <LandingPage onEnter={() => navigate('/login')} />
 }
 

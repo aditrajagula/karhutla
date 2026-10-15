@@ -156,3 +156,10 @@
   width: 28px;
   height: 28px;
 }
+
+.login__error {
+  font-size: 18px;
+  color: #D93025;
+  margin-top: -10px;
+}
+

@@ -5,6 +5,7 @@ import logoOrange from '../../assets/landing/logo-orange.png';
 import loginIcon from '../../assets/login/login.svg';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { useTheme } from '../../hooks/useTheme';
+import { login } from '../../services/dummyAuth';
 import './LoginPage.css';
 
 interface LoginPageProps {
@@ -15,11 +16,17 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [isDark, toggleTheme] = useTheme();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // TODO: hubungkan ke endpoint autentikasi backend
-    onLogin();
+    // TODO: ganti akun dummy dengan endpoint autentikasi backend
+    if (login(email, password)) {
+      setError('');
+      onLogin();
+    } else {
+      setError('Email atau kata sandi salah.');
+    }
   };
 
   return (
@@ -57,6 +64,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               required
             />
           </label>
+
+          {error && (
+            <p className="login__error" role="alert">
+              {error}
+            </p>
+          )}
 
           <button type="submit" className="login__submit">
             <img src={loginIcon} alt="" width={24} height={24} />

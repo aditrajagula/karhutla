@@ -10,13 +10,16 @@ import logging
 import math
 import uuid
 from datetime import datetime, timezone, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from PIL import Image, UnidentifiedImageError
+from shapely.geometry import mapping, shape
 
 from .auth import (
     enforce_rate_limit,
@@ -46,6 +49,10 @@ from .forest_change_service import (
 from .evidence_service import assess_report_evidence, parse_iso_utc
 
 logger = logging.getLogger(__name__)
+PEATLAND_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_big_official.geojson")
+CLASSIFIED_HOTSPOTS_GEOJSON_PATH = Path(__file__).with_name("hotspots_kalimantan_final.geojson")
+FIRMS_MANIFEST_PATH = Path(__file__).with_name("firms_manifest.json")
+PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES = 0.0001
 
 app = FastAPI(
     title="Pantau Hotspot, Jaga Hutan dan Gambut API",
@@ -402,9 +409,14 @@ def get_context_layers() -> ContextLayersResponse:
             )
         ),
         peatland_layer=ContextLayerItem(
-            available=False,
-            source="Badan Restorasi Gambut dan Mangrove (BRGM)",
-            status_message="Dataset resmi kesatuan hidrologis gambut belum tersedia dari panitia/instansi."
+            available=PEATLAND_GEOJSON_PATH.is_file(),
+            source="GeoJSON lokal peat_kalimantan_big_official.geojson",
+            status_message=(
+                "Layer poligon gambut Kalimantan tersedia untuk ditampilkan. "
+                "Tahun, lisensi, dan provenance dataset belum tercatat pada manifest."
+                if PEATLAND_GEOJSON_PATH.is_file()
+                else "Dataset poligon gambut Kalimantan belum tersedia pada server."
+            )
         ),
         boundary_layer=ContextLayerItem(
             available=True,
@@ -412,6 +424,66 @@ def get_context_layers() -> ContextLayersResponse:
             status_message="Geometri 5 provinsi Kalimantan aktif untuk filter spasial.",
             feature_count=len(KALIMANTAN_PROVINCES)
         )
+    )
+
+
+@lru_cache(maxsize=1)
+def _peatland_display_geojson_bytes() -> bytes:
+    """Prepare a lighter display-only copy; source geometry remains unchanged."""
+    if not PEATLAND_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON gambut belum tersedia.")
+
+    with PEATLAND_GEOJSON_PATH.open(encoding="utf-8") as source_file:
+        collection = json.load(source_file)
+    if collection.get("type") != "FeatureCollection" or not isinstance(
+        collection.get("features"), list
+    ):
+        raise HTTPException(status_code=500, detail="Format GeoJSON gambut tidak valid.")
+
+    for feature in collection["features"]:
+        geometry = shape(feature["geometry"])
+        if geometry.is_empty or not geometry.is_valid:
+            raise HTTPException(
+                status_code=500,
+                detail="GeoJSON gambut memiliki geometri kosong atau tidak valid.",
+            )
+        display_geometry = geometry.simplify(
+            PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES,
+            preserve_topology=True,
+        )
+        feature["geometry"] = mapping(display_geometry)
+
+    return json.dumps(collection, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+@app.get("/api/v1/map-data/peatland", summary="GeoJSON layer poligon gambut Kalimantan")
+def get_peatland_map_data() -> Response:
+    return Response(
+        content=_peatland_display_geojson_bytes(),
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/v1/map-data/classified-hotspots", summary="GeoJSON hotspot FIRMS dengan klasifikasi gambut")
+def get_classified_hotspots_map_data() -> FileResponse:
+    if not CLASSIFIED_HOTSPOTS_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON hotspot terklasifikasi belum tersedia.")
+    return FileResponse(
+        CLASSIFIED_HOTSPOTS_GEOJSON_PATH,
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/api/v1/map-data/firms-manifest", summary="Metadata dataset hotspot FIRMS peta Kalimantan")
+def get_firms_map_manifest() -> FileResponse:
+    if not FIRMS_MANIFEST_PATH.is_file():
+        raise HTTPException(status_code=503, detail="Manifest dataset FIRMS belum tersedia.")
+    return FileResponse(
+        FIRMS_MANIFEST_PATH,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=3600"},
     )
 
 

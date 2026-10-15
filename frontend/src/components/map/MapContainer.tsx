@@ -4,7 +4,18 @@ import 'leaflet/dist/leaflet.css';
 import type { Hotspot } from '../../types/hotspot';
 import type { CitizenReport } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS } from '../../types/report';
-import { fetchContextLayers, fetchKalimantanBoundaries } from '../../services/api';
+import {
+  fetchClassifiedHotspotsGeoJSON,
+  fetchContextLayers,
+  fetchFirmsMapManifest,
+  fetchKalimantanBoundaries,
+  fetchPeatlandGeoJSON,
+} from '../../services/api';
+import type {
+  ClassifiedHotspotsGeoJSON,
+  FirmsMapManifest,
+  PeatlandGeoJSON,
+} from '../../services/api';
 
 interface MapContainerProps {
   hotspots: Hotspot[];
@@ -53,12 +64,25 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const hotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const reportsLayerRef = useRef<L.LayerGroup | null>(null);
   const kalimantanLayerRef = useRef<L.GeoJSON | null>(null);
+  const peatlandLayerRef = useRef<L.GeoJSON | null>(null);
+  const classifiedHotspotsLayerRef = useRef<L.LayerGroup | null>(null);
+  const classifiedHotspotsLayersRef = useRef<{ peat: L.GeoJSON; nonPeat: L.GeoJSON } | null>(null);
+  const peatlandGeoJSONRef = useRef<PeatlandGeoJSON | null>(null);
+  const classifiedHotspotsGeoJSONRef = useRef<ClassifiedHotspotsGeoJSON | null>(null);
+  const firmsManifestRef = useRef<FirmsMapManifest | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   const [userBasemap, setUserBasemap] = useState<BasemapType | null>(null);
   const [showHotspots, setShowHotspots] = useState<boolean>(true);
   const [showReports, setShowReports] = useState<boolean>(true);
   const [showKalimantanBoundaries, setShowKalimantanBoundaries] = useState<boolean>(true);
+  const [showPeatland, setShowPeatland] = useState<boolean>(false);
+  const [showClassifiedHotspots, setShowClassifiedHotspots] = useState<boolean>(false);
+  const [classifiedHotspotFilter, setClassifiedHotspotFilter] = useState<'all' | 'peat'>('all');
+  const [peatlandFeatureCount, setPeatlandFeatureCount] = useState<number | null>(null);
+  const [classifiedHotspotCount, setClassifiedHotspotCount] = useState<number | null>(null);
+  const [classifiedHotspotInfo, setClassifiedHotspotInfo] = useState<string | null>(null);
+  const [peatlandStatus, setPeatlandStatus] = useState<string | null>(null);
   const [contextStatus, setContextStatus] = useState<string | null>(null);
   const [layerError, setLayerError] = useState<string | null>(null);
 
@@ -80,6 +104,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     });
 
     L.control.zoom({ position: 'topleft' }).addTo(map);
+    const peatlandPane = map.createPane('peatlandPane');
+    peatlandPane.style.zIndex = '350';
 
     const hotspotsGroup = L.layerGroup().addTo(map);
     hotspotsLayerRef.current = hotspotsGroup;
@@ -175,9 +201,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     fetchContextLayers()
       .then((layers) => {
         if (!isSubscribed) return;
-        setContextStatus(
-          `${layers.forest_layer.status_message} ${layers.peatland_layer.status_message}`,
-        );
+        setContextStatus(layers.forest_layer.status_message);
       })
       .catch((error: unknown) => {
         if (!isSubscribed) return;
@@ -187,6 +211,197 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       isSubscribed = false;
     };
   }, []);
+
+  // Layer poligon gambut resmi; data disederhanakan khusus untuk tampilan peta.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (peatlandLayerRef.current) {
+      map.removeLayer(peatlandLayerRef.current);
+      peatlandLayerRef.current = null;
+    }
+    if (!showPeatland) return;
+
+    let isSubscribed = true;
+    const controller = new AbortController();
+
+    const loadPeatland = async () => {
+      try {
+        const geojson = peatlandGeoJSONRef.current
+          || await fetchPeatlandGeoJSON(controller.signal);
+        if (!isSubscribed || !mapInstanceRef.current) return;
+        peatlandGeoJSONRef.current = geojson;
+
+        const layer = L.geoJSON(geojson, {
+          pane: 'peatlandPane',
+          style: {
+            color: '#7C3AED',
+            weight: 1,
+            fillColor: '#A78BFA',
+            fillOpacity: 0.32,
+          },
+          onEachFeature: (feature, featureLayer) => {
+            const properties = feature.properties || {};
+            const landform = typeof properties.landform === 'string'
+              ? escapeHtml(properties.landform)
+              : 'Kawasan gambut';
+            const material = typeof properties.bhnindk === 'string'
+              ? escapeHtml(properties.bhnindk)
+              : 'Tidak tersedia';
+
+            featureLayer.bindPopup(`
+              <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
+                <div style="font-weight: 700; color: #6D28D9; margin-bottom: 4px;">Layer Gambut Kalimantan</div>
+                <div><b>Klasifikasi:</b> ${landform}</div>
+                <div><b>Bahan induk:</b> ${material}</div>
+                <div style="margin-top: 5px; font-size: 10px; color: #64748B;">
+                  Poligon gambut bukan batas area terbakar. Tahun/sumber data perlu diverifikasi dari metadata asal.
+                </div>
+              </div>
+            `);
+          },
+        });
+        layer.addTo(map);
+        peatlandLayerRef.current = layer;
+        setPeatlandFeatureCount(geojson.features.length);
+        setPeatlandStatus(
+          `${geojson.features.length.toLocaleString('id-ID')} poligon dimuat. Tahun dan provenance dataset belum tercatat.`,
+        );
+      } catch (error: unknown) {
+        if (!isSubscribed) return;
+        setLayerError(error instanceof Error ? error.message : 'Layer gambut gagal dimuat.');
+        setPeatlandStatus(null);
+      }
+    };
+
+    void loadPeatland();
+    return () => {
+      isSubscribed = false;
+      controller.abort();
+      if (peatlandLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(peatlandLayerRef.current);
+        peatlandLayerRef.current = null;
+      }
+    };
+  }, [showPeatland]);
+
+  // Dataset FIRMS statis mempertahankan label klasifikasi gambut dari manifest lokal.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (classifiedHotspotsLayerRef.current) {
+      map.removeLayer(classifiedHotspotsLayerRef.current);
+      classifiedHotspotsLayerRef.current = null;
+    }
+    if (!showClassifiedHotspots) return;
+
+    let isSubscribed = true;
+    const controller = new AbortController();
+
+    const loadClassifiedHotspots = async () => {
+      try {
+        const [geojson, manifest] = await Promise.all([
+          classifiedHotspotsGeoJSONRef.current
+            ? Promise.resolve(classifiedHotspotsGeoJSONRef.current)
+            : fetchClassifiedHotspotsGeoJSON(controller.signal),
+          firmsManifestRef.current
+            ? Promise.resolve(firmsManifestRef.current)
+            : fetchFirmsMapManifest(controller.signal),
+        ]);
+        if (!isSubscribed || !mapInstanceRef.current) return;
+        classifiedHotspotsGeoJSONRef.current = geojson;
+        firmsManifestRef.current = manifest;
+
+        const peatCount = geojson.features.filter(
+          (feature) => feature.properties?.in_peat === true,
+        ).length;
+        if (!classifiedHotspotsLayersRef.current) {
+          const hotspotRenderer = L.canvas({ padding: 0.5 });
+          const createLayer = (inPeat: boolean) => L.geoJSON(geojson, {
+            filter: (feature) => feature.properties?.in_peat === inPeat,
+            pointToLayer: (feature, latlng) => {
+              const priority = String(feature.properties?.fire_risk_priority || '');
+              const color = priority.startsWith('KRITIS')
+                ? '#7F1D1D'
+                : priority.startsWith('Tinggi')
+                  ? '#DC2626'
+                  : priority.startsWith('Sedang')
+                    ? '#F97316'
+                    : '#64748B';
+              return L.circleMarker(latlng, {
+                radius: 4,
+                color: '#FFFFFF',
+                weight: 0.7,
+                fillColor: color,
+                fillOpacity: 0.9,
+                renderer: hotspotRenderer,
+              });
+            },
+            onEachFeature: (feature, featureLayer) => {
+              const properties = feature.properties || {};
+              const date = escapeHtml(properties.acq_date || '-');
+              const time = escapeHtml(String(properties.acq_time ?? '-').padStart(4, '0'));
+              const peatClass = escapeHtml(properties.peat_class || 'Tidak diketahui');
+              const risk = escapeHtml(properties.fire_risk_priority || 'Tidak tersedia');
+              const satellite = escapeHtml(properties.satellite || 'VIIRS');
+              const confidence = escapeHtml(properties.confidence || 'Tidak tersedia');
+              const frp = typeof properties.frp === 'number'
+                ? `${properties.frp.toFixed(2)} MW`
+                : 'Tidak tersedia';
+              featureLayer.bindPopup(`
+                <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
+                  <div style="font-weight: 700; color: #B45309; margin-bottom: 4px;">Anomali Termal FIRMS</div>
+                  <div><b>Wilayah gambut:</b> ${inPeat ? 'Ya' : 'Tidak'}</div>
+                  <div><b>Kelas gambut:</b> ${peatClass}</div>
+                  <div><b>Prioritas dataset:</b> ${risk}</div>
+                  <div><b>Satelit:</b> ${satellite} (${confidence})</div>
+                  <div><b>Waktu:</b> ${date} ${time} UTC</div>
+                  <div><b>FRP:</b> ${frp}</div>
+                  <div style="margin-top: 5px; font-size: 10px; color: #64748B;">
+                    Hotspot adalah indikasi anomali termal, bukan konfirmasi kebakaran atau batas area terbakar.
+                  </div>
+                </div>
+              `);
+            },
+          });
+          classifiedHotspotsLayersRef.current = {
+            peat: createLayer(true),
+            nonPeat: createLayer(false),
+          };
+        }
+
+        const preparedLayers = classifiedHotspotsLayersRef.current;
+        const visibleLayers = classifiedHotspotFilter === 'peat'
+          ? [preparedLayers.peat]
+          : [preparedLayers.peat, preparedLayers.nonPeat];
+        const layerGroup = L.layerGroup(visibleLayers).addTo(map);
+        classifiedHotspotsLayerRef.current = layerGroup;
+        const renderedCount = classifiedHotspotFilter === 'peat'
+          ? peatCount
+          : geojson.features.length;
+        setClassifiedHotspotCount(renderedCount);
+        setClassifiedHotspotInfo(
+          `${renderedCount.toLocaleString('id-ID')} titik ditampilkan; ${peatCount.toLocaleString('id-ID')} berada dalam poligon gambut. Snapshot ${manifest.fetched_at_utc.replace('T', ' ').replace('Z', ' UTC')}.`,
+        );
+      } catch (error: unknown) {
+        if (!isSubscribed) return;
+        setLayerError(error instanceof Error ? error.message : 'Dataset hotspot terklasifikasi gagal dimuat.');
+        setClassifiedHotspotInfo(null);
+      }
+    };
+
+    void loadClassifiedHotspots();
+    return () => {
+      isSubscribed = false;
+      controller.abort();
+      if (classifiedHotspotsLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(classifiedHotspotsLayerRef.current);
+        classifiedHotspotsLayerRef.current = null;
+      }
+    };
+  }, [showClassifiedHotspots, classifiedHotspotFilter]);
 
   // Layer Poligon Batas 5 Provinsi Kalimantan
   useEffect(() => {
@@ -507,6 +722,87 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <span>Batas Kalimantan (5 Prov)</span>
         </label>
 
+        {/* Toggle layer sebaran gambut */}
+        <label
+          style={{
+            fontSize: '11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            padding: '4px 6px',
+            borderRadius: '4px',
+            background: isDark ? '#1E293B' : '#F1F5F9',
+            border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
+            color: isDark ? '#F8FAFC' : '#0F172A',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showPeatland}
+            onChange={(event) => {
+              if (event.target.checked) setPeatlandStatus('Memuat poligon gambut Kalimantan...');
+              setShowPeatland(event.target.checked);
+            }}
+          />
+          <span style={{ width: '9px', height: '9px', background: '#A78BFA', border: '1px solid #7C3AED', display: 'inline-block' }} />
+          <span>Poligon gambut{peatlandFeatureCount ? ` (${peatlandFeatureCount})` : ''}</span>
+        </label>
+
+        {/* Toggle dataset hotspot yang sudah diklasifikasikan dengan poligon gambut */}
+        <label
+          style={{
+            fontSize: '11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            padding: '4px 6px',
+            borderRadius: '4px',
+            background: isDark ? '#1E293B' : '#F1F5F9',
+            border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
+            color: isDark ? '#F8FAFC' : '#0F172A',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showClassifiedHotspots}
+            onChange={(event) => {
+              if (event.target.checked) {
+                setClassifiedHotspotInfo('Memuat snapshot FIRMS terklasifikasi...');
+              }
+              setShowClassifiedHotspots(event.target.checked);
+            }}
+          />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#DC2626', display: 'inline-block' }} />
+          <span>Snapshot FIRMS terklasifikasi{classifiedHotspotCount !== null ? ` (${classifiedHotspotCount.toLocaleString('id-ID')})` : ''}</span>
+        </label>
+
+        {showClassifiedHotspots && (
+          <select
+            aria-label="Filter snapshot hotspot berdasarkan wilayah gambut"
+            value={classifiedHotspotFilter}
+            onChange={(event) => {
+              setClassifiedHotspotInfo('Memperbarui filter hotspot...');
+              setClassifiedHotspotFilter(event.target.value as 'all' | 'peat');
+            }}
+            style={{
+              fontSize: '11px',
+              padding: '4px 6px',
+              borderRadius: '4px',
+              border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
+              background: isDark ? '#1E293B' : '#F1F5F9',
+              color: isDark ? '#F8FAFC' : '#0F172A',
+              minHeight: '30px',
+            }}
+          >
+            <option value="all">Semua titik snapshot</option>
+            <option value="peat">Hanya titik di gambut</option>
+          </select>
+        )}
+
         {/* Toggle Layer Hotspots */}
         <label
           style={{
@@ -641,8 +937,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           />
           <span><b>Batas 5 Provinsi Kalimantan</b> (Indonesia)</span>
         </div>
+        {showPeatland && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ width: '10px', height: '10px', background: '#A78BFA', border: '1px solid #7C3AED', display: 'inline-block', flexShrink: 0 }} />
+            <span><b>Poligon gambut</b> (layer tematik; bukan area terbakar)</span>
+          </div>
+        )}
+        {showClassifiedHotspots && (
+          <>
+            <div style={{ fontSize: '10px', marginBottom: '4px' }}>
+              {classifiedHotspotInfo || 'Memuat dataset hotspot...'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7F1D1D', display: 'inline-block', flexShrink: 0 }} />
+              <span>Prioritas dataset tinggi/kritis; abu-abu = bukan gambut</span>
+            </div>
+          </>
+        )}
+        {peatlandStatus && (
+          <div style={{ fontSize: '10px', marginBottom: '4px' }}>{peatlandStatus}</div>
+        )}
         <div style={{ fontSize: '10px', color: isDark ? '#94A3B8' : '#64748B', borderTop: '1px solid var(--color-border)', paddingTop: '4px' }}>
-          Hotspot near-real-time dapat tertunda beberapa jam; bukan konfirmasi kebakaran atau alert darurat.
+          Snapshot klasifikasi statis berbeda dari hotspot near-real-time. Hotspot bukan konfirmasi kebakaran atau batas area terbakar.
         </div>
         {(contextStatus || layerError) && (
           <div role={layerError ? 'alert' : 'note'} style={{ marginTop: '5px', fontSize: '10px', color: layerError ? '#B91C1C' : isDark ? '#FBBF24' : '#92400E' }}>

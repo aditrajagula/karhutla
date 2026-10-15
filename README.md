@@ -21,7 +21,7 @@ Sesuai ketentuan [PRD.md](file:///c:/Data-Karhutla/PRD.md):
    * Jika snapshot tim lokal tersedia: Sistem beralih otomatis ke snapshot terbaru (`"FALLBACK_LOCAL_SNAPSHOT"`).
    * Jika belum ada snapshot: Sistem mengembalikan status jelas `"NO_DATA_AVAILABLE"` tanpa mengalami crash.
 4. **Cakupan fitur laporan warga:** Dibatasi pada geometri administratif lima provinsi Kalimantan Indonesia (EPSG:4326); batas disimpan dalam GeoJSON dan diverifikasi dengan point-in-polygon.
-5. **Layer Hutan dan Gambut:** Statistik Hansen agregat ditandai sebagai demonstrasi; raster lokal hanya mencakup area kecil sekitar Palangka Raya, dan layer gambut belum tersedia. API menyatakan keterbatasan ini secara transparan.
+5. **Layer Hutan dan Gambut:** Layer poligon gambut Kalimantan tersedia dari GeoJSON lokal; raster Hansen untuk hutan masih terbatas pada area kecil sekitar Palangka Raya. Provenance, tahun, dan lisensi GeoJSON gambut perlu dilengkapi dari sumber dataset.
 
 ---
 
@@ -248,9 +248,9 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
     "feature_count": null
   },
   "peatland_layer": {
-    "available": false,
-    "source": "Badan Restorasi Gambut dan Mangrove (BRGM)",
-    "status_message": "Dataset resmi kesatuan hidrologis gambut belum tersedia dari panitia/instansi.",
+    "available": true,
+    "source": "GeoJSON lokal peat_kalimantan_big_official.geojson",
+    "status_message": "Layer poligon gambut Kalimantan tersedia untuk ditampilkan. Tahun, lisensi, dan provenance dataset belum tercatat pada manifest.",
     "feature_count": null
   },
   "boundary_layer": {
@@ -261,6 +261,15 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
   }
 }
 ```
+
+### 4. Layer GeoJSON tematik untuk peta Kalimantan
+Frontend memuat layer ini hanya saat pengguna menyalakannya. Backend mencari aset lokal berikut di `backend/app/`:
+
+* `GET /api/v1/map-data/peatland` — poligon gambut; endpoint mengembalikan geometri yang disederhanakan hanya untuk tampilan peta (toleransi 0.0001 derajat, sekitar 11 m). File sumber tidak diubah dan geometri hasil tampilan tidak digunakan untuk klasifikasi hotspot.
+* `GET /api/v1/map-data/classified-hotspots` — snapshot titik FIRMS beserta `in_peat`, `peat_class`, dan `fire_risk_priority`.
+* `GET /api/v1/map-data/firms-manifest` — sumber, tanggal pengambilan, bbox, dan jumlah catatan snapshot.
+
+Kontrol peta menyediakan overlay poligon gambut, snapshot hotspot terklasifikasi, dan filter semua titik / hanya titik di gambut. Snapshot ini terpisah dari layer hotspot near-real-time API. Pastikan tiga file data tersedia di `backend/app/` pada deployment. Hotspot adalah indikasi anomali termal, bukan bukti kebakaran atau batas area terbakar; metadata asal, tahun, dan lisensi GeoJSON gambut masih perlu dicatat.
 
 ---
 

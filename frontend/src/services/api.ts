@@ -1,5 +1,6 @@
 import type { ConfidenceLevel, Hotspot, HotspotFilterParams, HotspotResponse } from '../types/hotspot';
 import type { DataSourceMode, SystemStatus } from '../types/status';
+import type { FeatureCollection } from 'geojson';
 import type {
   CitizenReport,
   CitizenReportsResponse,
@@ -179,6 +180,84 @@ export interface ContextLayersStatus {
   forest_layer: { available: boolean; source: string; status_message: string };
   peatland_layer: { available: boolean; source: string; status_message: string };
   boundary_layer: { available: boolean; source: string; status_message: string; feature_count?: number };
+}
+
+export type PeatlandGeoJSON = FeatureCollection;
+export type ClassifiedHotspotsGeoJSON = FeatureCollection;
+
+export interface FirmsMapManifest {
+  source: string;
+  sensors: string[];
+  area_bbox: string;
+  days: number;
+  fetched_at_utc: string;
+  total_records: number;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isFeatureCollection(value: unknown): value is FeatureCollection {
+  return (
+    isRecord(value)
+    && value.type === 'FeatureCollection'
+    && Array.isArray(value.features)
+    && value.features.every((feature) => (
+      isRecord(feature)
+      && feature.type === 'Feature'
+      && isRecord(feature.geometry)
+      && typeof feature.geometry.type === 'string'
+      && 'coordinates' in feature.geometry
+    ))
+  );
+}
+
+function isFirmsMapManifest(value: unknown): value is FirmsMapManifest {
+  return (
+    isRecord(value)
+    && typeof value.source === 'string'
+    && Array.isArray(value.sensors)
+    && value.sensors.every((sensor) => typeof sensor === 'string')
+    && typeof value.area_bbox === 'string'
+    && typeof value.days === 'number'
+    && typeof value.fetched_at_utc === 'string'
+    && typeof value.total_records === 'number'
+  );
+}
+
+async function fetchMapData<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, { signal });
+  if (!res.ok) {
+    throw new Error(`Gagal memuat dataset peta (HTTP ${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function fetchPeatlandGeoJSON(signal?: AbortSignal): Promise<PeatlandGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/peatland', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON layer gambut tidak valid.');
+  }
+  return data;
+}
+
+export async function fetchClassifiedHotspotsGeoJSON(
+  signal?: AbortSignal,
+): Promise<ClassifiedHotspotsGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/classified-hotspots', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON hotspot terklasifikasi tidak valid.');
+  }
+  return data;
+}
+
+export async function fetchFirmsMapManifest(signal?: AbortSignal): Promise<FirmsMapManifest> {
+  const data: unknown = await fetchMapData('/map-data/firms-manifest', signal);
+  if (!isFirmsMapManifest(data)) {
+    throw new Error('Format manifest hotspot FIRMS tidak valid.');
+  }
+  return data;
 }
 
 export async function fetchContextLayers(): Promise<ContextLayersStatus> {

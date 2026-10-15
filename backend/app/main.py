@@ -809,13 +809,19 @@ def get_forest_loss_summary_endpoint() -> Dict[str, Any]:
 def get_forest_loss_point_endpoint(
     latitude: float = Query(..., ge=-11.0, le=6.0, description="Latitude"),
     longitude: float = Query(..., ge=95.0, le=141.5, description="Longitude"),
-    province: Optional[str] = Query(None, description="Nama provinsi")
+    province: Optional[str] = Query(None, description="Nama provinsi"),
+    use_official: Optional[bool] = Query(None, description="Gunakan data subset resmi Hansen UMD jika tersedia"),
 ) -> Dict[str, Any]:
     """
     Mengevaluasi indikasi tutupan pohon dan menghitung luas 1 piksel WGS84 dalam hektare
     menggunakan proyeksi geodesik berdasarkan garis lintang koordinat.
     """
-    return evaluate_forest_change_point(lat=latitude, lon=longitude, province=province)
+    return evaluate_forest_change_point(
+        lat=latitude,
+        lon=longitude,
+        province=province,
+        use_official=use_official,
+    )
 
 
 @app.get("/api/v1/boundaries/kalimantan", summary="Poligon batas 5 provinsi Kalimantan Indonesia")

@@ -162,8 +162,8 @@ def test_reader_valid_loss_pixel(synthetic_hansen_dir: Path):
     assert res.treecover2000 == 85
     assert res.datamask == 1
     assert res.category_result == "Ada indikasi pendukung"
-    assert res.data_status == "raster_verified"
-    assert res.data_verified is True
+    assert res.data_status == "demonstration"
+    assert res.data_verified is False
     assert res.raster_available is True
     assert res.tile_id == "00N_110E"
     assert res.pixel_row == 0
@@ -187,8 +187,8 @@ def test_reader_valid_no_loss_pixel(synthetic_hansen_dir: Path):
     assert res.raw_lossyear == 0
     assert res.treecover2000 == 90
     assert res.category_result == "Belum ditemukan kecocokan"
-    assert res.data_status == "raster_verified"
-    assert res.data_verified is True
+    assert res.data_status == "demonstration"
+    assert res.data_verified is False
     assert res.raster_available is True
 
 
@@ -345,8 +345,8 @@ def test_forest_change_service_pixel_loss(synthetic_hansen_dir: Path):
     assert eval_res["status"] == "SUPPORTING_INDICATION"
     assert eval_res["internal_status"] == STATUS_LOSS_DETECTED
     assert eval_res["category_result"] == "Ada indikasi pendukung"
-    assert eval_res["data_status"] == "raster_verified"
-    assert eval_res["data_verified"] is True
+    assert eval_res["data_status"] == "demonstration"
+    assert eval_res["data_verified"] is False
     assert eval_res["raster_available"] is True
     assert eval_res["pixel_data"]["loss_detected"] is True
     assert eval_res["pixel_data"]["loss_year"] == 2015
@@ -366,8 +366,8 @@ def test_forest_change_service_pixel_no_loss(synthetic_hansen_dir: Path):
     assert eval_res["status"] == "NO_MATCH_FOUND"
     assert eval_res["internal_status"] == STATUS_NO_LOSS_DETECTED
     assert eval_res["category_result"] == "Belum ditemukan kecocokan"
-    assert eval_res["data_status"] == "raster_verified"
-    assert eval_res["data_verified"] is True
+    assert eval_res["data_status"] == "demonstration"
+    assert eval_res["data_verified"] is False
     assert eval_res["raster_available"] is True
     assert eval_res["pixel_data"]["loss_detected"] is False
 
@@ -385,7 +385,8 @@ def test_forest_change_service_no_data_or_non_forest(synthetic_hansen_dir: Path)
     assert eval_res["status"] == STATUS_NO_DATA_OR_NON_FOREST
     assert eval_res["category_result"] == "Belum dapat dinilai"
     assert eval_res["raster_available"] is True
-    assert eval_res["data_verified"] is True
+    assert eval_res["data_status"] == "demonstration"
+    assert eval_res["data_verified"] is False
 
 
 def test_forest_change_service_demonstration_baseline_remains_unverified():
@@ -514,8 +515,8 @@ def test_api_forest_loss_point_with_raster_fixture(synthetic_hansen_dir: Path, m
     data = res.json()
     assert data["status"] == "SUPPORTING_INDICATION"
     assert data["category_result"] == "Ada indikasi pendukung"
-    assert data["data_status"] == "raster_verified"
-    assert data["data_verified"] is True
+    assert data["data_status"] == "demonstration"
+    assert data["data_verified"] is False
     assert data["raster_available"] is True
     assert data["pixel_data"]["loss_detected"] is True
     assert data["pixel_data"]["loss_year"] == 2015
@@ -839,5 +840,70 @@ def test_local_demo_tiles_available_and_instant():
     assert res.access_method == "local_file"
     assert res.raster_available is True
     assert res.latency_ms < 250.0  # Jauh di bawah latensi remote 9000 ms (<0.25s vs 9s)
+
+
+def test_data_verified_remains_false_regardless_of_raster_read():
+    """
+    Tahap 4 Audit Konsistensi:
+    Memastikan bahwa pembacaan piksel raster lokal TETAP berstatus operasional:
+    - data_status = 'demonstration'
+    - data_verified = False
+    dan bahwa ketersediaan raster diverifikasi via raster_available=True tanpa
+    mengklaim verifikasi ilmiah independen yang belum dilakukan.
+    """
+    clear_pixel_cache()
+    res = read_hansen_pixel(
+        lat=-2.0001,
+        lon=113.6001,
+        province="Kalimantan Tengah",
+        use_official=True,
+    )
+    assert res.raster_available is True
+    assert res.data_status == "demonstration"
+    assert res.data_verified is False
+
+    # Uji pula melalui evaluate_forest_change_point
+    eval_res = evaluate_forest_change_point(
+        lat=-2.0001,
+        lon=113.6001,
+        province="Kalimantan Tengah",
+        use_official=True,
+    )
+    assert eval_res["raster_available"] is True
+    assert eval_res["data_status"] == "demonstration"
+    assert eval_res["data_verified"] is False
+
+
+def test_satellite_attribution_landsat_umd_not_sentinel(synthetic_hansen_dir: Path, monkeypatch):
+    """
+    Tahap 4 Audit Atribusi:
+    Memastikan bahwa atribusi satelit pada evidence_service secara ilmiah merujuk
+    pada Landsat (USGS/NASA) / UMD dan TIDAK mengklaim Sentinel (ESA).
+    """
+    clear_pixel_cache()
+    monkeypatch.setattr("app.forest_change_service.HANSEN_TILES_DIR", synthetic_hansen_dir)
+    monkeypatch.setattr("app.hansen_tile_reader.HANSEN_TILES_DIR", synthetic_hansen_dir)
+
+    from app.evidence_service import assess_report_evidence
+
+    # Evaluasi bukti kategori perubahan_tutupan di titik (0, 0) yang memiliki kehilangan terdeteksi
+    report = {
+        "category": "perubahan_tutupan",
+        "latitude": -0.0001,
+        "longitude": 110.0001,
+        "province": "Kalimantan Tengah",
+        "observed_at_utc": "2026-03-20T10:00:00Z",
+    }
+    res = assess_report_evidence(report)
+    assert res["assessment_code"] == "SUPPORTING_INDICATION"
+    assert "details" in res
+    details = res["details"]
+    assert details is not None
+    assert "satellite_sources" in details
+    assert "Sentinel" not in details["satellite_sources"]
+    assert "Landsat" in details["satellite_sources"]
+    assert details["data_status"] == "demonstration"
+    assert details["data_verified"] is False
+
 
 

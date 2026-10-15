@@ -217,7 +217,7 @@ def assess_report_evidence(
                 "category_result": "Ada indikasi pendukung",
                 "evidence_type": "hansen_gfc_treecover_loss",
                 "summary": (
-                    f"Lokasi berada di {matched_prov} dengan riwayat perubahan tutupan pohon terkonfirmasi "
+                    f"Lokasi berada di {matched_prov} dengan indikasi deteksi riwayat kehilangan tutupan kanopi "
                     f"pada dataset Hansen Global Forest Change v1.13."
                 ),
                 "matching_rule": point_eval.get("matching_rule"),
@@ -226,7 +226,9 @@ def assess_report_evidence(
                     "province": matched_prov,
                     "pixel_area_ha": point_eval.get("pixel_area_ha"),
                     "data_period": "2000–2025",
-                    "satellite_sources": "Landsat / Sentinel / UMD",
+                    "satellite_sources": "Landsat (USGS/NASA) / UMD",
+                    "data_status": point_eval.get("data_status", "demonstration"),
+                    "data_verified": point_eval.get("data_verified", False),
                     "pixel_data": point_eval.get("pixel_data"),
                 },
                 "limitations_caveat": (
@@ -246,11 +248,11 @@ def assess_report_evidence(
                     "verification_notes",
                     "Piksel teridentifikasi sebagai badan air atau area bukan tutupan kanopi pada baseline 2000."
                 ),
-                "matching_rule": point_eval.get("matching_rule", "Pemeriksaan piksel raster terverifikasi resolusi 30m."),
+                "matching_rule": point_eval.get("matching_rule", "Pemeriksaan piksel raster Hansen GFC v1.13 resolusi 30m."),
                 "details": {
                     "province": matched_prov,
-                    "data_status": point_eval.get("data_status", "raster_verified"),
-                    "data_verified": point_eval.get("data_verified", True),
+                    "data_status": point_eval.get("data_status", "demonstration"),
+                    "data_verified": point_eval.get("data_verified", False),
                     "raster_available": True,
                     "pixel_area_ha": point_eval.get("pixel_area_ha"),
                     "pixel_data": point_eval.get("pixel_data"),
@@ -274,7 +276,7 @@ def assess_report_evidence(
                 "summary": summary_text,
                 "matching_rule": point_eval.get(
                     "matching_rule",
-                    "Pemeriksaan riwayat tutupan pohon tingkat piksel (30m) membutuhkan layer raster lokal terverifikasi."
+                    "Pemeriksaan riwayat tutupan pohon tingkat piksel (30m) membutuhkan layer raster lokal Hansen GFC v1.13."
                 ),
                 "details": {
                     "province": matched_prov,
@@ -294,7 +296,7 @@ def assess_report_evidence(
                 "assessment_code": "NO_MATCH_FOUND",
                 "category_result": "Belum ditemukan kecocokan",
                 "evidence_type": "hansen_gfc_treecover_loss",
-                "summary": "Pemeriksaan raster terverifikasi tidak menemukan riwayat kehilangan tutupan pohon pada piksel ini.",
+                "summary": "Pemeriksaan raster Hansen GFC v1.13 tidak menemukan riwayat kehilangan tutupan pohon pada piksel ini.",
                 "matching_rule": point_eval.get("matching_rule", "Pemeriksaan piksel 30m."),
                 "details": point_eval.get("pixel_data"),
                 "limitations_caveat": (

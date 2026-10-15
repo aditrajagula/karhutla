@@ -47,13 +47,32 @@ class IndonesiaSpatialFilter:
             self.geometries.append(valid_geom)
             self.feature_props.append(feat.get("properties", {}))
 
+        # Bersihkan tumpang tindih historis poligon Kalimantan Timur vs Kalimantan Utara (pemekaran 2012)
+        kaltara_idx = None
+        kaltim_idx = None
+        for i, props in enumerate(self.feature_props):
+            p_name = props.get("state") or props.get("NAME_1") or props.get("name") or props.get("Propinsi") or ""
+            if "Kalimantan Utara" in p_name:
+                kaltara_idx = i
+            elif "Kalimantan Timur" in p_name:
+                kaltim_idx = i
+
+        if kaltara_idx is not None and kaltim_idx is not None:
+            kaltim_geom = self.geometries[kaltim_idx]
+            kaltara_geom = self.geometries[kaltara_idx]
+            if kaltim_geom.intersects(kaltara_geom):
+                self.geometries[kaltim_idx] = make_valid(kaltim_geom.difference(kaltara_geom))
+
         # Bangun spatial index STRtree (vektorisasi C)
         self.tree = STRtree(self.geometries)
 
-    def is_inside(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
+    def is_inside(
+        self, lon: float, lat: float, preferred_province: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         """
         Memeriksa apakah koordinat (lon, lat) berada di dalam poligon Indonesia.
         Mengembalikan (True, nama_provinsi) jika di dalam, atau (False, None) jika di luar.
+        Mendukung preferred_province untuk koordinat batas atau poligon bersebelahan.
         """
         if self.tree is None:
             return False, None
@@ -64,17 +83,45 @@ class IndonesiaSpatialFilter:
         # Kueri calon geometri poligon yang melingkupi titik via bounding box index
         candidate_indices = self.tree.query(pt)
 
+        # 1. Jika pemanggil menetapkan preferred_province, prioritaskan pencocokan
+        if preferred_province:
+            for idx in candidate_indices:
+                geom = self.geometries[idx]
+                if geom.contains(pt) or geom.touches(pt):
+                    props = self.feature_props[idx]
+                    p_name = (
+                        props.get("state")
+                        or props.get("NAME_1")
+                        or props.get("name")
+                        or props.get("Propinsi")
+                        or props.get("PROVINSI")
+                    )
+                    if p_name and (
+                        preferred_province.lower() in p_name.lower()
+                        or p_name.lower() in preferred_province.lower()
+                    ):
+                        return True, p_name
+
+        # 2. Pencocokan kandidat pertama yang valid
         for idx in candidate_indices:
             geom = self.geometries[idx]
             # Uji Point-in-Polygon eksak
             if geom.contains(pt) or geom.touches(pt):
                 props = self.feature_props[idx]
-                province_name = props.get("state") or props.get("NAME_1") or props.get("name")
+                province_name = (
+                    props.get("state")
+                    or props.get("NAME_1")
+                    or props.get("name")
+                    or props.get("Propinsi")
+                    or props.get("PROVINSI")
+                )
                 return True, province_name
 
         return False, None
 
-    def is_inside_kalimantan(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
+    def is_inside_kalimantan(
+        self, lon: float, lat: float, preferred_province: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         """
         Memeriksa apakah koordinat (lon, lat) berada di dalam 5 provinsi Kalimantan Indonesia:
         Kalimantan Barat, Kalimantan Tengah, Kalimantan Selatan, Kalimantan Timur, Kalimantan Utara.
@@ -87,7 +134,7 @@ class IndonesiaSpatialFilter:
             "Kalimantan Timur",
             "Kalimantan Utara",
         }
-        inside, prov_name = self.is_inside(lon, lat)
+        inside, prov_name = self.is_inside(lon, lat, preferred_province=preferred_province)
         if inside and prov_name in kalimantan_provinces:
             return True, prov_name
         return False, None

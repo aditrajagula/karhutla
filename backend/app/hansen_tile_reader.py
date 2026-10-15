@@ -22,6 +22,7 @@ Tanggung Jawab:
 """
 
 import concurrent.futures
+import json
 import math
 import os
 import threading
@@ -41,9 +42,11 @@ from .config import (
     HANSEN_DATASET_VERSION,
     HANSEN_ENABLE_REMOTE_ACCESS,
     HANSEN_MAX_PARALLEL_WORKERS,
+    HANSEN_OFFICIAL_DIR,
     HANSEN_REMOTE_BASE_URL,
     HANSEN_REMOTE_TIMEOUT_SECONDS,
     HANSEN_TILES_DIR,
+    HANSEN_USE_OFFICIAL,
 )
 
 # 4 Tile Hansen 10°x10° yang melingkupi seluruh 5 provinsi Kalimantan Indonesia
@@ -82,6 +85,7 @@ _DOWNLOAD_LOCK = threading.Lock()
 _CACHE_LOCK = threading.Lock()
 _PIXEL_CACHE: Dict[str, "HansenPixelResult"] = {}
 _GRID_CACHE: Dict[str, "HansenPixelResult"] = {}
+_MANIFEST_CACHE: Dict[str, Optional[Dict[str, Any]]] = {}
 
 # Spatial filter lazily loaded
 _SPATIAL_FILTER = None
@@ -116,7 +120,7 @@ class HansenPixelResult:
     pixel_row: Optional[int]
     pixel_col: Optional[int]
     province: Optional[str] = None
-    pixel_resolution_approx_m: float = 30.87
+    pixel_resolution_approx_m: float = 27.83
     dataset_version: str = HANSEN_DATASET_VERSION
     data_period: str = "2000–2025"
     access_method: Optional[str] = None
@@ -134,6 +138,9 @@ class HansenPixelResult:
     coordinate_audit: Optional[Dict[str, Any]] = None
     latency_ms: float = 0.0
     cache_hit: bool = False
+    is_official: bool = False
+    source_type: Optional[str] = "DEMO_SYNTHETIC"
+    manifest_info: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Konversi ke kamus (dictionary) yang ramah serialisasi JSON."""
@@ -208,7 +215,7 @@ def is_coordinate_in_kalimantan(
     # 3. Gunakan filter spasial batas administratif resmi (Point-in-Polygon)
     sf = _get_spatial_filter()
     if sf is not None:
-        inside, prov_from_poly = sf.is_inside_kalimantan(lon, lat)
+        inside, prov_from_poly = sf.is_inside_kalimantan(lon, lat, preferred_province=matched_prov)
         if not inside:
             # Titik secara fisik berada di luar wilayah 5 provinsi Kalimantan (laut, Sarawak, Sabah, Brunei, dll).
             # Parameter nama provinsi dari pemanggil TIDAK BOLEH membuat titik di luar wilayah menjadi valid.
@@ -222,25 +229,141 @@ def is_coordinate_in_kalimantan(
     return False, None
 
 
+def load_tile_manifest(
+    tile_id: str, tiles_dir: Optional[Union[str, Path]] = None
+) -> Optional[Dict[str, Any]]:
+    """Memuat manifest provenance untuk tile tertentu jika tersedia dengan cache memori."""
+    dir_path = Path(tiles_dir) if tiles_dir else HANSEN_TILES_DIR
+    cache_key = f"{tile_id}_{str(dir_path.resolve())}"
+    with _CACHE_LOCK:
+        if cache_key in _MANIFEST_CACHE:
+            return _MANIFEST_CACHE[cache_key]
+
+    if tiles_dir:
+        candidates = [
+            dir_path / "official" / f"manifest_{tile_id}_official.json",
+            dir_path / f"manifest_{tile_id}_official.json",
+            dir_path / f"manifest_{tile_id}.json",
+        ]
+    else:
+        candidates = [
+            HANSEN_OFFICIAL_DIR / f"manifest_{tile_id}_official.json",
+            HANSEN_OFFICIAL_DIR / f"manifest_{tile_id}.json",
+            dir_path / "official" / f"manifest_{tile_id}_official.json",
+            dir_path / f"manifest_{tile_id}_official.json",
+            dir_path / f"manifest_{tile_id}.json",
+        ]
+    for c in candidates:
+        if c.exists() and c.is_file():
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    with _CACHE_LOCK:
+                        _MANIFEST_CACHE[cache_key] = data
+                    return data
+            except Exception:
+                continue
+
+    with _CACHE_LOCK:
+        _MANIFEST_CACHE[cache_key] = None
+    return None
+
+
 def resolve_layer_source(
     layer: str,
     tile_id: str,
     version: str = HANSEN_DATASET_VERSION,
     tiles_dir: Optional[Union[str, Path]] = None,
     enable_remote: bool = False,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    use_official: Optional[bool] = None,
 ) -> Tuple[Optional[str], str]:
     """
     Menentukan sumber file GeoTIFF untuk layer tertentu (lossyear, treecover2000, datamask).
     Prioritas:
-    1. File lokal di tiles_dir (nama lengkap UMD atau nama layer singkat).
-    2. URL remote HTTP Range jika enable_remote=True.
-    3. None jika tidak tersedia.
-    
-    Mengembalikan (source_path_or_url, access_method).
+    1. Jika use_official=True atau tiles_dir secara eksplisit menunjuk direktori resmi:
+       Periksa manifest provenance dan batasan bounding box.
+       - Jika (lat, lon) berada di dalam subset resmi: kembalikan file resmi ("local_official").
+       - Jika (lat, lon) berada di luar subset resmi: kembalikan (None, "out_of_official_subset").
+    2. Jika mode demo (use_official=False):
+       Cari file raster sintetis demo di tiles_dir ("local_demo").
+    3. Jika enable_remote=True:
+       Kembalikan URL remote HTTP Range ("remote_range").
+    4. Jika tidak ditemukan:
+       Kembalikan (None, "unavailable").
     """
     dir_path = Path(tiles_dir) if tiles_dir else HANSEN_TILES_DIR
 
-    # Pola penamaan file lokal yang didukung
+    is_explicit_official_dir = bool(
+        tiles_dir and (
+            "official" in Path(tiles_dir).parts
+            or Path(tiles_dir).name == "official"
+            or (Path(tiles_dir) / f"manifest_{tile_id}_official.json").exists()
+            or (Path(tiles_dir) / f"Hansen_{version}_{layer}_{tile_id}_official.tif").exists()
+        )
+    )
+
+    effective_use_official = (
+        True if is_explicit_official_dir
+        else (use_official if use_official is not None else HANSEN_USE_OFFICIAL)
+    )
+
+    if effective_use_official:
+        manifest = load_tile_manifest(tile_id, dir_path)
+        if manifest and lat is not None and lon is not None:
+            # Periksa apakah layer terdaftar dalam manifest jika manifest memiliki daftar layer
+            manifest_layers = manifest.get("layers", {})
+            if manifest_layers and layer not in manifest_layers:
+                return None, "layer_not_in_official_manifest"
+
+            bbox = manifest.get("geographic_bounds") or manifest.get("bounding_box", {})
+            min_lon = bbox.get("min_lon")
+            min_lat = bbox.get("min_lat")
+            max_lon = bbox.get("max_lon")
+            max_lat = bbox.get("max_lat")
+            if (
+                min_lon is not None
+                and min_lat is not None
+                and max_lon is not None
+                and max_lat is not None
+            ):
+                if not (min_lon <= lon <= max_lon and min_lat <= lat <= max_lat):
+                    # Koordinat berada di luar subset resmi ter-ingest
+                    return None, "out_of_official_subset"
+
+        if tiles_dir:
+            official_candidates = [
+                dir_path / "official" / f"Hansen_{version}_{layer}_{tile_id}_official.tif",
+                dir_path / f"Hansen_{version}_{layer}_{tile_id}_official.tif",
+                dir_path / "official" / f"Hansen_{version}_{layer}_{tile_id}.tif",
+            ]
+        else:
+            official_candidates = [
+                HANSEN_OFFICIAL_DIR / f"Hansen_{version}_{layer}_{tile_id}_official.tif",
+                HANSEN_OFFICIAL_DIR / f"Hansen_{version}_{layer}_{tile_id}.tif",
+                dir_path / "official" / f"Hansen_{version}_{layer}_{tile_id}_official.tif",
+                dir_path / f"Hansen_{version}_{layer}_{tile_id}_official.tif",
+                dir_path / "official" / f"Hansen_{version}_{layer}_{tile_id}.tif",
+            ]
+        for cand in official_candidates:
+            if cand.exists() and cand.is_file():
+                # Pastikan tidak ada file .part aktif yang menandakan berkas belum selesai diunduh
+                part_cand = Path(str(cand) + ".part")
+                if part_cand.exists():
+                    continue
+                return str(cand), "local_file"
+
+        # PENTING: Jika mode resmi aktif dan berkas resmi tidak ditemukan,
+        # JANGAN PERNAH fallback diam-diam ke berkas sintetis demo!
+        if enable_remote:
+            base_url = HANSEN_REMOTE_BASE_URL.format(version=version)
+            remote_url = f"{base_url}Hansen_{version}_{layer}_{tile_id}.tif"
+            return remote_url, "remote_range"
+
+        return None, "official_unavailable"
+
+    # 2. Pola penamaan file lokal umum / demo (HANYA jika effective_use_official=False)
     candidates = [
         dir_path / f"Hansen_{version}_{layer}_{tile_id}.tif",
         dir_path / f"Hansen_{version}_{layer}_{tile_id}.tiff",
@@ -409,10 +532,17 @@ def read_pixel_from_raster(
 
 
 def clear_pixel_cache() -> None:
-    """Membersihkan cache pembacaan piksel raster (berguna untuk pengujian)."""
+    """Membersihkan cache pembacaan piksel raster dan cache manifest (berguna untuk pengujian)."""
     with _CACHE_LOCK:
         _PIXEL_CACHE.clear()
         _GRID_CACHE.clear()
+        _MANIFEST_CACHE.clear()
+
+
+def clear_manifest_cache() -> None:
+    """Membersihkan cache pembacaan manifest provenance."""
+    with _CACHE_LOCK:
+        _MANIFEST_CACHE.clear()
 
 
 def get_cache_size() -> int:
@@ -443,6 +573,7 @@ def read_hansen_pixel(
     tiles_dir: Optional[Union[str, Path]] = None,
     enable_remote: Optional[bool] = None,
     use_cache: bool = True,
+    use_official: Optional[bool] = None,
 ) -> HansenPixelResult:
     """
     Fungsi utama untuk mengevaluasi piksel Hansen GFC pada titik (lat, lon).
@@ -456,6 +587,17 @@ def read_hansen_pixel(
     start_time = time.perf_counter()
     effective_remote = (
         enable_remote if enable_remote is not None else HANSEN_ENABLE_REMOTE_ACCESS
+    )
+    is_explicit_official_dir = bool(
+        tiles_dir and (
+            "official" in Path(tiles_dir).parts
+            or Path(tiles_dir).name == "official"
+            or (Path(tiles_dir) / f"Hansen_{version}_lossyear_00N_110E_official.tif").exists()
+        )
+    )
+    effective_use_official = (
+        True if is_explicit_official_dir
+        else (use_official if use_official is not None else HANSEN_USE_OFFICIAL)
     )
 
     # 1. Validasi cakupan wilayah Kalimantan
@@ -509,8 +651,8 @@ def read_hansen_pixel(
     tile_bounds = get_tile_bounds(tile_id)
     approx_col = int(math.floor((lon - tile_bounds[0]) / 0.00025))
     approx_row = int(math.floor((tile_bounds[3] - lat) / 0.00025))
-    pixel_cache_key = f"{tile_id}_{approx_row}_{approx_col}_{version}"
-    coord_cache_key = f"{round(lat, 6)}_{round(lon, 6)}_{version}_{effective_remote}"
+    pixel_cache_key = f"{tile_id}_{approx_row}_{approx_col}_{version}_{use_official}"
+    coord_cache_key = f"{round(lat, 6)}_{round(lon, 6)}_{version}_{effective_remote}_{use_official}"
 
     if use_cache:
         with _CACHE_LOCK:
@@ -523,37 +665,105 @@ def read_hansen_pixel(
                 return HansenPixelResult(**cached_dict)
 
     # 4. Cari sumber untuk masing-masing layer
+    manifest = load_tile_manifest(tile_id, tiles_dir)
+
     lossyear_source, ly_method = resolve_layer_source(
-        "lossyear", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote
+        "lossyear", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote,
+        lat=lat, lon=lon, use_official=use_official
     )
     tc_source, tc_method = resolve_layer_source(
-        "treecover2000", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote
+        "treecover2000", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote,
+        lat=lat, lon=lon, use_official=use_official
     )
     dm_source, dm_method = resolve_layer_source(
-        "datamask", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote
+        "datamask", tile_id, version=version, tiles_dir=tiles_dir, enable_remote=effective_remote,
+        lat=lat, lon=lon, use_official=use_official
     )
 
+    is_official_layer = bool(
+        ly_method == "local_official"
+        or (lossyear_source and ("_official.tif" in lossyear_source or "official" in Path(lossyear_source).parts))
+    )
+    source_type_val = "OFFICIAL_UMD_HANSEN_GFC" if is_official_layer else ("DEMO_SYNTHETIC" if lossyear_source else "UNAVAILABLE")
+
     if not lossyear_source:
-        res = HansenPixelResult(
-            status=STATUS_INSUFFICIENT_DATA,
-            category_result="Belum dapat dinilai",
-            loss_detected=False,
-            loss_year=None,
-            treecover2000=None,
-            datamask=None,
-            raw_lossyear=None,
-            tile_id=tile_id,
-            pixel_row=None,
-            pixel_col=None,
-            province=prov_name,
-            raster_available=False,
-            data_status="demonstration",
-            data_verified=False,
-            matching_rule=f"Layer raster Hansen lossyear ({tile_id}) belum tersedia secara lokal.",
-            error_message=f"File raster untuk tile {tile_id} belum tersedia di penyimpanan lokal. Disarankan menyiapkan tile lokal untuk demo.",
-            verification_notes="Data raster tingkat piksel lokal belum tersedia. Evaluasi tutupan pohon belum dapat dinilai.",
-            latency_ms=round((time.perf_counter() - start_time) * 1000, 2),
-        )
+        if ly_method in ("out_of_official_subset", "layer_not_in_official_manifest"):
+            bbox_desc = ""
+            if manifest:
+                bb = manifest.get("geographic_bounds") or manifest.get("bounding_box", {})
+                if bb:
+                    bbox_desc = f" [BBox subset resmi: lon {bb.get('min_lon')}..{bb.get('max_lon')}, lat {bb.get('min_lat')}..{bb.get('max_lat')}]."
+            res = HansenPixelResult(
+                status=STATUS_INSUFFICIENT_DATA,
+                category_result="Belum dapat dinilai",
+                loss_detected=False,
+                loss_year=None,
+                treecover2000=None,
+                datamask=None,
+                raw_lossyear=None,
+                tile_id=tile_id,
+                pixel_row=None,
+                pixel_col=None,
+                province=prov_name,
+                raster_available=False,
+                data_status="demonstration",
+                data_verified=False,
+                is_official=True,
+                source_type="OFFICIAL_UMD_HANSEN_GFC",
+                manifest_info=manifest,
+                matching_rule=f"Koordinat ({lat}, {lon}) berada di luar cakupan data resmi yang valid{bbox_desc}",
+                error_message=f"Koordinat ({lat}, {lon}) berada di luar cakupan data resmi Hansen GFC v1.13 tile {tile_id}.",
+                verification_notes="Koordinat berada di luar subset raster resmi yang diunduh. Evaluasi tutupan pohon belum dapat dinilai secara objektif (INSUFFICIENT_DATA).",
+                latency_ms=round((time.perf_counter() - start_time) * 1000, 2),
+            )
+        elif effective_use_official or ly_method == "official_unavailable":
+            res = HansenPixelResult(
+                status=STATUS_INSUFFICIENT_DATA,
+                category_result="Belum dapat dinilai",
+                loss_detected=False,
+                loss_year=None,
+                treecover2000=None,
+                datamask=None,
+                raw_lossyear=None,
+                tile_id=tile_id,
+                pixel_row=None,
+                pixel_col=None,
+                province=prov_name,
+                raster_available=False,
+                data_status="demonstration",
+                data_verified=False,
+                is_official=True,
+                source_type="OFFICIAL_UMD_HANSEN_GFC",
+                manifest_info=manifest,
+                matching_rule=f"Layer raster resmi Hansen lossyear ({tile_id}) belum tersedia secara lokal.",
+                error_message=f"File raster resmi untuk tile {tile_id} belum tersedia di penyimpanan lokal.",
+                verification_notes="Data raster resmi tingkat piksel belum tersedia. Evaluasi tutupan pohon belum dapat dinilai.",
+                latency_ms=round((time.perf_counter() - start_time) * 1000, 2),
+            )
+        else:
+            res = HansenPixelResult(
+                status=STATUS_INSUFFICIENT_DATA,
+                category_result="Belum dapat dinilai",
+                loss_detected=False,
+                loss_year=None,
+                treecover2000=None,
+                datamask=None,
+                raw_lossyear=None,
+                tile_id=tile_id,
+                pixel_row=None,
+                pixel_col=None,
+                province=prov_name,
+                raster_available=False,
+                data_status="demonstration",
+                data_verified=False,
+                is_official=False,
+                source_type="UNAVAILABLE",
+                manifest_info=None,
+                matching_rule=f"Layer raster Hansen lossyear ({tile_id}) belum tersedia secara lokal.",
+                error_message=f"File raster untuk tile {tile_id} belum tersedia di penyimpanan lokal. Disarankan menyiapkan tile lokal untuk demo.",
+                verification_notes="Data raster tingkat piksel lokal belum tersedia. Evaluasi tutupan pohon belum dapat dinilai.",
+                latency_ms=round((time.perf_counter() - start_time) * 1000, 2),
+            )
         if use_cache:
             _put_in_cache(coord_cache_key, pixel_cache_key, res)
         return res
@@ -630,6 +840,9 @@ def read_hansen_pixel(
                         raster_available=False,
                         data_status="demonstration",
                         data_verified=False,
+                        is_official=is_official_layer,
+                        source_type=source_type_val,
+                        manifest_info=manifest if is_official_layer else None,
                         matching_rule="Gagal membaca piksel raster lossyear.",
                         error_message=f"Kegagalan infrastruktur pembacaan raster: {str(e)}",
                         verification_notes="Pembacaan piksel raster gagal karena batas waktu (timeout) atau kendala berkas/jaringan.",
@@ -657,6 +870,9 @@ def read_hansen_pixel(
                     raster_available=False,
                     data_status="demonstration",
                     data_verified=False,
+                    is_official=is_official_layer,
+                    source_type=source_type_val,
+                    manifest_info=manifest if is_official_layer else None,
                     matching_rule=f"Akses remote melebihi batas waktu {overall_timeout} detik.",
                     error_message=f"Timeout akses raster: melebihi {overall_timeout} detik. Disarankan menggunakan tile lokal.",
                     verification_notes="Pembacaan piksel raster remote mengalami timeout.",
@@ -684,7 +900,7 @@ def read_hansen_pixel(
         else:
             detail_desc = "Bukan tutupan hutan pada baseline 2000"
             note_desc = (
-                f"Piksel daratan terverifikasi (datamask=1) dengan tutupan kanopi 0% pada baseline tahun 2000 "
+                f"Piksel daratan valid (datamask=1) dengan tutupan kanopi 0% pada baseline tahun 2000 "
                 f"(kawasan pemukiman/perkotaan/lahan non-hutan historis, seperti kawasan perkotaan Palangka Raya). "
                 f"Secara metodologis, metrik kehilangan tutupan pohon tidak dapat diterapkan pada baseline non-hutan."
             )
@@ -702,8 +918,11 @@ def read_hansen_pixel(
             province=prov_name,
             access_method=access_method,
             raster_available=True,
-            data_status="raster_verified",
-            data_verified=True,
+            data_status="demonstration",
+            data_verified=False,
+            is_official=is_official_layer,
+            source_type=source_type_val,
+            manifest_info=manifest if is_official_layer else None,
             matching_rule=f"Pemeriksaan piksel 30m: {detail_desc}.",
             verification_notes=note_desc,
             pixel_center_lat=center_lat,
@@ -717,6 +936,11 @@ def read_hansen_pixel(
         # B. Kehilangan tutupan pohon terdeteksi (1..25 -> 2001..2025)
         if 1 <= raw_lossyear <= 25:
             loss_year_cal = 2000 + raw_lossyear
+            v_note = (
+                f"Data raster resmi UMD Hansen GFC v1.13 mencatat riwayat kehilangan tutupan kanopi >5m pada tahun {loss_year_cal}."
+                if is_official_layer
+                else f"Piksel raster Hansen mencatat riwayat kehilangan tutupan kanopi >5m pada tahun {loss_year_cal}."
+            )
             res = HansenPixelResult(
                 status=STATUS_LOSS_DETECTED,
                 category_result="Ada indikasi pendukung",
@@ -731,10 +955,13 @@ def read_hansen_pixel(
                 province=prov_name,
                 access_method=access_method,
                 raster_available=True,
-                data_status="raster_verified",
-                data_verified=True,
+                data_status="demonstration",
+                data_verified=False,
+                is_official=is_official_layer,
+                source_type=source_type_val,
+                manifest_info=manifest if is_official_layer else None,
                 matching_rule=f"Terdeteksi kehilangan tutupan kanopi pada tahun {loss_year_cal} (lossyear={raw_lossyear}) resolusi 30m di {prov_name}.",
-                verification_notes=f"Piksel raster Hansen memverifikasi riwayat kehilangan tutupan kanopi >5m pada tahun {loss_year_cal}.",
+                verification_notes=v_note,
                 pixel_center_lat=center_lat,
                 pixel_center_lon=center_lon,
                 georef_crs=georef_crs,
@@ -758,8 +985,11 @@ def read_hansen_pixel(
                 province=prov_name,
                 access_method=access_method,
                 raster_available=True,
-                data_status="raster_verified",
+                data_status="demonstration",
                 data_verified=False,
+                is_official=is_official_layer,
+                source_type=source_type_val,
+                manifest_info=manifest if is_official_layer else None,
                 matching_rule=f"Nilai lossyear={raw_lossyear} berada di luar rentang valid 1..25.",
                 error_message=f"Nilai piksel lossyear {raw_lossyear} tidak valid.",
                 pixel_center_lat=center_lat,
@@ -771,6 +1001,11 @@ def read_hansen_pixel(
             )
     else:
         # C. Tidak ada kehilangan tutupan pohon yang terdeteksi (lossyear=0 pada data valid)
+        v_note = (
+            "Data raster resmi UMD Hansen GFC v1.13 valid. Tidak terdeteksi kehilangan tutupan pohon kanopi >5m selama periode 2000–2025."
+            if is_official_layer
+            else "Data raster valid. Tidak terdeteksi kehilangan tutupan pohon kanopi >5m selama periode 2000–2025."
+        )
         res = HansenPixelResult(
             status=STATUS_NO_LOSS_DETECTED,
             category_result="Belum ditemukan kecocokan",
@@ -785,10 +1020,13 @@ def read_hansen_pixel(
             province=prov_name,
             access_method=access_method,
             raster_available=True,
-            data_status="raster_verified",
-            data_verified=True,
+            data_status="demonstration",
+            data_verified=False,
+            is_official=is_official_layer,
+            source_type=source_type_val,
+            manifest_info=manifest if is_official_layer else None,
             matching_rule=f"Pemeriksaan piksel 30m di {prov_name}: tidak terdeteksi kehilangan tutupan pohon (2000–2025).",
-            verification_notes="Data raster valid. Tidak terdeteksi kehilangan tutupan pohon kanopi >5m selama periode 2000–2025.",
+            verification_notes=v_note,
             pixel_center_lat=center_lat,
             pixel_center_lon=center_lon,
             georef_crs=georef_crs,

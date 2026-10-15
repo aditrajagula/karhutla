@@ -50,5 +50,8 @@ Desktop.ini
 # Temporary & raw cache (snapshots committed intentionally if manifest present)
 data/raw/
 data/uploads/
+data/*.parquet
 *.db
 *.sqlite3
+
+data/era5_features.parquet

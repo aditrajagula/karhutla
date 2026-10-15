@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { CitizenReport } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
+import { fetchFireRiskPrediction } from '../../services/api';
 
 interface ReportDetailModalProps {
   report: CitizenReport | null;
@@ -11,6 +12,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   report,
   onClose,
 }) => {
+  const [riskData, setRiskData] = useState<any>(report?.environmental_risk || null);
+  const [loadingRisk, setLoadingRisk] = useState<boolean>(false);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -18,6 +22,34 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  useEffect(() => {
+    if (!report) return;
+
+    if (report.environmental_risk?.risk_level) {
+      setRiskData(report.environmental_risk);
+      setLoadingRisk(false);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingRisk(true);
+    fetchFireRiskPrediction(report.latitude, report.longitude, report.province || undefined)
+      .then((data) => {
+        if (isMounted) {
+          setRiskData(data);
+          setLoadingRisk(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Gagal memuat prediksi risiko cuaca mikro:', err);
+        if (isMounted) setLoadingRisk(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [report?.id, report?.latitude, report?.longitude, report?.province, report?.environmental_risk]);
 
   if (!report) return null;
 
@@ -214,6 +246,83 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* PANEL INDEKS KERENTANAN WILAYAH (MODEL ML) */}
+          {loadingRisk && (
+            <div
+              style={{
+                backgroundColor: 'var(--color-bg-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                fontSize: '12px',
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              ⏳ Memuat estimasi kerentanan cuaca mikro (Open-Meteo & ML)...
+            </div>
+          )}
+
+          {!loadingRisk && riskData?.risk_level && (
+            <div
+              style={{
+                backgroundColor: 'var(--color-bg-card)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
+                    Indeks Kerentanan Wilayah (Model ML)
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-text-main)', marginTop: '2px' }}>
+                    Probabilitas: <b>{riskData.risk_percentage}%</b>{' '}
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                      (Sumber Cuaca: <b>{riskData.weather_source}</b>)
+                    </span>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backgroundColor:
+                      riskData.risk_level === 'TINGGI'
+                        ? 'rgba(239, 68, 68, 0.15)'
+                        : riskData.risk_level === 'SEDANG'
+                        ? 'rgba(234, 179, 8, 0.15)'
+                        : 'rgba(34, 197, 94, 0.15)',
+                    color:
+                      riskData.risk_level === 'TINGGI'
+                        ? '#ef4444'
+                        : riskData.risk_level === 'SEDANG'
+                        ? '#eab308'
+                        : '#22c55e',
+                    border: `1px solid ${
+                      riskData.risk_level === 'TINGGI'
+                        ? '#ef4444'
+                        : riskData.risk_level === 'SEDANG'
+                        ? '#eab308'
+                        : '#22c55e'
+                    }`,
+                  }}
+                >
+                  {riskData.risk_level === 'TINGGI' ? '🔴 TINGGI' : riskData.risk_level === 'SEDANG' ? '🟡 SEDANG' : '🟢 RENDAH'}
+                </span>
+              </div>
+              {riskData.primary_drivers && riskData.primary_drivers.length > 0 && (
+                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--color-border)', fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                  <b>Pemicu Utama:</b> {riskData.primary_drivers[0].label} ({riskData.primary_drivers[0].impact})
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Rincian Laporan Lapangan */}
           <div className="detail-row">

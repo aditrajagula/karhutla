@@ -630,11 +630,23 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
         coverage_date_range=cov_range
     )
 
+    # Konteks kerentanan lingkungan prediktif (tanpa mengubah status bukti faktual)
+    try:
+        from .prediction_service import get_prediction_service
+        env_risk = get_prediction_service().predict_fire_risk(
+            lat=float(report_dict["latitude"]),
+            lon=float(report_dict["longitude"]),
+            province=report_dict.get("province")
+        )
+    except Exception:
+        env_risk = None
+
     public_report = {
         **report_dict,
         "latitude": round(float(report_dict["latitude"]), 3),
         "longitude": round(float(report_dict["longitude"]), 3),
-        "evidence_assessment": evidence
+        "evidence_assessment": evidence,
+        "environmental_risk": env_risk
     }
     public_report.pop("reporter_contact", None)
 
@@ -668,11 +680,23 @@ def get_citizen_report_by_id(report_id: str) -> Dict[str, Any]:
         coverage_date_range=cov_range
     )
 
+    # Konteks kerentanan lingkungan prediktif (tanpa mengubah status bukti faktual)
+    try:
+        from .prediction_service import get_prediction_service
+        env_risk = get_prediction_service().predict_fire_risk(
+            lat=float(report["latitude"]),
+            lon=float(report["longitude"]),
+            province=report.get("province")
+        )
+    except Exception:
+        env_risk = None
+
     public_report = {
         **report,
         "latitude": round(float(report["latitude"]), 3),
         "longitude": round(float(report["longitude"]), 3),
-        "evidence_assessment": evidence
+        "evidence_assessment": evidence,
+        "environmental_risk": env_risk
     }
     public_report.pop("reporter_contact", None)
     return public_report
@@ -801,6 +825,21 @@ def get_kalimantan_boundaries_endpoint() -> Dict[str, Any]:
     yang dilengkapi dengan data baseline tutupan pohon Hansen GFC v1.13.
     """
     return get_kalimantan_geojson()
+
+
+@app.get("/api/v1/predict/fire-risk", summary="Prediksi probabilitas risiko karhutla berbasis ML")
+def predict_fire_risk_endpoint(
+    latitude: float = Query(..., ge=-11.0, le=6.0, description="Latitude"),
+    longitude: float = Query(..., ge=95.0, le=141.5, description="Longitude"),
+    province: Optional[str] = Query(None, description="Nama provinsi"),
+) -> Dict[str, Any]:
+    """
+    Memprediksi probabilitas risiko kebakaran hutan/lahan berbasis model Machine Learning
+    dengan parameter cuaca mikro real-time Open-Meteo dan tutupan kanopi Hansen GFC v1.13.
+    """
+    from .prediction_service import get_prediction_service
+    service = get_prediction_service()
+    return service.predict_fire_risk(lat=latitude, lon=longitude, province=province)
 
 
 

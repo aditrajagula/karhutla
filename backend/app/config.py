@@ -4,7 +4,11 @@ Konfigurasi Environment dan Konstanta Sistem.
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        pass
 
 # Path direktori proyek (C:\Data-Karhutla)
 APP_DIR = Path(__file__).resolve().parent
@@ -58,3 +62,14 @@ SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 HANSEN_TILES_DIR.mkdir(parents=True, exist_ok=True)
+
+# Open-Meteo Weather API Configurations
+WEATHER_API_BASE_URL = os.getenv(
+    "WEATHER_API_BASE_URL",
+    "https://api.open-meteo.com/v1/forecast"
+)
+WEATHER_REQUEST_TIMEOUT_SECONDS = float(os.getenv("WEATHER_REQUEST_TIMEOUT_SECONDS", "5.0"))
+
+# Predictive Fire Risk ML Model Configurations
+PREDICTIVE_MODEL_PATH = BASE_DIR / os.getenv("PREDICTIVE_MODEL_PATH", "data/model_regresi_logistik.joblib")
+PREDICTIVE_SCALER_PATH = BASE_DIR / os.getenv("PREDICTIVE_SCALER_PATH", "data/scaler_regresi_logistik.joblib")

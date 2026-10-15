@@ -34,6 +34,14 @@ export interface CitizenReport {
   // reporter_contact tidak pernah diekspos pada respon publik demi privasi warga
   status: ReportStatus;
   evidence_assessment?: EvidenceAssessment;
+  environmental_risk?: {
+    status?: string;
+    risk_level?: string;
+    risk_percentage?: number;
+    risk_probability?: number;
+    weather_source?: string;
+    primary_drivers?: Array<{ feature: string; label: string; impact: string }>;
+  } | null;
   verification_notes?: string | null;
   rejection_reason?: string | null;
   is_duplicate_suspect: boolean;

@@ -6,7 +6,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("all", "core", "raster", "citizen", "fast")]
+    [ValidateSet("all", "core", "raster", "citizen", "predict", "fast")]
     [string]$Suite = "all",
 
     [switch]$VerboseOutput
@@ -61,6 +61,12 @@ switch ($Suite) {
         $TargetPaths = @(
             "backend/tests/test_citizen_reports.py",
             "backend/tests/test_citizen_evidence_and_privacy.py"
+        )
+    }
+    "predict" {
+        Write-Host ">> Menjalankan modul Prediksi Karhutla ML & Klien Cuaca Open-Meteo..." -ForegroundColor Green
+        $TargetPaths = @(
+            "backend/tests/test_predictive_model.py"
         )
     }
     "fast" {

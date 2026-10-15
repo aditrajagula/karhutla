@@ -140,3 +140,91 @@ def test_get_kalimantan_boundaries_endpoint(client: TestClient):
         feat = next(f for f in data["features"] if f["properties"]["province"] == exp)
         assert feat["properties"]["baseline_treecover_2000_ha"] > 0
         assert feat["properties"]["cumulative_loss_2001_2025_ha"] > 0
+
+
+def test_spatial_filter_tarakan_kaltara_overlap_resolution(spatial_filter: IndonesiaSpatialFilter):
+    """
+    Memverifikasi bahwa Pulau Tarakan teresolusi secara akurat ke Kalimantan Utara,
+    bukan Kalimantan Timur (mengatasi tumpang tindih poligon historis pemekaran 2012).
+    """
+    # Pulau Tarakan (3.32°N, 117.60°E)
+    inside, prov = spatial_filter.is_inside_kalimantan(lon=117.60, lat=3.32)
+    assert inside is True
+    assert prov == "Kalimantan Utara"
+
+    # Tanjung Selor (Ibu Kota Kaltara)
+    inside_ts, prov_ts = spatial_filter.is_inside_kalimantan(lon=117.37, lat=2.84)
+    assert inside_ts is True
+    assert prov_ts == "Kalimantan Utara"
+
+
+def test_spatial_filter_property_name_variations(tmp_path):
+    """
+    Memverifikasi toleransi pembacaan GeoJSON jika properti menggunakan variasi
+    kunci nama ('state', 'NAME_1', 'name', 'Propinsi', 'PROVINSI').
+    """
+    import json
+    from shapely.geometry import mapping, Polygon
+
+    poly = Polygon([(113.0, -2.0), (114.0, -2.0), (114.0, -1.0), (113.0, -1.0), (113.0, -2.0)])
+
+    variations = [
+        {"state": "Kalimantan Tengah"},
+        {"NAME_1": "Kalimantan Tengah"},
+        {"name": "Kalimantan Tengah"},
+        {"Propinsi": "Kalimantan Tengah"},
+        {"PROVINSI": "Kalimantan Tengah"},
+    ]
+
+    for i, prop in enumerate(variations):
+        gj_file = tmp_path / f"test_prop_{i}.geojson"
+        gj_data = {
+            "type": "FeatureCollection",
+            "features": [{"type": "Feature", "geometry": mapping(poly), "properties": prop}]
+        }
+        gj_file.write_text(json.dumps(gj_data), encoding="utf-8")
+
+        sf_custom = IndonesiaSpatialFilter(gj_file)
+        inside, prov_found = sf_custom.is_inside_kalimantan(lon=113.5, lat=-1.5)
+        assert inside is True
+        assert prov_found == "Kalimantan Tengah"
+
+
+def test_strtree_query_compatibility_shapely2(spatial_filter: IndonesiaSpatialFilter):
+    """
+    Memverifikasi kompatibilitas STRtree.query() dengan Shapely 2.x:
+    - Mengembalikan array indeks calon poligon (integer).
+    - Query point tidak menghasilkan exception atau format tak terduga.
+    """
+    import numpy as np
+    from shapely.geometry import Point
+
+    pt = Point(113.92, -2.21)  # Palangka Raya
+    assert spatial_filter.tree is not None
+    candidates = spatial_filter.tree.query(pt)
+
+    # Pada Shapely 2.x, query(geom) pada single geometry mengembalikan numpy ndarray 1D integer
+    assert isinstance(candidates, np.ndarray)
+    assert candidates.ndim == 1
+    assert len(candidates) > 0
+    assert np.issubdtype(candidates.dtype, np.integer)
+
+
+def test_administrative_boundary_points_kalimantan(spatial_filter: IndonesiaSpatialFilter):
+    """
+    Memverifikasi titik tepat pada batas atau perbatasan antar-provinsi:
+    - Perbatasan Kalbar-Kalteng (-0.65, 112.75): terdeteksi dalam salah satu provinsi Kalimantan.
+    - Parameter preferred_province menghargai pilihan provinsi yang sah.
+    """
+    lat, lon = -0.65, 112.75
+
+    # Tanpa preferred_province
+    inside, prov = spatial_filter.is_inside_kalimantan(lon=lon, lat=lat)
+    assert inside is True
+    assert prov in ("Kalimantan Barat", "Kalimantan Tengah")
+
+    # Dengan preferred_province Kalimantan Tengah
+    inside_kt, prov_kt = spatial_filter.is_inside_kalimantan(lon=lon, lat=lat, preferred_province="Kalimantan Tengah")
+    assert inside_kt is True
+    assert prov_kt == "Kalimantan Tengah"
+

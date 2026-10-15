@@ -24,21 +24,65 @@ def client():
     return TestClient(app)
 
 
-def test_pixel_area_geodesic_math():
+def test_pixel_area_wgs84_ellipsoid_math():
     """
-    Memverifikasi perhitungan luas 1 piksel 1 arc-detik WGS84 dalam hektare:
-    A(phi) = (R_E * dphi) * (R_E * cos(phi) * dlambda)
-    Pada khatulistiwa (0°), 1 arc-second ~ 30.87 m x 30.87 m ~ 953 m^2 ~ 0.0953 ha.
+    Memverifikasi perhitungan luas sel raster dengan integrasi elipsoid WGS84 analitik (authalic):
+    1. Lintang 0° (ekuator) sel 0.00025° x 0.00025°: ~0.0769317 ha (~769.32 m²).
+    2. Lintang -2.25° (koridor Kalteng): ~0.0768740 ha (~768.74 m²).
+    3. Resolusi kustom (1 arc-sec): ~0.0949774 ha.
+    4. Resolusi asimetris (dX != dY).
+    5. Batas lintang valid dan batas eksplisit lat_south / lat_north.
     """
+    # 1. Nilai ekuator 0° Hansen GFC (0.00025°)
     area_equator = calculate_pixel_area_ha(0.0)
-    assert 0.095 <= area_equator <= 0.096, f"Luas pada khatulistiwa {area_equator} di luar ekspektasi ~0.0953 ha"
+    assert abs(area_equator - 0.0769317) < 1e-6, f"Luas ekuator {area_equator} berbeda dari ekspektasi 0.0769317 ha"
+    assert round(area_equator, 4) == 0.0769
 
-    # Pada lintang 3 derajat (misal Kaltara / Kalbar utara), luas sedikit lebih kecil karena konvergensi meridian
-    area_3deg = calculate_pixel_area_ha(3.0)
-    assert area_3deg < area_equator
-    expected_ratio = math.cos(math.radians(3.0))
-    actual_ratio = area_3deg / area_equator
-    assert abs(actual_ratio - expected_ratio) < 1e-4
+    # 2. Lintang -2.25° (Koridor Palangka Raya - Pulang Pisau)
+    area_kalteng = calculate_pixel_area_ha(-2.25)
+    assert abs(area_kalteng - 0.0768740) < 1e-6, f"Luas -2.25° {area_kalteng} berbeda dari ekspektasi 0.0768740 ha"
+    assert round(area_kalteng, 4) == 0.0769
+    assert area_kalteng < area_equator
+
+    # 3. Validasi independen terhadap rumus diferensial M(phi) * N(phi) * cos(phi) * dphi * dlambda
+    wgs84_a = 6378137.0
+    wgs84_f = 1.0 / 298.257223563
+    wgs84_e2 = 2.0 * wgs84_f - wgs84_f**2
+    rad_phi = math.radians(-2.25)
+    sin_p = math.sin(rad_phi)
+    m = wgs84_a * (1.0 - wgs84_e2) / ((1.0 - wgs84_e2 * sin_p**2) ** 1.5)
+    n = wgs84_a / math.sqrt(1.0 - wgs84_e2 * sin_p**2)
+    d_rad = math.radians(0.00025)
+    diff_area_ha = (m * d_rad) * (n * math.cos(rad_phi) * d_rad) / 10000.0
+    # Integrasi analitik dan diferensial untuk sel kecil 0.00025° harus bersesuaian sangat tinggi (< 1e-9 ha)
+    assert abs(area_kalteng - diff_area_ha) < 1e-8
+
+    # 4. Resolusi kustom (misal 1 arc-second ~ 1/3600°)
+    area_1arcsec = calculate_pixel_area_ha(0.0, degrees_per_pixel=1.0 / 3600.0)
+    assert abs(area_1arcsec - 0.0949774) < 1e-6, f"Luas 1 arc-sec {area_1arcsec} harus ~0.0949774 ha"
+
+    # 5. Resolusi asimetris X dan Y (dX=0.00025, dY=0.0005)
+    area_asym = calculate_pixel_area_ha(0.0, degrees_per_pixel=0.00025, degrees_per_pixel_y=0.0005)
+    assert abs(area_asym - 2.0 * area_equator) < 1e-6, "Resolusi dY ganda harus menghasilkan luas 2x"
+
+    # 6. Batas eksplisit lat_south dan lat_north
+    half_dy = 0.00025 / 2.0
+    area_from_bounds = calculate_pixel_area_ha(
+        0.0,
+        degrees_per_pixel=0.00025,
+        lat_south_deg=-2.25 - half_dy,
+        lat_north_deg=-2.25 + half_dy,
+    )
+    assert abs(area_from_bounds - area_kalteng) < 1e-9
+
+    # 7. Penanganan batas kutub dan swap terbalik
+    area_swapped = calculate_pixel_area_ha(
+        0.0,
+        degrees_per_pixel=0.00025,
+        lat_south_deg=2.0,
+        lat_north_deg=1.9,
+    )
+    assert area_swapped > 0.0
 
 
 def test_forest_loss_summary_completeness():
@@ -133,8 +177,8 @@ def test_evaluate_forest_change_point_future_raster_support():
     assert res_loss["status"] == "SUPPORTING_INDICATION"
     assert res_loss["category_result"] == "Ada indikasi pendukung"
     assert res_loss["raster_available"] is True
-    assert res_loss["data_verified"] is True
-    assert res_loss["data_status"] == "raster_verified"
+    assert res_loss["data_verified"] is False
+    assert res_loss["data_status"] == "demonstration"
     assert "tidak secara otomatis membuktikan" in res_loss["scientific_caveat"].lower()
 
     # Kasus tidak ada kehilangan kanopi pada piksel

@@ -188,7 +188,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 {report.category !== 'kebakaran' && Boolean(evidence.details['dataset']) && (
                   <div>
                     <div>📚 <b>Dataset:</b> {String(evidence.details['dataset'])} (UMD/Google/NASA)</div>
-                    <div>📐 <b>Resolusi Piksel WGS84:</b> ~{String(evidence.details['pixel_area_ha'] ?? '0.0953')} ha / piksel</div>
+                    <div>📐 <b>Luas Piksel (WGS84):</b> ~{String(evidence.details['pixel_area_ha'] ?? '0.0769')} ha / piksel (bervariasi menurut lintang)</div>
                     <div>📅 <b>Periode Analisis:</b> {String(evidence.details['data_period'] ?? '2000–2025')} (Data historis)</div>
                   </div>
                 )}

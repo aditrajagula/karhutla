@@ -15,11 +15,26 @@ Keterbatasan Ilmiah:
 import math
 from typing import Any, Dict, List, Optional
 
-# Konstanta Geodesik Bumi (WGS84)
-EARTH_RADIUS_METERS = 6378137.0  # WGS84 Semi-major axis
-ARCSEC_PER_PIXEL = 1.0  # Resolusi 1 arc-second (sekitar 30 meter pada khatulistiwa)
-DEGREES_PER_PIXEL = ARCSEC_PER_PIXEL / 3600.0
+# Konstanta Parameter Elipsoid Geodesik WGS84 (EPSG:7030 / EPSG:4326)
+WGS84_A = 6378137.0  # Sumbu semi-major (equatorial radius) dalam meter
+WGS84_F = 1.0 / 298.257223563  # Flattening (pemepatan elipsoid)
+WGS84_B = WGS84_A * (1.0 - WGS84_F)  # Sumbu semi-minor (polar radius) ~ 6356752.314245 meter
+WGS84_E2 = 2.0 * WGS84_F - WGS84_F * WGS84_F  # Kuadrat eksentrisitas pertama (e^2) ~ 0.00669437999014
+WGS84_E = math.sqrt(WGS84_E2)  # Eksentrisitas pertama (e) ~ 0.0818191908426
 SQ_METERS_PER_HECTARE = 10000.0
+
+# Backward-compatibility alias
+EARTH_RADIUS_METERS = WGS84_A
+
+# Resolusi Spasial Hansen Global Forest Change v1.13:
+# Grid UMD memiliki 40.000 piksel per tile 10°x10°:
+# 10° / 40.000 = 0.00025° = 0.9 arc-second (~27.83 meter pada khatulistiwa)
+HANSEN_PIXEL_DEGREES = 0.00025
+HANSEN_ARCSEC_PER_PIXEL = 0.9
+
+# Alias kompatibilitas mundur
+DEGREES_PER_PIXEL = HANSEN_PIXEL_DEGREES
+ARCSEC_PER_PIXEL = HANSEN_ARCSEC_PER_PIXEL
 
 # 5 Provinsi Kalimantan Indonesia yang masuk cakupan resmi
 KALIMANTAN_PROVINCES = [
@@ -81,23 +96,90 @@ HANSEN_ANNUAL_LOSS_HA: Dict[str, Dict[int, float]] = {
 }
 
 
-def calculate_pixel_area_ha(latitude_deg: float) -> float:
+def _wgs84_q(phi_rad: float) -> float:
     """
-    Menghitung luas 1 piksel raster (1 arc-second) dalam hektare pada garis lintang tertentu.
-    Menggunakan rumus geodesik permukaan bola WGS84:
-    Area = (R * d_lat_rad) * (R * cos(lat_rad) * d_lon_rad)
+    Fungsi authalic latitude Q(phi) pada elipsoid oblat WGS84:
+    Q(phi) = (sin(phi) / (1 - e^2 * sin^2(phi))) + (1 / (2*e)) * ln((1 + e*sin(phi)) / (1 - e*sin(phi)))
+    Digunakan untuk integrasi analitik luas permukaan elipsoid antara dua lintang paralel.
     """
-    rad_lat = math.radians(latitude_deg)
-    d_phi = math.radians(DEGREES_PER_PIXEL)
-    d_lambda = math.radians(DEGREES_PER_PIXEL)
+    sin_p = math.sin(phi_rad)
+    e_sin_p = WGS84_E * sin_p
+    # Safety clamping jika nilai mendekati batas kutub
+    if e_sin_p >= 1.0:
+        e_sin_p = 0.999999999999999
+    elif e_sin_p <= -1.0:
+        e_sin_p = -0.999999999999999
 
-    # Panjang busur meridian (utara-selatan)
-    arc_lat_m = EARTH_RADIUS_METERS * d_phi
-    # Panjang busur paralel (timur-barat) dengan proyeksi kosinus lintang
-    arc_lon_m = EARTH_RADIUS_METERS * math.cos(rad_lat) * d_lambda
+    term1 = sin_p / (1.0 - WGS84_E2 * sin_p * sin_p)
+    term2 = (1.0 / (2.0 * WGS84_E)) * math.log((1.0 + e_sin_p) / (1.0 - e_sin_p))
+    return term1 + term2
 
-    sq_meters = arc_lat_m * arc_lon_m
+
+def wgs84_ellipsoid_cell_area_ha(
+    lat_south_deg: float,
+    lat_north_deg: float,
+    d_lon_deg: float,
+) -> float:
+    """
+    Menghitung luas sel kuadrilateral pada elipsoid WGS84 secara eksak
+    melalui integrasi analitik zona authalic:
+    Area = 0.5 * b^2 * |d_lambda| * |Q(phi_north) - Q(phi_south)|
+    Hasil dikonversi ke satuan hektare (1 ha = 10.000 m^2).
+    """
+    p_south = max(-90.0, min(90.0, lat_south_deg))
+    p_north = max(-90.0, min(90.0, lat_north_deg))
+    if p_south > p_north:
+        p_south, p_north = p_north, p_south
+
+    phi1_rad = math.radians(p_south)
+    phi2_rad = math.radians(p_north)
+    d_lambda_rad = math.radians(abs(d_lon_deg))
+
+    q1 = _wgs84_q(phi1_rad)
+    q2 = _wgs84_q(phi2_rad)
+
+    sq_meters = 0.5 * (WGS84_B ** 2) * d_lambda_rad * abs(q2 - q1)
     return sq_meters / SQ_METERS_PER_HECTARE
+
+
+def calculate_pixel_area_ha(
+    latitude_deg: float,
+    degrees_per_pixel: float = HANSEN_PIXEL_DEGREES,
+    degrees_per_pixel_y: Optional[float] = None,
+    lat_south_deg: Optional[float] = None,
+    lat_north_deg: Optional[float] = None,
+) -> float:
+    """
+    Menghitung luas sel piksel raster dalam satuan hektare pada garis lintang tertentu
+    menggunakan integrasi luas analitik elipsoid WGS84 sejati (EPSG:4326 / EPSG:7030),
+    bukan pendekatan bola konstan R=a.
+    
+    Metode:
+    Mengintegrasikan secara analitik luas permukaan elipsoid antara batas lintang
+    selatan (phi_south) dan utara (phi_north) untuk rentang bujur d_lambda:
+    Area = 0.5 * b^2 * |d_lambda| * |Q(phi_north) - Q(phi_south)|
+    di mana b adalah sumbu semi-minor WGS84 (~6.356.752,31 m) dan Q(phi) adalah
+    fungsi authalic latitude elipsoid.
+    
+    Nilai acuan sel 0.00025° x 0.00025° Hansen GFC v1.13:
+    - Ekuator (0°): ~0.07693 ha (~769.32 m²)
+    - Lintang -2.25° (Kalimantan Tengah): ~0.07687 ha (~768.74 m²)
+    """
+    if degrees_per_pixel_y is None:
+        degrees_per_pixel_y = degrees_per_pixel
+
+    d_x = abs(degrees_per_pixel)
+    d_y = abs(degrees_per_pixel_y)
+
+    if lat_south_deg is not None and lat_north_deg is not None:
+        s = lat_south_deg
+        n = lat_north_deg
+    else:
+        half_dy = d_y / 2.0
+        s = max(-90.0, latitude_deg - half_dy)
+        n = min(90.0, latitude_deg + half_dy)
+
+    return wgs84_ellipsoid_cell_area_ha(s, n, d_x)
 
 
 def get_forest_loss_summary() -> Dict[str, Any]:
@@ -144,9 +226,10 @@ def get_forest_loss_summary() -> Dict[str, Any]:
         "data_period": "2000–2025",
         "last_updated": "2025-v1.13",
         "methodology": (
-            "Perhitungan luas berbasis proyeksi geodesik WGS84 per piksel dengan koreksi kosinus lintang: "
-            "A(phi) = (R_E * dphi) * (R_E * cos(phi) * dlambda). "
-            "1 arc-detik setara ~0.0953 ha pada khatulistiwa."
+            "Perhitungan luas berbasis integrasi analitik elipsoid WGS84 (authalic latitude) "
+            "per sel piksel raster resolusi 0,00025° x 0,00025° (~0,9 arc-detik, bukan satu arc-detik penuh). "
+            "Luas sel piksel bervariasi menurut garis lintang: ~0,07693 ha pada khatulistiwa (0°) "
+            "hingga ~0,07687 ha pada lintang -2,25° (Kalimantan Tengah)."
         ),
         "limitations": [
             "Kehilangan tutupan pohon (tree cover loss) tidak otomatis berarti deforestasi ilegal atau pembukaan lahan.",
@@ -159,7 +242,7 @@ def get_forest_loss_summary() -> Dict[str, Any]:
         "verification_notes": (
             "Statistik tutupan pohon saat ini disajikan secara transparan sebagai data demonstrasi sementara. "
             "Data belum melalui ingest raster GeoTIFF Hansen tingkat piksel atau query langsung Google Earth Engine "
-            "untuk menghasilkan nilai terverifikasi per batas provinsi."
+            "untuk menghasilkan nilai agregat definitif per batas provinsi."
         ),
         "total_baseline_treecover_2000_ha": round(total_baseline_ha, 2),
         "total_cumulative_loss_2001_2025_ha": round(total_cumulative_loss_ha, 2),
@@ -189,6 +272,7 @@ def evaluate_forest_change_point(
     raster_pixel_value: Optional[Dict[str, Any]] = None,
     tiles_dir: Optional[Any] = None,
     enable_remote: Optional[bool] = None,
+    use_official: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Evaluasi indikasi tutupan pohon untuk lokasi spesifik (lat, lon) di Kalimantan.
@@ -216,6 +300,9 @@ def evaluate_forest_change_point(
             "data_status": "demonstration",
             "data_verified": False,
             "raster_available": False,
+            "is_official": False,
+            "source_type": "UNAVAILABLE",
+            "manifest_info": None,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "verification_notes": "Data raster tingkat piksel tidak tersedia untuk koordinat di luar cakupan 5 provinsi Kalimantan.",
             "matching_rule": "Koordinat berada di luar cakupan 5 provinsi Kalimantan Indonesia.",
@@ -247,18 +334,21 @@ def evaluate_forest_change_point(
             "internal_status": status_override or (STATUS_LOSS_DETECTED if loss_detected else STATUS_NO_LOSS_DETECTED),
             "category_result": cat_result,
             "province": prov_resolved or "Kalimantan",
-            "pixel_resolution_approx_m": 30.87,
+            "pixel_resolution_approx_m": 27.83,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "data_period": "2000–2025 (Hansen GFC)",
-            "data_status": "raster_verified",
-            "data_verified": True,
+            "data_status": "demonstration",
+            "data_verified": False,
             "raster_available": True,
+            "is_official": False,
+            "source_type": "DEMO_SYNTHETIC",
+            "manifest_info": None,
             "pixel_data": {
                 "loss_detected": loss_detected,
                 "loss_year": loss_year,
                 "canopy_density_pct": canopy_density,
             },
-            "matching_rule": f"Pemeriksaan piksel raster terverifikasi resolusi 30m di {prov_resolved or 'Kalimantan'}.",
+            "matching_rule": f"Pemeriksaan piksel raster Hansen GFC v1.13 resolusi 30m di {prov_resolved or 'Kalimantan'}.",
             "scientific_caveat": (
                 "Perubahan tutupan pohon adalah indikator biofisik dan tidak secara otomatis membuktikan "
                 "pembukaan lahan ilegal atau kebakaran tanpa verifikasi hak atas tanah dan pemeriksaan lapangan."
@@ -272,6 +362,7 @@ def evaluate_forest_change_point(
         province=province,
         tiles_dir=tiles_dir,
         enable_remote=enable_remote,
+        use_official=use_official,
     )
 
     prov_resolved = res.province or matched_prov
@@ -286,6 +377,9 @@ def evaluate_forest_change_point(
             "data_status": "demonstration",
             "data_verified": False,
             "raster_available": False,
+            "is_official": False,
+            "source_type": "UNAVAILABLE",
+            "manifest_info": None,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "verification_notes": res.verification_notes or "Data raster tingkat piksel tidak tersedia untuk koordinat di luar cakupan 5 provinsi Kalimantan.",
             "matching_rule": res.matching_rule or "Koordinat berada di luar cakupan 5 provinsi Kalimantan Indonesia.",
@@ -301,8 +395,11 @@ def evaluate_forest_change_point(
             "pixel_resolution_approx_m": res.pixel_resolution_approx_m,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "data_period": "2000–2025 (Hansen GFC)",
-            "data_status": "raster_verified",
-            "data_verified": True,
+            "data_status": res.data_status,
+            "data_verified": res.data_verified,
+            "is_official": res.is_official,
+            "source_type": res.source_type,
+            "manifest_info": res.manifest_info,
             "raster_available": True,
             "tile_id": res.tile_id,
             "pixel_row": res.pixel_row,
@@ -314,7 +411,7 @@ def evaluate_forest_change_point(
                 "canopy_density_pct": res.treecover2000,
                 "datamask": res.datamask,
             },
-            "matching_rule": res.matching_rule or f"Pemeriksaan piksel raster terverifikasi resolusi 30m di {prov_resolved}.",
+            "matching_rule": res.matching_rule or f"Pemeriksaan piksel raster Hansen GFC v1.13 resolusi 30m di {prov_resolved}.",
             "verification_notes": res.verification_notes,
             "scientific_caveat": res.scientific_caveat,
             "pixel_center_lat": res.pixel_center_lat,
@@ -335,8 +432,11 @@ def evaluate_forest_change_point(
             "pixel_resolution_approx_m": res.pixel_resolution_approx_m,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "data_period": "2000–2025 (Hansen GFC)",
-            "data_status": "raster_verified",
-            "data_verified": True,
+            "data_status": res.data_status,
+            "data_verified": res.data_verified,
+            "is_official": res.is_official,
+            "source_type": res.source_type,
+            "manifest_info": res.manifest_info,
             "raster_available": True,
             "tile_id": res.tile_id,
             "pixel_row": res.pixel_row,
@@ -369,8 +469,11 @@ def evaluate_forest_change_point(
             "pixel_resolution_approx_m": res.pixel_resolution_approx_m,
             "pixel_area_ha": round(pixel_area_ha, 4),
             "data_period": "2000–2025 (Hansen GFC)",
-            "data_status": "raster_verified",
-            "data_verified": True,
+            "data_status": res.data_status,
+            "data_verified": res.data_verified,
+            "is_official": res.is_official,
+            "source_type": res.source_type,
+            "manifest_info": res.manifest_info,
             "raster_available": True,
             "tile_id": res.tile_id,
             "pixel_row": res.pixel_row,
@@ -401,11 +504,14 @@ def evaluate_forest_change_point(
         "internal_status": STATUS_INSUFFICIENT_DATA,
         "category_result": "Belum dapat dinilai",
         "province": prov_resolved,
-        "pixel_resolution_approx_m": 30.87,
+        "pixel_resolution_approx_m": 27.83,
         "pixel_area_ha": round(pixel_area_ha, 4),
         "data_period": "2000–2025 (Hansen GFC)",
-        "data_status": "demonstration",
-        "data_verified": False,
+        "data_status": res.data_status,
+        "data_verified": res.data_verified,
+        "is_official": res.is_official,
+        "source_type": res.source_type,
+        "manifest_info": res.manifest_info,
         "raster_available": False,
         "verification_notes": (
             res.verification_notes

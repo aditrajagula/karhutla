@@ -86,7 +86,7 @@ def test_frontend_backend_integration():
     assert c_data["forest_layer"]["available"] is False
     assert c_data["peatland_layer"]["available"] is False
     assert c_data["boundary_layer"]["available"] is True
-    assert c_data["boundary_layer"]["feature_count"] == 34
+    assert c_data["boundary_layer"]["feature_count"] == 5
 
     # 6. Citizen Reports API via Frontend Origin
     r_rep = httpx.get(
@@ -99,4 +99,3 @@ def test_frontend_backend_integration():
     rep_data = r_rep.json()
     assert "records" in rep_data
     assert "features" in rep_data
-

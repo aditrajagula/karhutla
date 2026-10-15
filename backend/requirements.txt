@@ -11,3 +11,5 @@ numpy>=1.26.0
 python-dotenv>=1.0.1
 pytest>=8.2.0
 rasterio>=1.4.0
+argon2-cffi>=23.1.0
+Pillow>=10.4.0

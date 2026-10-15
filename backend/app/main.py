@@ -4,18 +4,28 @@ Menyediakan REST API untuk data hotspot, metadata provenance, dan status layer k
 """
 
 import base64
+from io import BytesIO
 import json
 import logging
 import math
 import uuid
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from fastapi import FastAPI, HTTPException, Query
+from typing import Any, Dict, List, Literal, Optional, Tuple
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from PIL import Image, UnidentifiedImageError
 
+from .auth import (
+    enforce_rate_limit,
+    get_current_user,
+    login_user,
+    logout_user,
+    register_user,
+    require_role,
+)
 from .config import (
     BOUNDARIES_PATH,
     FIRMS_DEFAULT_SOURCE,
@@ -25,7 +35,7 @@ from .config import (
 )
 from .pipeline import HotspotPipeline
 from .snapshot_manager import find_latest_valid_snapshot
-from .reports_storage import reports_repo, ReportCategory, ReportStatus
+from .reports_storage import reports_repo, ReportCategory, ReportStatus, UserModel
 from .forest_change_service import (
     get_forest_loss_summary,
     evaluate_forest_change_point,
@@ -45,6 +55,73 @@ app = FastAPI(
     ),
     version="1.0.0"
 )
+
+
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=32, pattern=r"^[A-Za-z0-9_.-]+$")
+    email: Optional[str] = Field(None, max_length=254)
+    password: str = Field(..., min_length=10, max_length=128)
+    role: Literal["warga", "petugas"] = "warga"
+    institution_code: Optional[str] = Field(None, max_length=256)
+
+
+class LoginRequest(BaseModel):
+    identifier: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class ReportValidationRequest(BaseModel):
+    reason: Optional[str] = Field(None, max_length=1000)
+
+
+class AlertSettingsUpdate(BaseModel):
+    enabled: bool
+    radius_m: Literal[1000, 3000, 5000, 10000]
+
+
+@app.post("/api/v1/auth/register", summary="Mendaftarkan akun warga atau petugas")
+def register(payload: RegisterRequest, request: Request) -> Dict[str, Any]:
+    enforce_rate_limit(request, "register", limit=10)
+    if payload.email and (
+        "@" not in payload.email
+        or payload.email.startswith("@")
+        or payload.email.endswith("@")
+    ):
+        raise HTTPException(status_code=422, detail="Format email tidak valid.")
+    user = register_user(
+        username=payload.username,
+        email=payload.email,
+        password=payload.password,
+        role=payload.role,
+        institution_code=payload.institution_code,
+    )
+    return {"status": "success", "user": user.to_public_dict()}
+
+
+@app.post("/api/v1/auth/login", summary="Login dan membuat sesi pengguna")
+def login(payload: LoginRequest, request: Request) -> Dict[str, Any]:
+    enforce_rate_limit(request, "login", limit=20)
+    user, token, expires_at = login_user(payload.identifier, payload.password)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "expires_at_utc": expires_at.isoformat(),
+        "user": user.to_public_dict(),
+    }
+
+
+@app.get("/api/v1/auth/me", summary="Melihat akun dari sesi aktif")
+def get_me(user: UserModel = Depends(get_current_user)) -> Dict[str, Any]:
+    return {"user": user.to_public_dict()}
+
+
+@app.post("/api/v1/auth/logout", summary="Mengakhiri sesi aktif")
+def logout(
+    user: UserModel = Depends(get_current_user),
+    authorization: Optional[str] = Header(None),
+) -> Dict[str, str]:
+    logout_user(authorization, user)
+    return {"status": "success", "message": "Sesi telah diakhiri."}
 
 # Pastikan folder upload ada dan mount StaticFiles untuk foto laporan masyarakat
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -317,8 +394,12 @@ def get_context_layers() -> ContextLayersResponse:
     return ContextLayersResponse(
         forest_layer=ContextLayerItem(
             available=False,
-            source="Kementerian Lingkungan Hidup dan Kehutanan (KLHK)",
-            status_message="Dataset resmi kawasan hutan belum tersedia dari panitia/instansi."
+            source="Hansen GFC 2025 v1.13 (tile lokal demonstrasi) dan rujukan KLHK",
+            status_message=(
+                "Raster Hansen lokal hanya mencakup area kecil di sekitar Palangka Raya; "
+                "belum dapat ditampilkan sebagai segmentasi menyeluruh Kalimantan. "
+                "Layer kawasan hutan resmi belum tersedia."
+            )
         ),
         peatland_layer=ContextLayerItem(
             available=False,
@@ -327,9 +408,9 @@ def get_context_layers() -> ContextLayersResponse:
         ),
         boundary_layer=ContextLayerItem(
             available=True,
-            source="Batas Daratan 34 Provinsi Indonesia (WGS84 EPSG:4326)",
-            status_message="Geometri batas wilayah daratan Indonesia aktif untuk filter spasial.",
-            feature_count=len(pipeline_instance.spatial_filter.geometries)
+            source="Batas 5 provinsi Kalimantan (WGS84 EPSG:4326)",
+            status_message="Geometri 5 provinsi Kalimantan aktif untuk filter spasial.",
+            feature_count=len(KALIMANTAN_PROVINCES)
         )
     )
 
@@ -369,10 +450,12 @@ def get_boundaries_alias():
 
 class CitizenReportCreate(BaseModel):
     category: str = Field(..., description="Kategori: kebakaran, pembukaan_lahan, perubahan_tutupan")
-    latitude: float = Field(..., ge=-11.0, le=6.0, description="Latitude daratan Indonesia (-11.0 s.d. 6.0)")
-    longitude: float = Field(..., ge=95.0, le=141.5, description="Longitude daratan Indonesia (95.0 s.d. 141.5)")
+    latitude: float = Field(..., ge=-5.0, le=5.0, description="Latitude Kalimantan")
+    longitude: float = Field(..., ge=108.0, le=120.0, description="Longitude Kalimantan")
     observed_at_utc: str = Field(..., description="Waktu pengamatan standar ISO (UTC)")
     description: str = Field(..., min_length=10, max_length=2000, description="Keterangan pengamatan lapangan (min 10 karakter)")
+    location_method: Literal["gps", "peta", "manual"] = "manual"
+    accuracy_m: Optional[float] = Field(None, ge=0, le=10000)
     photo_base64: Optional[str] = Field(None, description="Foto pendukung dalam format Base64 data URL atau string")
     reporter_name: Optional[str] = Field(None, max_length=100, description="Nama pelapor (opsional)")
     reporter_contact: Optional[str] = Field(None, max_length=100, description="Kontak pelapor (opsional)")
@@ -385,22 +468,14 @@ class ReportStatusUpdate(BaseModel):
 
 
 def save_report_photo(photo_raw: str, uploads_dir: Path) -> tuple[str, str]:
-    """Menyimpan data gambar Base64 ke direktori penyimpanan lokal uploads."""
-    ext = "jpg"
+    """Validate and re-encode an image so camera metadata is not persisted."""
     b64_content = photo_raw.strip()
 
     if "," in b64_content and b64_content.startswith("data:"):
-        header, b64_content = b64_content.split(",", 1)
-        header_lower = header.lower()
-        if "image/png" in header_lower:
-            ext = "png"
-        elif "image/webp" in header_lower:
-            ext = "webp"
-        elif "image/jpeg" in header_lower or "image/jpg" in header_lower:
-            ext = "jpg"
+        _, b64_content = b64_content.split(",", 1)
 
     try:
-        binary_data = base64.b64decode(b64_content)
+        binary_data = base64.b64decode(b64_content, validate=True)
     except Exception as exc:
         raise HTTPException(status_code=422, detail="Data gambar Base64 tidak valid.") from exc
 
@@ -410,10 +485,34 @@ def save_report_photo(photo_raw: str, uploads_dir: Path) -> tuple[str, str]:
     if len(binary_data) < 10:
         raise HTTPException(status_code=422, detail="Data file foto terlalu kecil atau rusak.")
 
+    try:
+        with Image.open(BytesIO(binary_data)) as image:
+            if image.format not in {"JPEG", "PNG", "WEBP"}:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Format foto harus JPEG, PNG, atau WEBP.",
+                )
+            if image.width * image.height > 20_000_000:
+                raise HTTPException(status_code=422, detail="Resolusi foto terlalu besar.")
+            image.load()
+            output = BytesIO()
+            output_format = image.format
+            if output_format == "JPEG" and image.mode not in {"RGB", "L"}:
+                image = image.convert("RGB")
+            image.save(output, format=output_format)
+    except HTTPException:
+        raise
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
+        raise HTTPException(status_code=422, detail="File foto tidak valid atau rusak.") from exc
+
+    sanitized = output.getvalue()
+    if len(sanitized) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=422, detail="Ukuran foto setelah diproses melebihi 5 MB.")
+
+    ext = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}[output_format]
     filename = f"report_{uuid.uuid4().hex[:12]}.{ext}"
     target_path = uploads_dir / filename
-    with open(target_path, "wb") as f:
-        f.write(binary_data)
+    target_path.write_bytes(sanitized)
 
     photo_url = f"/uploads/reports/{filename}"
     return filename, photo_url
@@ -432,7 +531,10 @@ def fetch_hotspots_for_reports(
     Jika sinkronisasi API gagal atau tidak ada data tersedia, firms_available bernilai False.
     """
     now_utc = datetime.now(timezone.utc)
-    fire_reports = [r for r in reports if r.get("category") == "kebakaran"]
+    fire_reports = [
+        r for r in reports
+        if r.get("category") in {"kebakaran", "asap_kebakaran"}
+    ]
     if not fire_reports:
         return [], True, None
 
@@ -472,7 +574,7 @@ def fetch_hotspots_for_reports(
         return [], False, None
 
 
-@app.get("/api/v1/reports", summary="Mengambil daftar laporan masyarakat")
+@app.get("/api/v1/reports", summary="Mengambil daftar publik laporan masyarakat")
 def get_citizen_reports(
     category: Optional[str] = Query(None, description="Filter kategori: kebakaran, pembukaan_lahan, perubahan_tutupan"),
     status: Optional[str] = Query(None, description="Filter status: PENDING, IN_REVIEW, VERIFIED, REJECTED"),
@@ -486,20 +588,26 @@ def get_citizen_reports(
     Informasi kontak pribadi (reporter_contact) dilindungi dan tidak ditampilkan ke publik.
     Koordinat publik disamarkan ke 3 desimal (~110m) demi privasi warga.
     """
+    legacy_status_aliases = {
+        "PENDING": ReportStatus.PENDING.value,
+        "IN_REVIEW": ReportStatus.IN_REVIEW.value,
+        "VERIFIED": ReportStatus.VERIFIED.value,
+        "REJECTED": ReportStatus.REJECTED.value,
+    }
+    normalized_status = legacy_status_aliases.get(status or "", status)
     raw_reports = reports_repo.get_reports(
         category=category,
-        status=status,
+        status=normalized_status,
         province=province,
         limit=limit,
-        public=False
+        public=False,
     )
 
-    if region and region.strip().lower() == "kalimantan":
-        kalimantan_names = {p.lower() for p in KALIMANTAN_PROVINCES}
-        raw_reports = [
-            r for r in raw_reports
-            if r.get("province") and r["province"].strip().lower() in kalimantan_names
-        ]
+    kalimantan_names = {p.lower() for p in KALIMANTAN_PROVINCES}
+    raw_reports = [
+        r for r in raw_reports
+        if r.get("province") and r["province"].strip().lower() in kalimantan_names
+    ]
 
     # Ambil data hotspot FIRMS dengan rentang waktu sesuai observasi laporan
     recent_hotspots, firms_available, cov_range = fetch_hotspots_for_reports(raw_reports)
@@ -519,6 +627,13 @@ def get_citizen_reports(
             "evidence_assessment": evidence
         }
         pub_r.pop("reporter_contact", None)
+        pub_r.pop("reporter_name", None)
+        pub_r.pop("reporter_id", None)
+        pub_r.pop("location_method", None)
+        pub_r.pop("accuracy_m", None)
+        pub_r["citizen_validation_count"] = len(
+            reports_repo.get_report_validations(r["id"])
+        )
         sanitized_reports.append(pub_r)
 
     features = [
@@ -554,8 +669,12 @@ def get_citizen_reports(
     }
 
 
-@app.post("/api/v1/reports", summary="Menyimpan laporan baru dari masyarakat")
-def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
+@app.post("/api/v1/reports", summary="Menyimpan laporan baru dari warga login")
+def create_citizen_report(
+    payload: CitizenReportCreate,
+    request: Request,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
     """
     Menerima dan memvalidasi laporan indikasi kejadian dari masyarakat:
     - Validasi kategori kejadian.
@@ -592,12 +711,18 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
             detail="Format waktu pengamatan (observed_at_utc) tidak valid. Gunakan format ISO-8601 UTC."
         ) from exc
 
-    # Validasi koordinat terhadap poligon batas wilayah Indonesia
-    is_inside, prov_name = pipeline_instance.spatial_filter.is_inside(payload.longitude, payload.latitude)
+    enforce_rate_limit(request, "create_report", limit=20)
+    if user.role not in {"warga", "petugas"}:
+        raise HTTPException(status_code=403, detail="Akun ini tidak dapat membuat laporan.")
+
+    # Validasi koordinat terhadap batas administratif 5 provinsi Kalimantan.
+    is_inside, prov_name = pipeline_instance.spatial_filter.is_inside_kalimantan(
+        payload.longitude, payload.latitude
+    )
     if not is_inside:
         raise HTTPException(
             status_code=422,
-            detail="Koordinat lokasi laporan berada di luar batas daratan wilayah Indonesia."
+            detail="Koordinat lokasi laporan berada di luar cakupan 5 provinsi Kalimantan."
         )
 
     # Simpan file foto jika disertakan
@@ -612,12 +737,21 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
         longitude=payload.longitude,
         observed_at_utc=payload.observed_at_utc,
         description=payload.description.strip(),
+        location_method=payload.location_method,
+        accuracy_m=payload.accuracy_m,
         province=prov_name,
         photo_filename=photo_fn,
         photo_url=photo_url,
         reporter_name=payload.reporter_name.strip() if payload.reporter_name else None,
         reporter_contact=payload.reporter_contact.strip() if payload.reporter_contact else None,
+        reporter_id=user.id,
         public=False
+    )
+    reports_repo.write_audit_log(
+        "laporan_dibuat",
+        actor_user_id=user.id,
+        target_report_id=report_dict["id"],
+        details={"category": payload.category},
     )
 
     # Lakukan evaluasi bukti langsung untuk response yang baru disimpan
@@ -637,6 +771,11 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
         "evidence_assessment": evidence
     }
     public_report.pop("reporter_contact", None)
+    public_report.pop("reporter_name", None)
+    public_report.pop("reporter_id", None)
+    public_report.pop("location_method", None)
+    public_report.pop("accuracy_m", None)
+    public_report["citizen_validation_count"] = 0
 
     return {
         "status": "success",
@@ -652,7 +791,90 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
     }
 
 
-@app.get("/api/v1/reports/{report_id}", summary="Mengambil detail satu laporan masyarakat")
+@app.get("/api/v1/reports/mine", summary="Mengambil riwayat laporan milik pengguna")
+def get_my_citizen_reports(
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    records = reports_repo.get_reports(
+        reporter_id=user.id,
+        limit=1000,
+        public=True,
+    )
+    for report in records:
+        report.pop("reporter_contact", None)
+        report.pop("reporter_name", None)
+        report.pop("reporter_id", None)
+        report["citizen_validation_count"] = len(
+            reports_repo.get_report_validations(report["id"])
+        )
+    return {"count": len(records), "records": records}
+
+
+@app.get("/api/v1/reports/nearby", summary="Mencari laporan dekat posisi pengguna")
+def get_nearby_citizen_reports(
+    latitude: float = Query(..., ge=-5.0, le=5.0),
+    longitude: float = Query(..., ge=108.0, le=120.0),
+    radius_km: int = Query(3, description="Radius yang didukung: 1, 3, 5, atau 10 km"),
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    if radius_km not in {1, 3, 5, 10}:
+        raise HTTPException(status_code=422, detail="Radius harus 1, 3, 5, atau 10 km.")
+    in_scope, _ = pipeline_instance.spatial_filter.is_inside_kalimantan(
+        longitude, latitude
+    )
+    if not in_scope:
+        raise HTTPException(status_code=422, detail="Lokasi alert harus berada di Kalimantan.")
+    matches = reports_repo.get_nearby_reports(latitude, longitude, radius_km)
+    records = [
+        {
+            "id": report["id"],
+            "category": report["category"],
+            "observed_at_utc": report["observed_at_utc"],
+            "status": report["status"],
+            "distance_km": round(distance, 2),
+        }
+        for report, distance in matches
+    ]
+    return {
+        "count": len(records),
+        "radius_km": radius_km,
+        "message": (
+            f"Ada {len(records)} laporan warga dalam radius {radius_km} km. "
+            "Laporan ini merupakan indikasi warga, bukan konfirmasi atau peringatan darurat."
+        ),
+        "records": records,
+    }
+
+
+@app.get("/api/v1/alerts/settings", summary="Mengambil pengaturan alert laporan terdekat")
+def get_alert_settings(
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    setting = reports_repo.get_alert_setting(user.id)
+    return {
+        "enabled": setting["enabled"],
+        "radius_m": setting["radius_m"],
+        "updated_at_utc": setting["updated_at_utc"],
+    }
+
+
+@app.put("/api/v1/alerts/settings", summary="Menyimpan pengaturan alert tanpa menyimpan GPS")
+def update_alert_settings(
+    payload: AlertSettingsUpdate,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    setting = reports_repo.save_alert_setting(
+        user.id, payload.enabled, payload.radius_m
+    )
+    reports_repo.write_audit_log(
+        "pengaturan_alert_diperbarui",
+        actor_user_id=user.id,
+        details={"enabled": payload.enabled, "radius_m": payload.radius_m},
+    )
+    return setting
+
+
+@app.get("/api/v1/reports/{report_id}", summary="Mengambil detail publik laporan masyarakat")
 def get_citizen_report_by_id(report_id: str) -> Dict[str, Any]:
     """Mengambil informasi detail satu laporan berdasarkan ID (privasi kontak terlindungi)."""
     report = reports_repo.get_report_by_id(report_id, public=False)
@@ -675,34 +897,144 @@ def get_citizen_report_by_id(report_id: str) -> Dict[str, Any]:
         "evidence_assessment": evidence
     }
     public_report.pop("reporter_contact", None)
+    public_report.pop("reporter_name", None)
+    public_report.pop("reporter_id", None)
+    public_report.pop("location_method", None)
+    public_report.pop("accuracy_m", None)
+    public_report["citizen_validation_count"] = len(
+        reports_repo.get_report_validations(report_id)
+    )
     return public_report
 
 
+@app.post("/api/v1/reports/{report_id}/validate", summary="Validasi laporan oleh warga lain")
+def validate_citizen_report(
+    report_id: str,
+    request: Request,
+    payload: ReportValidationRequest,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    enforce_rate_limit(request, "validate_report", limit=30)
+    require_role(user, "warga")
+    try:
+        updated = reports_repo.validate_report_by_citizen(report_id, user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    if not updated:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+
+    reports_repo.write_audit_log(
+        "laporan_divalidasi_warga",
+        actor_user_id=user.id,
+        target_report_id=report_id,
+        details={"reason": payload.reason.strip() if payload.reason else None},
+    )
+    public_report = {
+        **updated,
+        "latitude": round(float(updated["latitude"]), 3),
+        "longitude": round(float(updated["longitude"]), 3),
+        "citizen_validation_count": len(
+            reports_repo.get_report_validations(report_id)
+        ),
+        "status_disclaimer": (
+            "Validasi warga lain, bukan konfirmasi resmi atau bukti hukum."
+        ),
+    }
+    for key in (
+        "reporter_contact",
+        "reporter_name",
+        "reporter_id",
+        "location_method",
+        "accuracy_m",
+    ):
+        public_report.pop(key, None)
+    return {"status": "success", "data": public_report}
+
+
+@app.get("/api/v1/reports/{report_id}/private", summary="Mengambil lokasi presisi untuk petugas")
+def get_private_citizen_report(
+    report_id: str,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    require_role(user, "petugas")
+    report = reports_repo.get_report_by_id(report_id, public=False)
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+    reports_repo.write_audit_log(
+        "petugas_mengakses_lokasi_presisi",
+        actor_user_id=user.id,
+        target_report_id=report_id,
+    )
+    return {
+        "id": report["id"],
+        "latitude": report["latitude"],
+        "longitude": report["longitude"],
+        "location_method": report["location_method"],
+        "accuracy_m": report["accuracy_m"],
+    }
+
+
+@app.get("/api/v1/reports/{report_id}/audit", summary="Melihat audit trail laporan untuk petugas")
+def get_citizen_report_audit(
+    report_id: str,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
+    require_role(user, "petugas")
+    if not reports_repo.get_report_by_id(report_id, public=False):
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+    return {
+        "report_id": report_id,
+        "validations": reports_repo.get_report_validations(report_id),
+        "events": reports_repo.get_report_audit_logs(report_id),
+    }
+
+
 @app.patch("/api/v1/reports/{report_id}/status", summary="Verifikasi laporan oleh operator")
-def update_report_status(report_id: str, payload: ReportStatusUpdate) -> Dict[str, Any]:
+def update_report_status(
+    report_id: str,
+    payload: ReportStatusUpdate,
+    user: UserModel = Depends(get_current_user),
+) -> Dict[str, Any]:
     """
     Memperbarui status verifikasi laporan oleh operator (disediakan untuk kompatibilitas sistem).
     Status valid: PENDING, IN_REVIEW, VERIFIED, REJECTED.
     Jika status REJECTED, alasan penolakan wajib disertakan.
     """
+    require_role(user, "petugas")
+    status_aliases = {
+        "PENDING": ReportStatus.PENDING.value,
+        "IN_REVIEW": ReportStatus.IN_REVIEW.value,
+        "VERIFIED": ReportStatus.VERIFIED.value,
+        "REJECTED": ReportStatus.REJECTED.value,
+    }
+    target_status = status_aliases.get(payload.status, payload.status)
     valid_statuses = [s.value for s in ReportStatus]
-    if payload.status not in valid_statuses:
+    if target_status not in valid_statuses:
         raise HTTPException(
             status_code=422,
             detail=f"Status '{payload.status}' tidak valid. Pilihan: {valid_statuses}"
         )
+    if target_status not in {
+        ReportStatus.IN_REVIEW.value,
+        ReportStatus.VERIFIED.value,
+        ReportStatus.REJECTED.value,
+    }:
+        raise HTTPException(
+            status_code=422,
+            detail="Petugas hanya dapat menandai perlu tinjauan, memverifikasi, atau menolak laporan.",
+        )
 
-    if payload.status == ReportStatus.REJECTED.value:
-        if not payload.rejection_reason or not payload.rejection_reason.strip():
+    if target_status == ReportStatus.REJECTED.value:
+        if not payload.rejection_reason or len(payload.rejection_reason.strip()) < 10:
             raise HTTPException(
                 status_code=422,
-                detail="Alasan penolakan (rejection_reason) wajib diisi jika laporan ditolak."
+                detail="Alasan penolakan wajib diisi minimal 10 karakter."
             )
 
     try:
         updated = reports_repo.update_verification_status(
             report_id=report_id,
-            status=payload.status,
+            status=target_status,
             verification_notes=payload.verification_notes.strip() if payload.verification_notes else None,
             rejection_reason=payload.rejection_reason.strip() if payload.rejection_reason else None,
             public=True
@@ -713,8 +1045,26 @@ def update_report_status(report_id: str, payload: ReportStatusUpdate) -> Dict[st
     if not updated:
         raise HTTPException(status_code=404, detail=f"Laporan dengan ID '{report_id}' tidak ditemukan.")
 
+    reports_repo.write_audit_log(
+        "laporan_status_petugas",
+        actor_user_id=user.id,
+        target_report_id=report_id,
+        details={
+            "status": target_status,
+            "reason": payload.rejection_reason.strip()
+            if payload.rejection_reason
+            else payload.verification_notes.strip()
+            if payload.verification_notes
+            else None,
+        },
+    )
+
     # Sanitasi kontak pribadi dan koordinat presisi
     updated.pop("reporter_contact", None)
+    updated.pop("reporter_name", None)
+    updated.pop("reporter_id", None)
+    updated.pop("location_method", None)
+    updated.pop("accuracy_m", None)
     if "latitude" in updated:
         updated["latitude"] = round(float(updated["latitude"]), 3)
     if "longitude" in updated:
@@ -732,15 +1082,20 @@ def get_reports_meta() -> Dict[str, Any]:
     """Mengembalikan daftar nilai kategori, status, dan kategori penilaian bukti yang sah."""
     return {
         "categories": [
-            {"value": "kebakaran", "label": "Kebakaran atau kemunculan asap"},
-            {"value": "pembukaan_lahan", "label": "Indikasi pembukaan lahan"},
-            {"value": "perubahan_tutupan", "label": "Indikasi perubahan kondisi tutupan hutan"},
+            {"value": "kebakaran", "label": "Kebakaran (kategori lama)"},
+            {"value": "asap_kebakaran", "label": "Kebakaran atau asap"},
+            {"value": "pembukaan_lahan", "label": "Pembukaan lahan (kategori lama)"},
+            {"value": "deforestasi", "label": "Deforestasi / pembukaan hutan"},
+            {"value": "perubahan_tutupan", "label": "Perubahan tutupan (kategori lama)"},
+            {"value": "alih_fungsi_bekas_karhutla", "label": "Alih fungsi lahan bekas karhutla"},
+            {"value": "lainnya", "label": "Lain-lain"},
         ],
         "statuses": [
-            {"value": "PENDING", "label": "Menunggu verifikasi"},
-            {"value": "IN_REVIEW", "label": "Perlu pemeriksaan lebih lanjut"},
-            {"value": "VERIFIED", "label": "Terverifikasi"},
-            {"value": "REJECTED", "label": "Ditolak dengan alasan"},
+            {"value": ReportStatus.PENDING.value, "label": "Menunggu validasi"},
+            {"value": ReportStatus.CITIZEN_VALIDATED.value, "label": "Riwayat kebakaran — validasi warga"},
+            {"value": ReportStatus.IN_REVIEW.value, "label": "Perlu tinjauan lapangan"},
+            {"value": ReportStatus.VERIFIED.value, "label": "Terverifikasi petugas"},
+            {"value": ReportStatus.REJECTED.value, "label": "Ditolak"},
         ],
         "evidence_assessments": [
             {
@@ -783,14 +1138,19 @@ def get_forest_loss_summary_endpoint() -> Dict[str, Any]:
 
 @app.get("/api/v1/forest-loss/point", summary="Evaluasi tutupan pohon titik koordinat")
 def get_forest_loss_point_endpoint(
-    latitude: float = Query(..., ge=-11.0, le=6.0, description="Latitude"),
-    longitude: float = Query(..., ge=95.0, le=141.5, description="Longitude"),
+    latitude: float = Query(..., ge=-5.0, le=5.0, description="Latitude Kalimantan"),
+    longitude: float = Query(..., ge=108.0, le=120.0, description="Longitude Kalimantan"),
     province: Optional[str] = Query(None, description="Nama provinsi")
 ) -> Dict[str, Any]:
     """
     Mengevaluasi indikasi tutupan pohon dan menghitung luas 1 piksel WGS84 dalam hektare
     menggunakan proyeksi geodesik berdasarkan garis lintang koordinat.
     """
+    in_scope, _ = pipeline_instance.spatial_filter.is_inside_kalimantan(
+        longitude, latitude
+    )
+    if not in_scope:
+        raise HTTPException(status_code=422, detail="Titik berada di luar cakupan Kalimantan.")
     return evaluate_forest_change_point(lat=latitude, lon=longitude, province=province)
 
 
@@ -801,6 +1161,3 @@ def get_kalimantan_boundaries_endpoint() -> Dict[str, Any]:
     yang dilengkapi dengan data baseline tutupan pohon Hansen GFC v1.13.
     """
     return get_kalimantan_geojson()
-
-
-

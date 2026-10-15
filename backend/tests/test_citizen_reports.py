@@ -10,12 +10,37 @@ Menguji:
 """
 
 from datetime import datetime, timezone, timedelta
+import uuid
 import pytest
 from fastapi.testclient import TestClient
+from app import auth
 from app.main import app
 from app.reports_storage import reports_repo, ReportStatus, ReportCategory, CitizenReportModel
 
-client = TestClient(app)
+
+def authenticated_client(role="warga"):
+    username = f"legacy_{uuid.uuid4().hex[:10]}"
+    test_client = TestClient(app, client=(username, 50000))
+    payload = {
+        "username": username,
+        "password": "test-password-123",
+        "role": role,
+    }
+    if role == "petugas":
+        auth.PETUGAS_REGISTRATION_CODE = "test-institution-code"
+        payload["institution_code"] = "test-institution-code"
+    assert test_client.post("/api/v1/auth/register", json=payload).status_code == 200
+    login = test_client.post(
+        "/api/v1/auth/login",
+        json={"identifier": username, "password": payload["password"]},
+    )
+    assert login.status_code == 200
+    test_client.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
+    return test_client
+
+
+client = authenticated_client()
+officer_client = authenticated_client("petugas")
 
 
 @pytest.fixture(autouse=True)
@@ -36,17 +61,18 @@ def test_reports_meta():
     assert "statuses" in data
     cat_vals = [c["value"] for c in data["categories"]]
     assert "kebakaran" in cat_vals
+    assert "asap_kebakaran" in cat_vals
     assert "pembukaan_lahan" in cat_vals
     assert "perubahan_tutupan" in cat_vals
 
 
 def test_create_valid_report():
-    """Laporan dengan koordinat valid di daratan Riau berhasil disimpan."""
+    """Laporan dengan koordinat valid di Kalimantan berhasil disimpan."""
     now_utc = datetime.now(timezone.utc).isoformat()
     payload = {
         "category": "kebakaran",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "Terlihat kepulan asap putih tebal di area semak dekat parit gambut.",
         "reporter_name": "Warga Peduli Gambut",
@@ -59,16 +85,16 @@ def test_create_valid_report():
     assert data["is_duplicate_suspect"] is False
     rep = data["data"]
     assert rep["category"] == "kebakaran"
-    assert rep["status"] == "PENDING"
+    assert rep["status"] == "menunggu_validasi"
     assert "rep_" in rep["id"]
     assert rep["province"] is not None
-    assert "Riau" in rep["province"]
+    assert "Kalimantan Barat" in rep["province"]
 
 
-def test_create_report_outside_indonesia():
-    """Laporan di luar wilayah daratan Indonesia harus ditolak dengan HTTP 422."""
+def test_create_report_outside_kalimantan():
+    """Laporan di luar cakupan Kalimantan harus ditolak dengan HTTP 422."""
     now_utc = datetime.now(timezone.utc).isoformat()
-    # Koordinat di laut Jawa (masuk rentang bbox, tapi di luar daratan)
+    # Koordinat di Sumatra berada di luar cakupan wilayah Kalimantan.
     payload = {
         "category": "kebakaran",
         "latitude": -5.0,
@@ -79,7 +105,7 @@ def test_create_report_outside_indonesia():
     response = client.post("/api/v1/reports", json=payload)
     assert response.status_code == 422
     err_detail = str(response.json().get("detail", ""))
-    assert "luar batas daratan" in err_detail.lower() or "indonesia" in err_detail.lower()
+    assert "luar cakupan" in err_detail.lower() or "kalimantan" in err_detail.lower()
 
 
 def test_create_report_invalid_category():
@@ -87,8 +113,8 @@ def test_create_report_invalid_category():
     now_utc = datetime.now(timezone.utc).isoformat()
     payload = {
         "category": "banjir_bandang",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "Banjir melanda area perkebunan warga.",
     }
@@ -103,8 +129,8 @@ def test_create_report_future_time():
     future_time = (datetime.now(timezone.utc) + timedelta(days=5)).isoformat()
     payload = {
         "category": "pembukaan_lahan",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": future_time,
         "description": "Alat berat terindikasi mulai menebang kayu hutan.",
     }
@@ -119,8 +145,8 @@ def test_create_report_description_too_short():
     now_utc = datetime.now(timezone.utc).isoformat()
     payload = {
         "category": "kebakaran",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "api asap",  # hanya 8 karakter
     }
@@ -172,8 +198,8 @@ def test_get_reports_list_and_filters():
     now_utc = datetime.now(timezone.utc).isoformat()
     client.post("/api/v1/reports", json={
         "category": "kebakaran",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "Laporan uji kebakaran untuk filter query.",
     })
@@ -205,8 +231,8 @@ def test_operator_verification_status_update():
     now_utc = datetime.now(timezone.utc).isoformat()
     payload = {
         "category": "perubahan_tutupan",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "Penebangan pohon di zona penyangga hutan lindung.",
     }
@@ -219,13 +245,13 @@ def test_operator_verification_status_update():
         "status": "IN_REVIEW",
         "verification_notes": "Petugas pos kehutanan telah ditugaskan melakukan pengecekan.",
     }
-    res_review = client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_review)
+    res_review = officer_client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_review)
     assert res_review.status_code == 200
-    assert res_review.json()["data"]["status"] == "IN_REVIEW"
+    assert res_review.json()["data"]["status"] == "perlu_tinjauan_lapangan"
     assert res_review.json()["data"]["verification_notes"] == patch_review["verification_notes"]
 
     # 3. Status REJECTED tanpa alasan harus gagal (HTTP 422)
-    res_reject_no_reason = client.patch(
+    res_reject_no_reason = officer_client.patch(
         f"/api/v1/reports/{rep_id}/status",
         json={"status": "REJECTED", "rejection_reason": ""}
     )
@@ -237,9 +263,9 @@ def test_operator_verification_status_update():
         "verification_notes": "Pengecekan drone tidak menemukan aktivitas penebangan.",
         "rejection_reason": "Bukan aktivitas perambahan hutan, hanya pembersihan kebun warga berizin.",
     }
-    res_reject = client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_reject)
+    res_reject = officer_client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_reject)
     assert res_reject.status_code == 200
-    assert res_reject.json()["data"]["status"] == "REJECTED"
+    assert res_reject.json()["data"]["status"] == "ditolak"
     assert res_reject.json()["data"]["rejection_reason"] == patch_reject["rejection_reason"]
 
     # 5. Verifikasi terkonfirmasi (VERIFIED)
@@ -247,9 +273,9 @@ def test_operator_verification_status_update():
         "status": "VERIFIED",
         "verification_notes": "Dikonfirmasi oleh tim patroli lapangan.",
     }
-    res_verify = client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_verify)
+    res_verify = officer_client.patch(f"/api/v1/reports/{rep_id}/status", json=patch_verify)
     assert res_verify.status_code == 200
-    assert res_verify.json()["data"]["status"] == "VERIFIED"
+    assert res_verify.json()["data"]["status"] == "terverifikasi_petugas"
 
 
 def test_get_report_by_id():
@@ -260,8 +286,8 @@ def test_get_report_by_id():
     now_utc = datetime.now(timezone.utc).isoformat()
     res_new = client.post("/api/v1/reports", json={
         "category": "kebakaran",
-        "latitude": 0.53,
-        "longitude": 101.44,
+        "latitude": -0.0263,
+        "longitude": 109.3425,
         "observed_at_utc": now_utc,
         "description": "Laporan pengujian untuk get by id endpoint.",
     })

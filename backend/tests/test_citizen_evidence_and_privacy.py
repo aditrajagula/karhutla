@@ -15,15 +15,44 @@ Memverifikasi:
 
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
+import uuid
 import pytest
 from fastapi.testclient import TestClient
+from app import auth
 from app.main import app, pipeline_instance
 from app.reports_storage import reports_repo, CitizenReportModel
 from app.evidence_service import assess_report_evidence
 
+def authenticated_client(role: str = "warga") -> TestClient:
+    username = f"privacy_{uuid.uuid4().hex[:10]}"
+    test_client = TestClient(app, client=(username, 50000))
+    payload = {
+        "username": username,
+        "password": "test-password-123",
+        "role": role,
+    }
+    if role == "petugas":
+        auth.PETUGAS_REGISTRATION_CODE = "test-institution-code"
+        payload["institution_code"] = "test-institution-code"
+    registered = test_client.post("/api/v1/auth/register", json=payload)
+    assert registered.status_code == 200, registered.text
+    login = test_client.post(
+        "/api/v1/auth/login",
+        json={"identifier": username, "password": payload["password"]},
+    )
+    assert login.status_code == 200, login.text
+    test_client.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
+    return test_client
+
+
 @pytest.fixture
 def client():
-    return TestClient(app)
+    return authenticated_client()
+
+
+@pytest.fixture
+def officer_client():
+    return authenticated_client("petugas")
 
 
 @pytest.fixture(autouse=True)
@@ -301,7 +330,10 @@ def test_historical_report_outside_coverage_returns_insufficient_data():
     assert "belum tersedia dalam cakupan data" in eval_hist["summary"].lower()
 
 
-def test_full_privacy_across_all_endpoints_and_db_persistence(client: TestClient):
+def test_full_privacy_across_all_endpoints_and_db_persistence(
+    client: TestClient,
+    officer_client: TestClient,
+):
     """
     Audit komprehensif privasi:
     1. POST, GET list, GET detail, dan PATCH status tidak mengekspos reporter_contact.
@@ -358,7 +390,7 @@ def test_full_privacy_across_all_endpoints_and_db_persistence(client: TestClient
     assert detail_data["longitude"] == 109.877
 
     # 4. PATCH /api/v1/reports/{id}/status
-    res_patch = client.patch(
+    res_patch = officer_client.patch(
         f"/api/v1/reports/{rep_id}/status",
         json={"status": "IN_REVIEW", "verification_notes": "Sedang diteliti tim."}
     )
@@ -417,5 +449,3 @@ def test_hansen_demonstration_stats_transparency_consistency(client: TestClient)
     assert pt_json["category_result"] == "Belum dapat dinilai"
     assert pt_json["data_status"] == "demonstration"
     assert pt_json["data_verified"] is False
-
-

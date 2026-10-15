@@ -34,7 +34,7 @@ def test_get_context_layers(client: TestClient):
     assert "belum tersedia" in data["peatland_layer"]["status_message"]
 
     assert data["boundary_layer"]["available"] is True
-    assert data["boundary_layer"]["feature_count"] == 34
+    assert data["boundary_layer"]["feature_count"] == 5
 
 
 def test_get_hotspots_no_key_and_no_snapshot(client: TestClient, tmp_path: Path):

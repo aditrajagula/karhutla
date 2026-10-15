@@ -53,6 +53,9 @@ HANSEN_REMOTE_BASE_URL = os.getenv(
     "https://storage.googleapis.com/earthenginepartners-hansen/{version}/"
 )
 
+# Citizen report authentication
+PETUGAS_REGISTRATION_CODE = os.getenv("PETUGAS_REGISTRATION_CODE", "").strip()
+
 # Pastikan direktori penting ada
 SNAPSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)

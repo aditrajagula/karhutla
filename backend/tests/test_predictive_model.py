@@ -55,3 +55,33 @@ def test_prediction_service_inference():
     assert len(res["primary_drivers"]) > 0
     assert "feature" in res["primary_drivers"][0]
     assert "impact" in res["primary_drivers"][0]
+
+
+def test_prediction_service_with_out_of_bounds_coords():
+    service = get_prediction_service()
+    if not service.is_available():
+        pytest.skip("Model artifacts not available in current test environment")
+
+    # Uji titik di luar tile Kalimantan (misal Jakarta / koordinat GPS umum)
+    res = service.predict_fire_risk(lat=-6.2088, lon=106.8456)
+    assert res["status"] == "SUCCESS"
+    assert "coordinates" in res
+    assert res["coordinates"]["lat"] == -6.2088
+    assert res["coordinates"]["lon"] == 106.8456
+    assert 0.0 <= res["risk_probability"] <= 1.0
+    assert res["risk_level"] in ("RENDAH", "SEDANG", "TINGGI")
+
+
+def test_predict_fire_risk_api_endpoint():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.get("/api/v1/predict/fire-risk", params={"latitude": -0.0263, "longitude": 109.3425})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] in ("SUCCESS", "UNAVAILABLE")
+    if data["status"] == "SUCCESS":
+        assert "risk_level" in data
+        assert "risk_percentage" in data
+        assert "primary_drivers" in data

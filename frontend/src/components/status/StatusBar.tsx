@@ -11,6 +11,8 @@ interface StatusBarProps {
   reportsCount?: number;
   onOpenReportModal?: () => void;
   onOpenForestModal?: () => void;
+  onCheckNearbyRisk?: () => void;
+  isLocatingNearby?: boolean;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -23,6 +25,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   reportsCount,
   onOpenReportModal,
   onOpenForestModal,
+  onCheckNearbyRisk,
+  isLocatingNearby = false,
 }) => {
   return (
     <header className="status-header">
@@ -75,6 +79,26 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           >
             <span>🌲</span>
             <span>Tutupan Pohon Hansen GFC</span>
+          </button>
+        )}
+        {onCheckNearbyRisk && (
+          <button
+            type="button"
+            onClick={onCheckNearbyRisk}
+            className="btn-action"
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: isDark ? '#FCA5A5' : '#B91C1C',
+              fontWeight: 600,
+              border: '1px solid #EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+            title="Deteksi posisi GPS perangkat dan cek estimasi risiko kebakaran di sekitar Anda"
+          >
+            <span>{isLocatingNearby ? '📡' : '🎯'}</span>
+            <span>{isLocatingNearby ? 'Mencari GPS...' : 'Prediksi Sekitar Saya'}</span>
           </button>
         )}
         {onOpenReportModal && (

@@ -835,8 +835,8 @@ def get_kalimantan_boundaries_endpoint() -> Dict[str, Any]:
 
 @app.get("/api/v1/predict/fire-risk", summary="Prediksi probabilitas risiko karhutla berbasis ML")
 def predict_fire_risk_endpoint(
-    latitude: float = Query(..., ge=-11.0, le=6.0, description="Latitude"),
-    longitude: float = Query(..., ge=95.0, le=141.5, description="Longitude"),
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude"),
     province: Optional[str] = Query(None, description="Nama provinsi"),
 ) -> Dict[str, Any]:
     """

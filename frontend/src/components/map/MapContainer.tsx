@@ -17,6 +17,11 @@ interface MapContainerProps {
   onLocationPicked?: (coords: { lat: number; lng: number }) => void;
   onCancelPickLocation?: () => void;
   isDark?: boolean;
+  userCoords?: { lat: number; lon: number; accuracy?: number } | null;
+  userRisk?: { risk_level: string; risk_percentage: number; risk_color?: string } | null;
+  onCheckNearbyRisk?: () => void;
+  isLocatingNearby?: boolean;
+  onOpenNearbyModal?: () => void;
 }
 
 const INDONESIA_BOUNDS: [[number, number], [number, number]] = [
@@ -41,11 +46,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   onLocationPicked,
   onCancelPickLocation,
   isDark = false,
+  userCoords = null,
+  userRisk = null,
+  onCheckNearbyRisk,
+  isLocatingNearby = false,
+  onOpenNearbyModal,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const hotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const reportsLayerRef = useRef<L.LayerGroup | null>(null);
+  const userLocationLayerRef = useRef<L.LayerGroup | null>(null);
   const kalimantanLayerRef = useRef<L.GeoJSON | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
@@ -76,6 +87,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     const reportsGroup = L.layerGroup().addTo(map);
     reportsLayerRef.current = reportsGroup;
+
+    const userLocationGroup = L.layerGroup().addTo(map);
+    userLocationLayerRef.current = userLocationGroup;
 
     mapInstanceRef.current = map;
 
@@ -335,6 +349,90 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     });
   }, [reports, selectedReport, onSelectReport, showReports]);
 
+  // Render Penanda Lokasi GPS Pengguna & Buffer Radius Risiko
+  useEffect(() => {
+    const layerGroup = userLocationLayerRef.current;
+    const map = mapInstanceRef.current;
+    if (!layerGroup || !map) return;
+
+    layerGroup.clearLayers();
+    if (!userCoords) return;
+
+    const riskColor =
+      userRisk?.risk_level === 'TINGGI'
+        ? '#EF4444'
+        : userRisk?.risk_level === 'SEDANG'
+        ? '#F59E0B'
+        : '#10B981';
+
+    // 1. Lingkaran buffer area sekitar (radius 25 km = 25.000 meter)
+    const bufferCircle = L.circle([userCoords.lat, userCoords.lon], {
+      radius: 25000,
+      color: riskColor,
+      weight: 2,
+      dashArray: '5, 5',
+      fillColor: riskColor,
+      fillOpacity: 0.12,
+    });
+    bufferCircle.addTo(layerGroup);
+
+    // 2. Lingkaran akurasi GPS jika akurasi ada
+    if (userCoords.accuracy && userCoords.accuracy > 50) {
+      const accuracyCircle = L.circle([userCoords.lat, userCoords.lon], {
+        radius: userCoords.accuracy,
+        color: '#3B82F6',
+        weight: 1,
+        fillColor: '#3B82F6',
+        fillOpacity: 0.15,
+      });
+      accuracyCircle.addTo(layerGroup);
+    }
+
+    // 3. Pinpoint Marker Lokasi Pengguna
+    const marker = L.circleMarker([userCoords.lat, userCoords.lon], {
+      radius: 9,
+      fillColor: riskColor,
+      color: '#FFFFFF',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+    });
+
+    const popupHtml = `
+      <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 190px;">
+        <div style="font-weight: 700; color: #2563EB; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+          <span>🎯</span> Posisi GPS Anda
+        </div>
+        <div><b>Koordinat:</b> ${userCoords.lat.toFixed(4)}°, ${userCoords.lon.toFixed(4)}°</div>
+        ${
+          userRisk
+            ? `<div style="margin-top: 4px;"><b>Risiko Karhutla:</b> <span style="font-weight: 700; color: ${riskColor};">RISIKO ${userRisk.risk_level} (${userRisk.risk_percentage.toFixed(1)}%)</span></div>`
+            : '<div style="font-size: 11px; color: #64748B; margin-top: 2px;">Menganalisis cuaca mikro & risiko...</div>'
+        }
+        <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #E2E8F0; font-size: 11px;">
+          <button id="btn-popup-open-nearby" style="background: none; border: none; padding: 0; color: #2563EB; text-decoration: underline; cursor: pointer; font-weight: 600;">
+            Lihat Analisis Prediksi Lengkap &rarr;
+          </button>
+        </div>
+      </div>
+    `;
+
+    marker.bindPopup(popupHtml);
+    marker.on('popupopen', () => {
+      const btn = document.getElementById('btn-popup-open-nearby');
+      if (btn && onOpenNearbyModal) {
+        btn.onclick = () => onOpenNearbyModal();
+      }
+    });
+
+    marker.addTo(layerGroup);
+
+    // Animasi flyTo ke lokasi pengguna
+    map.flyTo([userCoords.lat, userCoords.lon], 11, {
+      duration: 1.2,
+    });
+  }, [userCoords, userRisk, onOpenNearbyModal]);
+
   // Efek fokus saat titik satelit dipilih
   useEffect(() => {
     if (!selectedHotspot || !mapInstanceRef.current) return;
@@ -558,6 +656,33 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <option value="dark">Basemap Gelap (Esri Canvas)</option>
           <option value="osm">Basemap Standar (OSM)</option>
         </select>
+
+        {onCheckNearbyRisk && (
+          <button
+            type="button"
+            onClick={onCheckNearbyRisk}
+            disabled={isLocatingNearby}
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              cursor: isLocatingNearby ? 'wait' : 'pointer',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              background: isDark ? '#1E293B' : '#F1F5F9',
+              border: `1px solid ${isDark ? '#EF4444' : '#DC2626'}`,
+              color: isDark ? '#FCA5A5' : '#DC2626',
+              userSelect: 'none',
+              minHeight: '34px',
+            }}
+            title="Deteksi posisi GPS Anda dan cek estimasi risiko kebakaran di sekitar"
+          >
+            <span>{isLocatingNearby ? '📡' : '🎯'}</span>
+            <span>{isLocatingNearby ? 'Mencari...' : 'GPS Sekitar'}</span>
+          </button>
+        )}
       </div>
 
       {/* Legenda Faktual di Sudut Kanan Bawah */}
@@ -622,6 +747,23 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           />
           <span><b>Batas 5 Provinsi Kalimantan</b> (Indonesia)</span>
         </div>
+        {userCoords && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <span
+              style={{
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: userRisk?.risk_level === 'TINGGI' ? '#EF4444' : userRisk?.risk_level === 'SEDANG' ? '#F59E0B' : '#10B981',
+                border: '2px solid #FFFFFF',
+                boxShadow: '0 0 4px rgba(0,0,0,0.3)',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span><b>Posisi GPS Anda</b> (Buffer Radius 25 km)</span>
+          </div>
+        )}
         <div style={{ fontSize: '10px', color: isDark ? '#94A3B8' : '#64748B', borderTop: '1px solid var(--color-border)', paddingTop: '4px' }}>
           Eksklusif 5 provinsi Indonesia. Malaysia & Brunei dikecualikan dari analisis.
         </div>

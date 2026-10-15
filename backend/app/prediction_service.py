@@ -12,14 +12,9 @@ import pandas as pd
 
 from .config import PREDICTIVE_MODEL_PATH, PREDICTIVE_SCALER_PATH
 try:
-    from .hansen_tile_reader import inspect_hansen_pixel
+    from .hansen_tile_reader import read_hansen_pixel
 except ImportError:
-    class DummyHansen:
-        def __init__(self, prov: Optional[str] = None):
-            self.treecover2000 = 70
-            self.province = prov or "Kalimantan"
-    def inspect_hansen_pixel(lat: float, lon: float, province: Optional[str] = None):
-        return DummyHansen(province)
+    read_hansen_pixel = None
 
 from .weather_client import WeatherClient
 
@@ -113,9 +108,19 @@ class FireRiskPredictionService:
         # 1. Ambil data cuaca dari Open-Meteo (dengan fallback aman)
         weather = self.weather_client.fetch_weather_features(lat, lon)
 
-        # 2. Ambil data vegetasi dari Hansen Raster 30m
-        hansen_res = inspect_hansen_pixel(lat=lat, lon=lon, province=province)
-        treecover = hansen_res.treecover2000 or 0
+        # 2. Ambil data vegetasi dari Hansen Raster 30m jika berada di cakupan tile
+        treecover = 70
+        detected_prov = province
+        if read_hansen_pixel is not None:
+            try:
+                hansen_res = read_hansen_pixel(lat=lat, lon=lon, province=province)
+                if getattr(hansen_res, "treecover2000", None) is not None:
+                    treecover = hansen_res.treecover2000
+                if getattr(hansen_res, "province", None):
+                    detected_prov = hansen_res.province
+            except Exception as exc:
+                logger.debug("Info raster Hansen tidak dapat diakses untuk koordinat (%s, %s): %s", lat, lon, exc)
+
         f_prim = round(treecover / 100.0, 4)
 
         # Cek apakah ada loss tahun lalu (misal jika data lossyear terdeteksi)
@@ -181,7 +186,7 @@ class FireRiskPredictionService:
         return {
             "status": "SUCCESS",
             "coordinates": {"lat": lat, "lon": lon},
-            "province": province or hansen_res.province,
+            "province": detected_prov or "Wilayah Sekitar Pengguna",
             "risk_probability": round(prob, 4),
             "risk_percentage": prob_percent,
             "risk_level": risk_level,

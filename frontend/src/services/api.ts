@@ -264,10 +264,16 @@ export async function fetchKalimantanBoundaries(): Promise<any> {
   return res.json();
 }
 
+import type { FireRiskPrediction } from '../types/prediction';
+
 /**
  * Mengambil estimasi probabilitas risiko kebakaran berbasis model ML dan cuaca real-time.
  */
-export async function fetchFireRiskPrediction(lat: number, lon: number, province?: string): Promise<any> {
+export async function fetchFireRiskPrediction(
+  lat: number,
+  lon: number,
+  province?: string
+): Promise<FireRiskPrediction> {
   const params = new URLSearchParams({ latitude: lat.toString(), longitude: lon.toString() });
   if (province) params.append('province', province);
   const res = await fetch(`${API_BASE_URL}/predict/fire-risk?${params.toString()}`);

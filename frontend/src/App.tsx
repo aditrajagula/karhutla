@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import type { Hotspot, HotspotFilterParams } from './types/hotspot';
 import type { CitizenReport } from './types/report';
 import type { DataSourceMode, SystemStatus } from './types/status';
-import { fetchCitizenReports, fetchHotspots, fetchSystemStatus } from './services/api';
+import type { FireRiskPrediction } from './types/prediction';
+import { fetchCitizenReports, fetchHotspots, fetchSystemStatus, fetchFireRiskPrediction } from './services/api';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
@@ -12,6 +13,7 @@ import { ReportFormModal } from './components/reports/ReportFormModal';
 import { ReportDetailModal } from './components/reports/ReportDetailModal';
 import { ReportList } from './components/reports/ReportList';
 import { ForestLossModal } from './components/forest/ForestLossModal';
+import { NearbyFireRiskModal } from './components/prediction/NearbyFireRiskModal';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { EmptyState } from './components/common/EmptyState';
 import { ErrorBanner } from './components/common/ErrorBanner';
@@ -37,6 +39,13 @@ export function App() {
   const [isForestModalOpen, setIsForestModalOpen] = useState<boolean>(false);
   const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
   const [pickedCoords, setPickedCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Prediksi Risiko Karhutla Sekitar Pengguna (GPS)
+  const [isNearbyModalOpen, setIsNearbyModalOpen] = useState<boolean>(false);
+  const [isLocatingNearby, setIsLocatingNearby] = useState<boolean>(false);
+  const [nearbyGpsError, setNearbyGpsError] = useState<string | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number; accuracy?: number } | null>(null);
+  const [nearbyPrediction, setNearbyPrediction] = useState<FireRiskPrediction | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -170,6 +179,70 @@ export function App() {
     setIsReportFormOpen(true);
   };
 
+  // Handler untuk mendeteksi GPS dan memprediksi risiko karhutla di sekitar pengguna
+  const handleCheckNearbyRisk = () => {
+    setIsNearbyModalOpen(true);
+    setNearbyGpsError(null);
+
+    if (!('geolocation' in navigator)) {
+      setNearbyGpsError('Peramban (browser) Anda tidak mendukung fitur Geolocation GPS.');
+      return;
+    }
+
+    setIsLocatingNearby(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+        setUserCoords({ lat, lon, accuracy });
+
+        try {
+          const res = await fetchFireRiskPrediction(lat, lon);
+          setNearbyPrediction(res);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Gagal memuat estimasi risiko karhutla.';
+          setNearbyGpsError(msg);
+        } finally {
+          setIsLocatingNearby(false);
+        }
+      },
+      (err) => {
+        setIsLocatingNearby(false);
+        let errorMsg = 'Gagal mengakses sensor GPS perangkat.';
+        if (err.code === err.PERMISSION_DENIED) {
+          errorMsg = 'Akses lokasi ditolak atau diblokir oleh peramban. Silakan aktifkan izin lokasi (GPS) pada peramban Anda untuk mengecek titik Anda secara presisi.';
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          errorMsg = 'Informasi lokasi tidak tersedia saat ini. Pastikan GPS perangkat Anda telah menyala.';
+        } else if (err.code === err.TIMEOUT) {
+          errorMsg = 'Waktu permintaan lokasi GPS habis (timeout). Silakan klik Segarkan GPS untuk mencoba kembali.';
+        }
+        setNearbyGpsError(errorMsg);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 30000,
+      }
+    );
+  };
+
+  // Handler jika pengguna memilih salah satu titik sampel simulasi di Kalimantan
+  const handleSelectSampleLocation = async (lat: number, lon: number, name: string) => {
+    setUserCoords({ lat, lon, accuracy: 50 });
+    setNearbyGpsError(null);
+    setIsLocatingNearby(true);
+    try {
+      const res = await fetchFireRiskPrediction(lat, lon, name);
+      setNearbyPrediction(res);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengambil prediksi risiko.';
+      setNearbyGpsError(msg);
+    } finally {
+      setIsLocatingNearby(false);
+    }
+  };
+
   return (
     <div className={`app-root ${isDark ? 'theme-dark' : 'theme-light'}`}>
       {/* Top Bar Header */}
@@ -186,6 +259,8 @@ export function App() {
           setIsReportFormOpen(true);
         }}
         onOpenForestModal={() => setIsForestModalOpen(true)}
+        onCheckNearbyRisk={handleCheckNearbyRisk}
+        isLocatingNearby={isLocatingNearby}
       />
 
       {/* Main Container: Map-first Full Viewport Layout */}
@@ -311,6 +386,19 @@ export function App() {
             onLocationPicked={handleLocationPicked}
             onCancelPickLocation={() => setIsPickingLocation(false)}
             isDark={isDark}
+            userCoords={userCoords}
+            userRisk={
+              nearbyPrediction && nearbyPrediction.status === 'SUCCESS'
+                ? {
+                    risk_level: nearbyPrediction.risk_level,
+                    risk_percentage: nearbyPrediction.risk_percentage ?? 0,
+                    risk_color: nearbyPrediction.risk_color,
+                  }
+                : null
+            }
+            onCheckNearbyRisk={handleCheckNearbyRisk}
+            isLocatingNearby={isLocatingNearby}
+            onOpenNearbyModal={() => setIsNearbyModalOpen(true)}
           />
         </section>
       </main>
@@ -340,6 +428,22 @@ export function App() {
       <ForestLossModal
         isOpen={isForestModalOpen}
         onClose={() => setIsForestModalOpen(false)}
+        isDark={isDark}
+      />
+
+      {/* Modal Prediksi Risiko Kebakaran di Sekitar Pengguna (GPS) */}
+      <NearbyFireRiskModal
+        isOpen={isNearbyModalOpen}
+        onClose={() => setIsNearbyModalOpen(false)}
+        isLoading={isLocatingNearby}
+        error={nearbyGpsError}
+        prediction={nearbyPrediction}
+        userCoords={userCoords}
+        hotspots={hotspots}
+        reports={reports}
+        onRefreshGps={handleCheckNearbyRisk}
+        onSelectSampleLocation={handleSelectSampleLocation}
+        onFocusMap={() => setIsNearbyModalOpen(false)}
         isDark={isDark}
       />
     </div>

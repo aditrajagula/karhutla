@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DataSourceMode } from '../../types/status';
+import type { AuthUser } from '../../services/api';
 
 interface StatusBarProps {
   mode: DataSourceMode;
@@ -11,6 +12,9 @@ interface StatusBarProps {
   reportsCount?: number;
   onOpenReportModal?: () => void;
   onOpenForestModal?: () => void;
+  authUser?: AuthUser | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -23,6 +27,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   reportsCount,
   onOpenReportModal,
   onOpenForestModal,
+  authUser = null,
+  onOpenAuth,
+  onLogout,
 }) => {
   return (
     <header className="status-header">
@@ -38,7 +45,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             mode === 'live' ? 'badge-live' : 'badge-snapshot'
           }`}
         >
-          {mode === 'live' ? 'Mode: Live NASA FIRMS' : 'Mode: Snapshot Mandiri Tim'}
+          {mode === 'live' ? 'Near-real-time: NASA FIRMS' : 'Snapshot statis tim'}
         </span>
         {totalCount !== undefined && (
           <span className="badge-count" title="Jumlah titik anomali satelit">
@@ -57,6 +64,16 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       <div className="header-actions">
+        {authUser ? (
+          <>
+            <span className="sync-time" title={`Role: ${authUser.role}`}>
+              {authUser.username} ({authUser.role})
+            </span>
+            <button type="button" className="btn-action" onClick={onLogout}>Keluar</button>
+          </>
+        ) : (
+          onOpenAuth && <button type="button" className="btn-action" onClick={onOpenAuth}>Masuk / Daftar</button>
+        )}
         {onOpenForestModal && (
           <button
             type="button"

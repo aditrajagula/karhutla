@@ -2,8 +2,8 @@
 
 ## 1. Status Ketersediaan Saat Ini
 
-> **Status:** BELUM TERSEDIA (OPSIONAL).
-> Panitia Hackathon JOINTS 2026 tidak menyediakan layer spasial tutupan hutan maupun peta hidrologis gambut.
+> **Status:** TERBATAS.
+> Terdapat raster Hansen GFC lokal untuk demonstrasi pada tile kecil sekitar Palangka Raya. Cakupan tersebut tidak memadai untuk segmentasi tutupan hutan seluruh Kalimantan. Dataset resmi kawasan hutan dan layer hidrologis gambut belum tersedia.
 
 ## 2. Rujukan Sumber Resmi Nasional
 
@@ -20,14 +20,27 @@ Jika di masa mendatang tim ingin mengintegrasikan layer ini secara mandiri, guna
 
 ## 3. Perilaku Aplikasi Saat Layer Belum Tersedia
 
-* Antarmuka web dan API backend memperlakukan layer konteks ini sebagai komponen opsional yang dinonaktifkan secara anggun (*gracefully disabled*).
-* Status API: `GET /api/v1/context-layers` mengembalikan status:
+* Antarmuka web dan API backend tidak mengklaim bahwa tile lokal mencakup seluruh Kalimantan. Statistik Hansen agregat juga ditandai sebagai data demonstrasi dan belum terverifikasi.
+* `GET /api/v1/context-layers` mengembalikan cakupan dan status aktual layer hutan serta gambut:
   ```json
   {
-    "forest_layer_available": false,
-    "peatland_layer_available": false,
-    "status_message": "Layer konteks kawasan hutan dan gambut belum tersedia dari sumber resmi panitia/instansi."
+    "forest_layer": {
+      "available": false,
+      "source": "Hansen GFC 2025 v1.13 (tile lokal demonstrasi) dan rujukan KLHK",
+      "status_message": "Raster Hansen lokal hanya mencakup area kecil di sekitar Palangka Raya."
+    },
+    "peatland_layer": {
+      "available": false,
+      "source": "Badan Restorasi Gambut dan Mangrove (BRGM)",
+      "status_message": "Dataset resmi kesatuan hidrologis gambut belum tersedia dari panitia/instansi."
+    },
+    "boundary_layer": {
+      "available": true,
+      "source": "Batas 5 provinsi Kalimantan (WGS84 EPSG:4326)",
+      "status_message": "Geometri 5 provinsi Kalimantan aktif untuk filter spasial.",
+      "feature_count": 5
+    }
   }
   ```
-* Pipeline deteksi hotspot NASA FIRMS tetap beroperasi 100% tanpa hambatan.
+* Pipeline FIRMS tidak bergantung pada layer konteks tersebut.
 * **Prinsip Penting:** Aplikasi **TIDAK MENGKLAIM** anomali termal sebagai bukti deforestasi atau kebakaran hutan tanpa dataset tutupan lahan resmi yang terverifikasi.

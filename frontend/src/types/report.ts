@@ -2,9 +2,21 @@
  * Tipe data untuk Fitur Pelaporan Masyarakat (Citizen Reports).
  */
 
-export type ReportCategory = 'kebakaran' | 'pembukaan_lahan' | 'perubahan_tutupan';
+export type ReportCategory =
+  | 'asap_kebakaran'
+  | 'deforestasi'
+  | 'alih_fungsi_bekas_karhutla'
+  | 'lainnya'
+  | 'kebakaran'
+  | 'pembukaan_lahan'
+  | 'perubahan_tutupan';
 
-export type ReportStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED';
+export type ReportStatus =
+  | 'menunggu_validasi'
+  | 'riwayat_kebakaran_validasi_warga'
+  | 'perlu_tinjauan_lapangan'
+  | 'terverifikasi_petugas'
+  | 'ditolak';
 
 export type EvidenceAssessmentCode = 'SUPPORTING_INDICATION' | 'NO_MATCH_FOUND' | 'INSUFFICIENT_DATA' | 'NOT_ASSESSED';
 
@@ -38,6 +50,7 @@ export interface CitizenReport {
   rejection_reason?: string | null;
   is_duplicate_suspect: boolean;
   duplicate_of_id?: string | null;
+  citizen_validation_count?: number;
   created_at_utc: string;
   updated_at_utc: string;
 }
@@ -48,6 +61,8 @@ export interface CreateCitizenReportPayload {
   longitude: number;
   observed_at_utc: string;
   description: string;
+  location_method?: 'gps' | 'peta' | 'manual';
+  accuracy_m?: number | null;
   photo_base64?: string | null;
   reporter_name?: string | null;
   reporter_contact?: string | null;
@@ -82,16 +97,21 @@ export interface UpdateReportResponse {
 }
 
 export const CATEGORY_LABELS: Record<ReportCategory, string> = {
+  asap_kebakaran: 'Kebakaran atau asap',
+  deforestasi: 'Deforestasi / pembukaan hutan',
+  alih_fungsi_bekas_karhutla: 'Alih fungsi lahan bekas karhutla',
+  lainnya: 'Lain-lain',
   kebakaran: 'Kebakaran atau Kemunculan Asap',
   pembukaan_lahan: 'Indikasi Pembukaan Lahan',
   perubahan_tutupan: 'Indikasi Perubahan Kondisi Tutupan Hutan',
 };
 
 export const STATUS_LABELS: Record<ReportStatus, string> = {
-  PENDING: 'Menunggu Verifikasi',
-  IN_REVIEW: 'Perlu Pemeriksaan Lebih Lanjut',
-  VERIFIED: 'Terverifikasi',
-  REJECTED: 'Ditolak dengan Alasan',
+  menunggu_validasi: 'Menunggu Validasi',
+  riwayat_kebakaran_validasi_warga: 'Riwayat Kebakaran — Validasi Warga',
+  perlu_tinjauan_lapangan: 'Perlu Tinjauan Lapangan',
+  terverifikasi_petugas: 'Terverifikasi Petugas',
+  ditolak: 'Ditolak',
 };
 
 export const EVIDENCE_BADGE_CONFIG: Record<

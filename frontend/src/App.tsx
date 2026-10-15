@@ -2,7 +2,20 @@ import { useEffect, useState } from 'react';
 import type { Hotspot, HotspotFilterParams } from './types/hotspot';
 import type { CitizenReport } from './types/report';
 import type { DataSourceMode, SystemStatus } from './types/status';
-import { fetchCitizenReports, fetchHotspots, fetchSystemStatus } from './services/api';
+import {
+  fetchCitizenReports,
+  fetchCurrentUser,
+  fetchMyReports,
+  fetchPrivateReportLocation,
+  fetchReportAudit,
+  fetchHotspots,
+  fetchSystemStatus,
+  logoutAccount,
+  updateReportStatus,
+  validateCitizenReport,
+} from './services/api';
+import type { AuthUser } from './services/api';
+import type { ReportStatus } from './types/report';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
@@ -11,6 +24,8 @@ import { HotspotDetailModal } from './components/detection/HotspotDetailModal';
 import { ReportFormModal } from './components/reports/ReportFormModal';
 import { ReportDetailModal } from './components/reports/ReportDetailModal';
 import { ReportList } from './components/reports/ReportList';
+import { NearbyAlerts } from './components/reports/NearbyAlerts';
+import { AuthModal } from './components/auth/AuthModal';
 import { ForestLossModal } from './components/forest/ForestLossModal';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { EmptyState } from './components/common/EmptyState';
@@ -31,6 +46,11 @@ export function App() {
   const [reports, setReports] = useState<CitizenReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<CitizenReport | null>(null);
   const [activeTab, setActiveTab] = useState<'satelit' | 'laporan'>('satelit');
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [myReportIds, setMyReportIds] = useState<Set<string>>(new Set());
+  const [privateCoordinates, setPrivateCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [reportAuditTrail, setReportAuditTrail] = useState<Array<Record<string, unknown>>>([]);
 
   // Modal pelaporan & mode pilih koordinat peta
   const [isReportFormOpen, setIsReportFormOpen] = useState<boolean>(false);
@@ -58,6 +78,39 @@ export function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    let ignore = false;
+    void fetchCurrentUser()
+      .then((user) => {
+        if (!ignore) setAuthUser(user);
+      })
+      .catch((error: unknown) => {
+        if (!ignore && sessionStorage.getItem('fireguard.session-token')) {
+          setErrorMessage(error instanceof Error ? error.message : 'Sesi tidak dapat dipulihkan.');
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authUser) return;
+    let ignore = false;
+    void fetchMyReports()
+      .then((ownedReports) => {
+        if (!ignore) setMyReportIds(new Set(ownedReports.map((report) => report.id)));
+      })
+      .catch((error: unknown) => {
+        if (!ignore) {
+          setErrorMessage(error instanceof Error ? error.message : 'Riwayat laporan gagal dimuat.');
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [authUser]);
 
   // Muat data dari backend (Hotspot Satelit & Laporan Warga)
   useEffect(() => {
@@ -98,8 +151,14 @@ export function App() {
           if (!ignore) {
             setReports(repRes.records || []);
           }
-        } catch {
-          // Gagal laporan warga bersifat non-fatal bagi alur satelit
+        } catch (reportError: unknown) {
+          if (!ignore) {
+            setErrorMessage(
+              reportError instanceof Error
+                ? reportError.message
+                : 'Gagal memuat laporan warga.',
+            );
+          }
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -152,9 +211,83 @@ export function App() {
     try {
       const repRes = await fetchCitizenReports();
       setReports(repRes.records || []);
-    } catch {
-      // ignore
+      if (authUser) {
+        const ownedReports = await fetchMyReports();
+        setMyReportIds(new Set(ownedReports.map((report) => report.id)));
+      }
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Gagal memuat ulang laporan.');
     }
+  };
+
+  const handleSelectReport = async (report: CitizenReport) => {
+    setSelectedReport(report);
+    setPrivateCoordinates(null);
+    setReportAuditTrail([]);
+    if (authUser?.role !== 'petugas') return;
+    try {
+      const [precise, audit] = await Promise.all([
+        fetchPrivateReportLocation(report.id),
+        fetchReportAudit(report.id),
+      ]);
+      setPrivateCoordinates(precise);
+      setReportAuditTrail(audit as Array<Record<string, unknown>>);
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Detail petugas gagal dimuat.');
+    }
+  };
+
+  const handleCitizenValidation = async (report: CitizenReport) => {
+    await validateCitizenReport(report.id);
+    await handleReloadReports();
+    setSelectedReport((current) => current?.id === report.id
+      ? { ...current, status: 'riwayat_kebakaran_validasi_warga', citizen_validation_count: (current.citizen_validation_count || 0) + 1 }
+      : current);
+  };
+
+  const handleOfficerUpdate = async (
+    report: CitizenReport,
+    status: ReportStatus,
+    reason?: string,
+  ) => {
+    await updateReportStatus(report.id, {
+      status,
+      verification_notes: status === 'perlu_tinjauan_lapangan' ? reason : undefined,
+      rejection_reason: status === 'ditolak' ? reason : undefined,
+    });
+    await handleReloadReports();
+    setSelectedReport((current) => current?.id === report.id
+      ? {
+        ...current,
+        status,
+        rejection_reason: status === 'ditolak' ? reason : current.rejection_reason,
+        verification_notes: status === 'perlu_tinjauan_lapangan' ? reason : current.verification_notes,
+      }
+      : current);
+    const audit = await fetchReportAudit(report.id);
+    setReportAuditTrail(audit as Array<Record<string, unknown>>);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutAccount();
+      setAuthUser(null);
+      setMyReportIds(new Set());
+      setSelectedReport(null);
+      setPrivateCoordinates(null);
+      setReportAuditTrail([]);
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Logout gagal.');
+    }
+  };
+
+  const openReportForm = () => {
+    if (!authUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setPickedCoords(null);
+    setIsReportFormOpen(true);
   };
 
   // Handler saat tombol 'Pilih di Peta' pada form ditekan
@@ -181,11 +314,11 @@ export function App() {
         onToggleTheme={() => setIsDark((prev) => !prev)}
         totalCount={hotspots.length}
         reportsCount={reports.length}
-        onOpenReportModal={() => {
-          setPickedCoords(null);
-          setIsReportFormOpen(true);
-        }}
+        onOpenReportModal={openReportForm}
         onOpenForestModal={() => setIsForestModalOpen(true)}
+        authUser={authUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={() => void handleLogout()}
       />
 
       {/* Main Container: Map-first Full Viewport Layout */}
@@ -231,6 +364,11 @@ export function App() {
                 </button>
               </div>
             </div>
+            {authUser && (
+              <div className="sidebar-section">
+                <NearbyAlerts onSelectReport={(report) => void handleSelectReport(report)} />
+              </div>
+            )}
 
             {activeTab === 'satelit' ? (
               <>
@@ -268,12 +406,9 @@ export function App() {
               <div className="sidebar-section list-section" style={{ flex: 1 }}>
                 <ReportList
                   reports={reports}
-                  onSelectReport={(r) => setSelectedReport(r)}
+                  onSelectReport={(r) => void handleSelectReport(r)}
                   selectedId={selectedReport?.id}
-                  onOpenCreateModal={() => {
-                    setPickedCoords(null);
-                    setIsReportFormOpen(true);
-                  }}
+                  onOpenCreateModal={openReportForm}
                 />
               </div>
             )}
@@ -281,8 +416,7 @@ export function App() {
             {/* Disclaimer Faktual */}
             <div className="sidebar-footer">
               <p>
-                Sistem FireGuard memadukan sensor termal satelit NASA FIRMS dan pelaporan partisipatif warga.
-                Laporan masyarakat bertindak sebagai informasi awal dan diverifikasi bertahap.
+                Data hotspot satelit bersifat near-real-time dan dapat tertunda beberapa jam. Laporan warga merupakan indikasi lapangan, bukan konfirmasi otomatis kebakaran. Sistem ini bukan sistem peringatan darurat.
               </p>
             </div>
           </div>
@@ -306,7 +440,7 @@ export function App() {
             onSelectHotspot={(h) => setSelectedHotspot(h)}
             reports={reports}
             selectedReport={selectedReport}
-            onSelectReport={(r) => setSelectedReport(r)}
+            onSelectReport={(r) => void handleSelectReport(r)}
             isPickingLocation={isPickingLocation}
             onLocationPicked={handleLocationPicked}
             onCancelPickLocation={() => setIsPickingLocation(false)}
@@ -334,6 +468,12 @@ export function App() {
       <ReportDetailModal
         report={selectedReport}
         onClose={() => setSelectedReport(null)}
+        isOwnReport={selectedReport ? myReportIds.has(selectedReport.id) : false}
+        userRole={authUser?.role || null}
+        privateCoordinates={privateCoordinates}
+        auditTrail={reportAuditTrail}
+        onCitizenValidate={handleCitizenValidation}
+        onOfficerUpdate={handleOfficerUpdate}
       />
 
       {/* Modal Analisis Tutupan Pohon Hansen GFC */}
@@ -341,6 +481,11 @@ export function App() {
         isOpen={isForestModalOpen}
         onClose={() => setIsForestModalOpen(false)}
         isDark={isDark}
+      />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthenticated={(user) => setAuthUser(user)}
       />
     </div>
   );

@@ -14,6 +14,30 @@ const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 const cleanBase = rawBase.replace(/\/+$/, '');
 const API_BASE_URL = cleanBase.endsWith('/api/v1') ? cleanBase : `${cleanBase}/api/v1`;
 
+let authToken = typeof sessionStorage === 'undefined'
+  ? null
+  : sessionStorage.getItem('fireguard.session-token');
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  role: 'warga' | 'petugas';
+  status: string;
+  created_at_utc: string;
+}
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+  if (typeof sessionStorage !== 'undefined') {
+    if (token) sessionStorage.setItem('fireguard.session-token', token);
+    else sessionStorage.removeItem('fireguard.session-token');
+  }
+}
+
+function authenticatedHeaders(): HeadersInit {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+}
+
 interface GeoJSONFeature {
   type: string;
   id?: string | number;
@@ -71,6 +95,7 @@ export async function fetchHotspots(params?: HotspotFilterParams): Promise<Hotsp
   if (params?.startDate) query.append('start_date', params.startDate);
   if (params?.endDate) query.append('end_date', params.endDate);
   if (params?.regionId) query.append('province', params.regionId);
+  query.append('region', 'kalimantan');
   if (params?.minConfidence) query.append('confidence', params.minConfidence);
 
   // Jika mode meminta snapshot secara paksa
@@ -177,7 +202,7 @@ export async function fetchCitizenReports(filters?: {
   if (filters?.category) query.append('category', filters.category);
   if (filters?.status) query.append('status', filters.status);
   if (filters?.province) query.append('province', filters.province);
-  if (filters?.region) query.append('region', filters.region);
+  query.append('region', filters?.region || 'kalimantan');
 
   const res = await fetch(`${API_BASE_URL}/reports?${query.toString()}`);
   if (!res.ok) {
@@ -207,6 +232,7 @@ export async function submitCitizenReport(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authenticatedHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -230,6 +256,7 @@ export async function updateReportStatus(
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
+      ...authenticatedHeaders(),
     },
     body: JSON.stringify(payload),
   });
@@ -240,6 +267,168 @@ export async function updateReportStatus(
     throw new Error(errorMsg);
   }
   return data;
+}
+
+export async function registerAccount(payload: {
+  username: string;
+  email?: string;
+  password: string;
+  role: 'warga' | 'petugas';
+  institution_code?: string;
+}): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Registrasi gagal (HTTP ${res.status})`);
+  }
+  return data.user as AuthUser;
+}
+
+export async function loginAccount(identifier: string, password: string): Promise<{
+  token: string;
+  user: AuthUser;
+}> {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Login gagal (HTTP ${res.status})`);
+  }
+  setAuthToken(data.access_token as string);
+  return { token: data.access_token as string, user: data.user as AuthUser };
+}
+
+export async function fetchCurrentUser(): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: authenticatedHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    setAuthToken(null);
+    throw new Error(data?.detail || `Sesi tidak valid (HTTP ${res.status})`);
+  }
+  return data.user as AuthUser;
+}
+
+export async function logoutAccount(): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    headers: authenticatedHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Logout gagal (HTTP ${res.status})`);
+  }
+  setAuthToken(null);
+}
+
+export async function fetchMyReports(): Promise<CitizenReport[]> {
+  const res = await fetch(`${API_BASE_URL}/reports/mine`, {
+    headers: authenticatedHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal memuat riwayat laporan (HTTP ${res.status})`);
+  }
+  return data.records as CitizenReport[];
+}
+
+export async function validateCitizenReport(reportId: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/reports/${encodeURIComponent(reportId)}/validate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
+    body: JSON.stringify({}),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Validasi laporan gagal (HTTP ${res.status})`);
+  }
+}
+
+export async function fetchPrivateReportLocation(reportId: string): Promise<{
+  latitude: number;
+  longitude: number;
+}> {
+  const res = await fetch(
+    `${API_BASE_URL}/reports/${encodeURIComponent(reportId)}/private`,
+    { headers: authenticatedHeaders() },
+  );
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal memuat koordinat petugas (HTTP ${res.status})`);
+  }
+  return data;
+}
+
+export async function fetchReportAudit(reportId: string): Promise<unknown[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/reports/${encodeURIComponent(reportId)}/audit`,
+    { headers: authenticatedHeaders() },
+  );
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal memuat audit trail (HTTP ${res.status})`);
+  }
+  return [...data.validations, ...data.events];
+}
+
+export async function fetchNearbyReports(
+  latitude: number,
+  longitude: number,
+  radiusKm: number,
+): Promise<{ count: number; message: string; records: Array<{
+  id: string;
+  category: string;
+  observed_at_utc: string;
+  status: string;
+  distance_km: number;
+}> }> {
+  const query = new URLSearchParams({
+    latitude: latitude.toString(),
+    longitude: longitude.toString(),
+    radius_km: radiusKm.toString(),
+  });
+  const res = await fetch(`${API_BASE_URL}/reports/nearby?${query}`, {
+    headers: authenticatedHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal memuat laporan terdekat (HTTP ${res.status})`);
+  }
+  return data;
+}
+
+export async function fetchAlertSettings(): Promise<{ enabled: boolean; radius_m: number }> {
+  const res = await fetch(`${API_BASE_URL}/alerts/settings`, {
+    headers: authenticatedHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal memuat pengaturan alert (HTTP ${res.status})`);
+  }
+  return data;
+}
+
+export async function saveAlertSettings(
+  enabled: boolean,
+  radiusM: number,
+): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/alerts/settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
+    body: JSON.stringify({ enabled, radius_m: radiusM }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.detail || `Gagal menyimpan pengaturan alert (HTTP ${res.status})`);
+  }
 }
 
 /**
@@ -263,5 +452,3 @@ export async function fetchKalimantanBoundaries(): Promise<any> {
   }
   return res.json();
 }
-
-

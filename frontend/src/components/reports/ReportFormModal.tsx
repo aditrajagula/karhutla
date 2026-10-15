@@ -18,7 +18,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
   initialCoords,
   onPickOnMapRequest,
 }) => {
-  const [category, setCategory] = useState<ReportCategory>('kebakaran');
+  const [category, setCategory] = useState<ReportCategory>('asap_kebakaran');
   const [latitude, setLatitude] = useState<string>(
     initialCoords ? initialCoords.lat.toFixed(5) : ''
   );
@@ -31,6 +31,10 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
     return now.toISOString().slice(0, 16);
   });
   const [description, setDescription] = useState<string>('');
+  const [locationMethod, setLocationMethod] = useState<'gps' | 'peta' | 'manual'>(
+    initialCoords ? 'peta' : 'manual',
+  );
+  const [accuracyM, setAccuracyM] = useState<number | null>(null);
   const [reporterName, setReporterName] = useState<string>('');
   const [reporterContact, setReporterContact] = useState<string>('');
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
@@ -63,6 +67,8 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
     if (initialCoords) {
       setLatitude(initialCoords.lat.toFixed(5));
       setLongitude(initialCoords.lng.toFixed(5));
+      setLocationMethod('peta');
+      setAccuracyM(null);
       setSuccessInfo(null);
     }
   }, [initialCoords]);
@@ -80,6 +86,8 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
       (pos) => {
         setLatitude(pos.coords.latitude.toFixed(5));
         setLongitude(pos.coords.longitude.toFixed(5));
+        setLocationMethod('gps');
+        setAccuracyM(pos.coords.accuracy);
         setIsLocating(false);
       },
       (err) => {
@@ -158,6 +166,8 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
         longitude: lonNum,
         observed_at_utc: obsDate.toISOString(),
         description: description.trim(),
+        location_method: locationMethod,
+        accuracy_m: accuracyM,
         reporter_name: reporterName.trim() || undefined,
         reporter_contact: reporterContact.trim() || undefined,
         photo_base64: photoBase64,
@@ -299,7 +309,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                   Kategori Kejadian <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
-                  {(['kebakaran', 'pembukaan_lahan', 'perubahan_tutupan'] as ReportCategory[]).map((cat) => (
+                  {(['asap_kebakaran', 'deforestasi', 'alih_fungsi_bekas_karhutla', 'lainnya'] as ReportCategory[]).map((cat) => (
                     <button
                       key={cat}
                       type="button"
@@ -308,7 +318,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       onClick={() => setCategory(cat)}
                     >
                       <div style={{ fontWeight: 600 }}>
-                        {cat === 'kebakaran' ? '🔥 Kebakaran / Asap' : cat === 'pembukaan_lahan' ? '🚜 Pembukaan Lahan' : '🌲 Perubahan Tutupan'}
+                        {cat === 'asap_kebakaran' ? '🔥 Kebakaran / Asap' : cat === 'deforestasi' ? '🌳 Deforestasi' : cat === 'alih_fungsi_bekas_karhutla' ? '🌱 Alih Fungsi Bekas Karhutla' : '📍 Lain-lain'}
                       </div>
                       <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '2px' }}>
                         {CATEGORY_LABELS[cat]}
@@ -356,7 +366,11 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       step="any"
                       placeholder="Contoh: -0.5234"
                       value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
+                      onChange={(e) => {
+                        setLatitude(e.target.value);
+                        setLocationMethod('manual');
+                        setAccuracyM(null);
+                      }}
                       className="filter-input font-mono"
                       required
                     />
@@ -368,14 +382,19 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       step="any"
                       placeholder="Contoh: 101.4421"
                       value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
+                      onChange={(e) => {
+                        setLongitude(e.target.value);
+                        setLocationMethod('manual');
+                        setAccuracyM(null);
+                      }}
                       className="filter-input font-mono"
                       required
                     />
                   </div>
                 </div>
                 <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', marginTop: '3px' }}>
-                  Batas koordinat daratan Indonesia (-11.0 s.d. 6.0 Lat, 95.0 s.d. 141.5 Lon).
+                  Hanya 5 provinsi Kalimantan. Metode lokasi: {locationMethod}
+                  {accuracyM !== null ? ` (akurasi GPS ±${Math.round(accuracyM)} m)` : ''}.
                 </span>
               </div>
 

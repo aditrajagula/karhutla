@@ -62,9 +62,10 @@ export const ReportList: React.FC<ReportListProps> = ({
           style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1 }}
         >
           <option value="">Semua Kategori</option>
-          <option value="kebakaran">Kebakaran / Asap</option>
-          <option value="pembukaan_lahan">Pembukaan Lahan</option>
-          <option value="perubahan_tutupan">Perubahan Tutupan</option>
+          <option value="asap_kebakaran">Kebakaran / Asap</option>
+          <option value="deforestasi">Deforestasi / Pembukaan Hutan</option>
+          <option value="alih_fungsi_bekas_karhutla">Alih Fungsi Bekas Karhutla</option>
+          <option value="lainnya">Lain-lain</option>
         </select>
 
         <select
@@ -123,7 +124,7 @@ export const ReportList: React.FC<ReportListProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                    {r.category === 'kebakaran' ? '🔥' : r.category === 'pembukaan_lahan' ? '🚜' : '🌲'}{' '}
+                    {r.category === 'kebakaran' || r.category === 'asap_kebakaran' ? '🔥' : r.category === 'pembukaan_lahan' || r.category === 'deforestasi' ? '🌳' : r.category === 'lainnya' ? '📍' : '🌱'}{' '}
                     {CATEGORY_LABELS[r.category as ReportCategory] || r.category}
                   </span>
                   <span

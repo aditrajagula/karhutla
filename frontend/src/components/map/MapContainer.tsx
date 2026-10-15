@@ -3,8 +3,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Hotspot } from '../../types/hotspot';
 import type { CitizenReport } from '../../types/report';
-import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
-import { fetchKalimantanBoundaries } from '../../services/api';
+import { CATEGORY_LABELS, STATUS_LABELS } from '../../types/report';
+import { fetchContextLayers, fetchKalimantanBoundaries } from '../../services/api';
 
 interface MapContainerProps {
   hotspots: Hotspot[];
@@ -19,16 +19,22 @@ interface MapContainerProps {
   isDark?: boolean;
 }
 
-const INDONESIA_BOUNDS: [[number, number], [number, number]] = [
-  [-11.0, 95.0],
-  [6.0, 141.0],
-];
 const KALIMANTAN_BOUNDS: [[number, number], [number, number]] = [
   [-4.5, 108.5],
   [4.5, 119.5],
 ];
 
-type BasemapType = 'dark' | 'light' | 'osm';
+type BasemapType = 'dark' | 'light' | 'osm' | 'satellite';
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character] || character);
+}
 
 export const MapContainer: React.FC<MapContainerProps> = ({
   hotspots,
@@ -53,6 +59,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [showHotspots, setShowHotspots] = useState<boolean>(true);
   const [showReports, setShowReports] = useState<boolean>(true);
   const [showKalimantanBoundaries, setShowKalimantanBoundaries] = useState<boolean>(true);
+  const [contextStatus, setContextStatus] = useState<string | null>(null);
+  const [layerError, setLayerError] = useState<string | null>(null);
 
   const basemap: BasemapType = userBasemap ?? (isDark ? 'dark' : 'light');
 
@@ -65,6 +73,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       zoom: 6,
       minZoom: 4,
       maxZoom: 18,
+      maxBounds: KALIMANTAN_BOUNDS,
+      maxBoundsViscosity: 1,
       zoomControl: false,
       preferCanvas: true,
     });
@@ -130,7 +140,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   }, [isPickingLocation, onLocationPicked]);
 
 
-  // Efek ganti basemap (Esri Gray / Dark / OSM)
+  // Basemaps use standard Web Mercator XYZ tile grids.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -147,6 +157,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     } else if (basemap === 'osm') {
       url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       attribution = '&copy; OpenStreetMap contributors';
+    } else if (basemap === 'satellite') {
+      url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      attribution = 'Tiles &copy; Esri';
     }
 
     const tileLayer = L.tileLayer(url, {
@@ -156,6 +169,24 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     tileLayerRef.current = tileLayer;
   }, [basemap]);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    fetchContextLayers()
+      .then((layers) => {
+        if (!isSubscribed) return;
+        setContextStatus(
+          `${layers.forest_layer.status_message} ${layers.peatland_layer.status_message}`,
+        );
+      })
+      .catch((error: unknown) => {
+        if (!isSubscribed) return;
+        setLayerError(error instanceof Error ? error.message : 'Status layer konteks gagal dimuat.');
+      });
+    return () => {
+      isSubscribed = false;
+    };
+  }, []);
 
   // Layer Poligon Batas 5 Provinsi Kalimantan
   useEffect(() => {
@@ -183,7 +214,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           },
           onEachFeature: (feature, l) => {
             const props = feature.properties || {};
-            const provName = props.province || props.name || 'Kalimantan';
+            const provName = escapeHtml(props.province || props.name || 'Kalimantan');
             const baseline = props.baseline_treecover_2000_ha
               ? (props.baseline_treecover_2000_ha / 1000000).toFixed(2)
               : '-';
@@ -211,7 +242,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         kalimantanLayerRef.current = layer;
       })
       .catch(() => {
-        // Gagal layer batas non-fatal
+        if (isSubscribed) {
+          setLayerError('Batas administratif Kalimantan gagal dimuat.');
+        }
       });
 
     return () => {
@@ -253,10 +286,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <div style="font-weight: 700; color: #B45309; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
             <span>🔥</span> Anomali Termal Satelit
           </div>
-          <div><b>Satelit/Sensor:</b> ${h.satellite} (${h.instrument})</div>
-          <div><b>Waktu:</b> ${h.acq_date} pk. ${h.acq_time} UTC</div>
+          <div><b>Satelit/Sensor:</b> ${escapeHtml(h.satellite)} (${escapeHtml(h.instrument)})</div>
+          <div><b>Waktu:</b> ${escapeHtml(h.acq_date)} pk. ${escapeHtml(h.acq_time)} UTC</div>
           <div><b>Koordinat:</b> ${h.latitude.toFixed(3)}°, ${h.longitude.toFixed(3)}°</div>
-          ${h.province ? `<div><b>Wilayah:</b> ${h.province}</div>` : ''}
+          ${h.province ? `<div><b>Wilayah:</b> ${escapeHtml(h.province)}</div>` : ''}
           <div><b>Tingkat Keyakinan:</b> <span style="text-transform: capitalize; font-weight: 600; color: ${confidenceColor};">${h.confidence}</span></div>
           ${h.frp !== undefined ? `<div><b>Daya Termal (FRP):</b> ${h.frp.toFixed(1)} MW</div>` : ''}
           <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; paddingTop: 3px;">
@@ -284,21 +317,35 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     reports.forEach((r) => {
       const isSelected = selectedReport?.id === r.id;
-      const evidence = r.evidence_assessment;
-      const assessmentLabel = evidence?.category_result || 'Belum dapat dinilai';
-      const badgeConfig = EVIDENCE_BADGE_CONFIG[assessmentLabel] || EVIDENCE_BADGE_CONFIG['Belum dapat dinilai'];
-
-      const strokeColor = isSelected ? '#1E3A2F' : '#0F172A';
-      const radius = isSelected ? 9 : 7;
-
-      const marker = L.circleMarker([r.latitude, r.longitude], {
-        radius,
-        fillColor: badgeConfig.text,
-        color: strokeColor,
-        weight: isSelected ? 3 : 1.5,
-        opacity: 0.95,
-        fillOpacity: 0.85,
-      });
+      if (r.status === 'ditolak') return;
+      const pending = r.status === 'menunggu_validasi';
+      const statusIcon = pending ? null : r.status === 'perlu_tinjauan_lapangan'
+        ? '⚠️'
+        : r.status === 'terverifikasi_petugas'
+          ? '🔥✓'
+          : '🔥';
+      const statusColor = r.status === 'riwayat_kebakaran_validasi_warga'
+        ? '#EA580C'
+        : r.status === 'perlu_tinjauan_lapangan'
+          ? '#D97706'
+          : '#DC2626';
+      const marker = pending
+        ? L.circleMarker([r.latitude, r.longitude], {
+          radius: isSelected ? 9 : 7,
+          fillColor: '#2563EB',
+          color: isSelected ? '#FFFFFF' : '#1D4ED8',
+          weight: isSelected ? 3 : 1.5,
+          opacity: 0.95,
+          fillOpacity: 0.9,
+        })
+        : L.marker([r.latitude, r.longitude], {
+          icon: L.divIcon({
+            className: 'fireguard-report-status-marker',
+            html: `<span aria-label="${escapeHtml(STATUS_LABELS[r.status])}" style="color:${statusColor}">${statusIcon}</span>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          }),
+        });
 
       const catLabel = CATEGORY_LABELS[r.category] || r.category;
       const shortDesc = r.description.length > 80 ? `${r.description.slice(0, 80)}...` : r.description;
@@ -306,18 +353,18 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       const popupContent = `
         <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 200px;">
           <div style="font-weight: 600; color: #0284C7; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-            <span>📢 Laporan Warga</span>
-            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${badgeConfig.bg}; color: ${badgeConfig.text}; border: 1px solid ${badgeConfig.border};">
-              ${badgeConfig.icon} ${assessmentLabel}
+            <span>${pending ? '🔵' : statusIcon} ${escapeHtml(STATUS_LABELS[r.status])}</span>
+            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(37, 99, 235, 0.1); color: ${statusColor}; border: 1px solid ${statusColor};">
+              ${r.citizen_validation_count || 0} validasi warga
             </span>
           </div>
-          <div><b>ID:</b> <code>${r.id}</code></div>
-          <div><b>Kategori:</b> ${catLabel}</div>
+          <div><b>ID:</b> <code>${escapeHtml(r.id)}</code></div>
+          <div><b>Kategori:</b> ${escapeHtml(catLabel)}</div>
           <div><b>Koordinat:</b> ${r.latitude.toFixed(3)}°, ${r.longitude.toFixed(3)}° <span style="font-size: 9px; color: #64748B;">(disamarkan)</span></div>
-          ${r.province ? `<div><b>Wilayah:</b> ${r.province}</div>` : ''}
-          <div><b>Waktu Pengamatan:</b> ${r.observed_at_utc.slice(0, 16).replace('T', ' ')} UTC</div>
+          ${r.province ? `<div><b>Wilayah:</b> ${escapeHtml(r.province)}</div>` : ''}
+          <div><b>Waktu Pengamatan:</b> ${escapeHtml(r.observed_at_utc.slice(0, 16).replace('T', ' '))} UTC</div>
           <div style="margin-top: 4px; font-style: italic; color: #475569; background: #F8FAFC; padding: 4px; border-radius: 4px; border: 1px solid #E2E8F0;">
-            "${shortDesc}"
+            "${escapeHtml(shortDesc)}"
           </div>
           ${r.photo_url ? '<div style="margin-top: 4px; color: #0284C7; font-size: 11px;">📷 Ada foto pendukung</div>' : ''}
           ${r.is_duplicate_suspect ? '<div style="margin-top: 2px; color: #D97706; font-size: 10px; font-weight: 600;">⚠️ Indikasi Duplikasi Area</div>' : ''}
@@ -352,14 +399,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       duration: 0.5,
     });
   }, [selectedReport]);
-
-  const handleResetIndonesia = () => {
-    if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.fitBounds(INDONESIA_BOUNDS, {
-      padding: [20, 20],
-      animate: true,
-    });
-  };
 
   const handleFocusKalimantan = () => {
     if (!mapInstanceRef.current) return;
@@ -442,27 +481,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <span>🌴 Fokus Kalimantan</span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleResetIndonesia}
-          title="Fokus Seluruh Indonesia"
-          className="control-btn"
-          style={{
-            fontSize: '12px',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
-            background: isDark ? '#1E293B' : '#F1F5F9',
-            color: isDark ? '#F8FAFC' : '#0F172A',
-            cursor: 'pointer',
-            minHeight: '34px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          <span>🇮🇩 Seluruh Indonesia</span>
-        </button>
 
         {/* Toggle Layer Batas Kalimantan */}
         <label
@@ -557,6 +575,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <option value="light">Basemap Terang (Esri Canvas)</option>
           <option value="dark">Basemap Gelap (Esri Canvas)</option>
           <option value="osm">Basemap Standar (OSM)</option>
+          <option value="satellite">Citra Satelit (Esri)</option>
         </select>
       </div>
 
@@ -608,7 +627,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               flexShrink: 0,
             }}
           />
-          <span><b>Laporan Warga</b> (Bukti Geospasial Terpadu)</span>
+          <span><b>Laporan baru</b> (titik biru); divalidasi warga (ikon api)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
           <span
@@ -623,8 +642,13 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <span><b>Batas 5 Provinsi Kalimantan</b> (Indonesia)</span>
         </div>
         <div style={{ fontSize: '10px', color: isDark ? '#94A3B8' : '#64748B', borderTop: '1px solid var(--color-border)', paddingTop: '4px' }}>
-          Eksklusif 5 provinsi Indonesia. Malaysia & Brunei dikecualikan dari analisis.
+          Hotspot near-real-time dapat tertunda beberapa jam; bukan konfirmasi kebakaran atau alert darurat.
         </div>
+        {(contextStatus || layerError) && (
+          <div role={layerError ? 'alert' : 'note'} style={{ marginTop: '5px', fontSize: '10px', color: layerError ? '#B91C1C' : isDark ? '#FBBF24' : '#92400E' }}>
+            {layerError || contextStatus}
+          </div>
+        )}
       </div>
     </div>
   );

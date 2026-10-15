@@ -1,0 +1,18 @@
+{
+  "snapshot_filename": "snapshot_team_20261015_172306.csv",
+  "snapshot_type": "TEAM_LOCAL_CAPTURE",
+  "label": "Snapshot Hasil Pengambilan Mandiri Tim (Bukan Benchmark Panitia)",
+  "fetched_at_utc": "2026-10-15T17:23:06Z",
+  "source": "NASA_FIRMS_API",
+  "sensor_product": "VIIRS_NOAA20_NRT",
+  "observation_date_range": {
+    "min": "2026-10-12",
+    "max": "2026-10-15"
+  },
+  "query_parameters": {
+    "bbox": "95.0,-11.0,141.5,6.0",
+    "total_days": 4
+  },
+  "record_count": 34963,
+  "checksum_sha256": "4079c211821697676ef563e7da741b4d95833bbbc1b89f368c7990a3cc37418f"
+}

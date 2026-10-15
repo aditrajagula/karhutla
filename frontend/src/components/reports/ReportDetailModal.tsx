@@ -1,16 +1,31 @@
 import React, { useEffect } from 'react';
-import type { CitizenReport } from '../../types/report';
+import type { CitizenReport, ReportStatus } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
 
 interface ReportDetailModalProps {
   report: CitizenReport | null;
   onClose: () => void;
+  isOwnReport?: boolean;
+  userRole?: 'warga' | 'petugas' | null;
+  privateCoordinates?: { latitude: number; longitude: number } | null;
+  auditTrail?: Array<Record<string, unknown>>;
+  onCitizenValidate?: (report: CitizenReport) => Promise<void>;
+  onOfficerUpdate?: (report: CitizenReport, status: ReportStatus, reason?: string) => Promise<void>;
 }
 
 export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   report,
   onClose,
+  isOwnReport = false,
+  userRole = null,
+  privateCoordinates,
+  auditTrail = [],
+  onCitizenValidate,
+  onOfficerUpdate,
 }) => {
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionLoading, setActionLoading] = React.useState(false);
+  const [rejectionReason, setRejectionReason] = React.useState('');
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -23,13 +38,14 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
   // Status badge tema
   const statusColors = {
-    PENDING: { bg: 'rgba(245, 158, 11, 0.15)', text: '#D97706', border: '#D97706' },
-    IN_REVIEW: { bg: 'rgba(37, 99, 235, 0.15)', text: '#2563EB', border: '#2563EB' },
-    VERIFIED: { bg: 'rgba(16, 185, 129, 0.15)', text: '#059669', border: '#059669' },
-    REJECTED: { bg: 'rgba(239, 68, 68, 0.15)', text: '#DC2626', border: '#DC2626' },
+    menunggu_validasi: { bg: 'rgba(37, 99, 235, 0.15)', text: '#2563EB', border: '#2563EB' },
+    riwayat_kebakaran_validasi_warga: { bg: 'rgba(234, 88, 12, 0.15)', text: '#C2410C', border: '#C2410C' },
+    perlu_tinjauan_lapangan: { bg: 'rgba(245, 158, 11, 0.15)', text: '#D97706', border: '#D97706' },
+    terverifikasi_petugas: { bg: 'rgba(239, 68, 68, 0.15)', text: '#DC2626', border: '#DC2626' },
+    ditolak: { bg: 'rgba(107, 114, 128, 0.15)', text: '#475569', border: '#475569' },
   };
 
-  const currentTheme = statusColors[report.status] || statusColors.PENDING;
+  const currentTheme = statusColors[report.status] || statusColors.menunggu_validasi;
 
   // Bukti hasil analisis terpisah
   const evidence = report.evidence_assessment;
@@ -177,7 +193,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                   lineHeight: 1.6,
                 }}
               >
-                {report.category === 'kebakaran' && Boolean(evidence.details['distance_km'] !== undefined) && (
+                {(report.category === 'kebakaran' || report.category === 'asap_kebakaran') && Boolean(evidence.details['distance_km'] !== undefined) && (
                   <div>
                     <div>📍 <b>Jarak ke Hotspot Terdekat:</b> {String(evidence.details['distance_km'])} km</div>
                     <div>🛰️ <b>Satelit & Sensor:</b> {String(evidence.details['satellite'] || 'VIIRS')} ({String(evidence.details['instrument'] || 'VIIRS')})</div>
@@ -185,7 +201,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     <div>🔥 <b>FRP:</b> {String(evidence.details['frp_mw'] ?? '-')} MW | <b>Confidence:</b> {String(evidence.details['confidence'] ?? '-')}</div>
                   </div>
                 )}
-                {report.category !== 'kebakaran' && Boolean(evidence.details['dataset']) && (
+                {report.category !== 'kebakaran' && report.category !== 'asap_kebakaran' && Boolean(evidence.details['dataset']) && (
                   <div>
                     <div>📚 <b>Dataset:</b> {String(evidence.details['dataset'])} (UMD/Google/NASA)</div>
                     <div>📐 <b>Resolusi Piksel WGS84:</b> ~{String(evidence.details['pixel_area_ha'] ?? '0.0953')} ha / piksel</div>
@@ -215,6 +231,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             )}
           </div>
 
+          {report.status === 'riwayat_kebakaran_validasi_warga' && (
+            <div role="note" style={{ padding: '9px 12px', marginBottom: '12px', border: '1px solid #EA580C', borderRadius: '6px', color: '#9A3412', fontSize: '12px' }}>
+              Validasi warga lain, bukan konfirmasi resmi atau bukti hukum.
+            </div>
+          )}
+
           {/* Rincian Laporan Lapangan */}
           <div className="detail-row">
             <span className="detail-label">Kategori Laporan:</span>
@@ -230,6 +252,14 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
               <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>(Disamarkan ~100m demi privasi)</span>
             </span>
           </div>
+          {userRole === 'petugas' && privateCoordinates && (
+            <div className="detail-row">
+              <span className="detail-label">Koordinat presisi petugas:</span>
+              <span className="detail-val font-mono">
+                {privateCoordinates.latitude.toFixed(6)}°, {privateCoordinates.longitude.toFixed(6)}°
+              </span>
+            </div>
+          )}
 
           {report.province && (
             <div className="detail-row">
@@ -300,8 +330,122 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
         </div>
 
         <div className="modal-footer">
+          {userRole === 'warga' && report.status === 'menunggu_validasi' && (
+            <div style={{ display: 'grid', gap: '6px', width: '100%', marginBottom: '10px' }}>
+              {actionError && <span role="alert" style={{ color: '#B91C1C', fontSize: '12px' }}>{actionError}</span>}
+              {isOwnReport ? (
+                <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                  Anda tidak dapat memvalidasi laporan milik sendiri.
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-action"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    if (!onCitizenValidate) return;
+                    setActionLoading(true);
+                    setActionError(null);
+                    try {
+                      await onCitizenValidate(report);
+                    } catch (error) {
+                      setActionError(error instanceof Error ? error.message : 'Validasi gagal.');
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  {actionLoading ? 'Menyimpan validasi...' : 'Validasi laporan warga lain'}
+                </button>
+              )}
+            </div>
+          )}
+          {userRole === 'petugas' && report.status !== 'ditolak' && (
+            <div style={{ display: 'grid', gap: '6px', width: '100%', marginBottom: '10px' }}>
+              {actionError && <span role="alert" style={{ color: '#B91C1C', fontSize: '12px' }}>{actionError}</span>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="btn-action"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    if (!onOfficerUpdate) return;
+                    setActionLoading(true);
+                    setActionError(null);
+                    try {
+                      await onOfficerUpdate(report, 'perlu_tinjauan_lapangan');
+                    } catch (error) {
+                      setActionError(error instanceof Error ? error.message : 'Pembaruan status gagal.');
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  Perlu tinjauan lapangan
+                </button>
+                <button
+                  type="button"
+                  className="btn-action"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    if (!onOfficerUpdate) return;
+                    setActionLoading(true);
+                    setActionError(null);
+                    try {
+                      await onOfficerUpdate(report, 'terverifikasi_petugas');
+                    } catch (error) {
+                      setActionError(error instanceof Error ? error.message : 'Pembaruan status gagal.');
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  Verifikasi petugas
+                </button>
+              </div>
+              <input
+                aria-label="Alasan penolakan laporan"
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Alasan penolakan wajib diisi"
+                className="filter-input"
+              />
+              <button
+                type="button"
+                className="btn-action"
+                disabled={actionLoading || rejectionReason.trim().length < 10}
+                onClick={async () => {
+                  if (!onOfficerUpdate) return;
+                  setActionLoading(true);
+                  setActionError(null);
+                  try {
+                    await onOfficerUpdate(report, 'ditolak', rejectionReason.trim());
+                  } catch (error) {
+                    setActionError(error instanceof Error ? error.message : 'Pembaruan status gagal.');
+                  } finally {
+                    setActionLoading(false);
+                  }
+                }}
+              >
+                Tolak laporan
+              </button>
+              {auditTrail.length > 0 && (
+                <details>
+                  <summary>Audit trail ({auditTrail.length})</summary>
+                  <pre style={{ maxHeight: '180px', overflow: 'auto', fontSize: '10px' }}>
+                    {JSON.stringify(auditTrail, null, 2)}
+                  </pre>
+                </details>
+              )}
+              {userRole === 'petugas' && (report.status === 'terverifikasi_petugas' || report.status === 'perlu_tinjauan_lapangan') && (
+                <p className="disclaimer-text">
+                  Verifikasi petugas adalah penilaian indikasi lanjutan, bukan bukti hukum atau konfirmasi kebakaran pasti.
+                </p>
+              )}
+            </div>
+          )}
           <p className="disclaimer-text">
-            Platform FireGuard untuk warga: Informasi warga dipadukan dengan penginderaan jauh satelit untuk transparansi pemantauan hutan Kalimantan tanpa peran petugas tertutup.
+            Laporan warga merupakan indikasi lapangan, bukan konfirmasi otomatis kebakaran. Data hotspot satelit near-real-time dapat tertunda beberapa jam; sistem ini bukan peringatan darurat.
           </p>
         </div>
       </div>

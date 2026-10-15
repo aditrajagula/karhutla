@@ -20,8 +20,8 @@ Sesuai ketentuan [PRD.md](file:///c:/Data-Karhutla/PRD.md):
 3. **Penanganan Saat Kunci Kosong / API Gagal:**
    * Jika snapshot tim lokal tersedia: Sistem beralih otomatis ke snapshot terbaru (`"FALLBACK_LOCAL_SNAPSHOT"`).
    * Jika belum ada snapshot: Sistem mengembalikan status jelas `"NO_DATA_AVAILABLE"` tanpa mengalami crash.
-4. **Batas Geografis Terverifikasi:** Menggunakan geometri administratif 34 provinsi Indonesia (EPSG:4326) yang divalidasi topologinya dengan Shapely 2.x STRtree. Dokumentasi sumber dicatat di [data/boundaries/SOURCES.md](file:///c:/Data-Karhutla/data/boundaries/SOURCES.md).
-5. **Layer Hutan dan Gambut (Opsional):** Dilaporkan transparan sebagai *belum tersedia* melalui endpoint `GET /api/v1/context-layers`.
+4. **Cakupan fitur laporan warga:** Dibatasi pada geometri administratif lima provinsi Kalimantan Indonesia (EPSG:4326); batas disimpan dalam GeoJSON dan diverifikasi dengan point-in-polygon.
+5. **Layer Hutan dan Gambut:** Statistik Hansen agregat ditandai sebagai demonstrasi; raster lokal hanya mencakup area kecil sekitar Palangka Raya, dan layer gambut belum tersedia. API menyatakan keterbatasan ini secara transparan.
 
 ---
 
@@ -72,7 +72,7 @@ c:/Data-Karhutla/
 │   └── src/                           # Komponen peta, status bar, detail modal, services
 └── data/                              # Dataset spasial dan penyimpanan snapshot
     ├── boundaries/
-    │   ├── indonesia_provinces.geojson# Batas administratif 34 provinsi daratan Indonesia
+    │   ├── indonesia_provinces.geojson# Geometri administratif untuk batas wilayah
     │   └── SOURCES.md                 # Dokumentasi sumber & verifikasi batas
     ├── snapshots/
     │   └── README.md                  # Kebijakan snapshot mandiri & manifest SHA-256
@@ -107,9 +107,9 @@ FIRMS_MAP_KEY=d4208fc31485aff61dda184dc5f1a4c8
 Aplikasi menggunakan database SQLite tertanam (*embedded*) melalui SQLAlchemy ORM. **Tidak memerlukan instalasi server database eksternal** (PostgreSQL/MySQL terpisah).
 
 1. **Lokasi File Database:**
-   File database disimpan di `data/citizen_reports.db` (dikonfigurasi melalui `REPORTS_DB_PATH` di `.env`).
-2. **Inisialisasi Otomatis:**
-   Skema tabel `citizen_reports` otomatis dibuat saat backend pertama kali dijalankan.
+   File database secara default disimpan di `data/citizen_reports.db`; lokasi dapat diubah melalui `REPORTS_DB_PATH`.
+2. **Inisialisasi dan kompatibilitas otomatis:**
+   Tabel laporan, akun, sesi, validasi warga, audit, dan pengaturan alert dibuat saat startup. Kolom baru untuk database laporan lama ditambahkan melalui migrasi SQLite saat backend mulai.
 3. **Verifikasi Koneksi / Inisialisasi Manual:**
    ```powershell
    .\.venv\Scripts\python.exe -c "import sys; sys.path.insert(0, 'backend'); from app.reports_storage import reports_repo; print('Database terhubung di:', reports_repo.db_path)"
@@ -123,8 +123,15 @@ Aplikasi menggunakan database SQLite tertanam (*embedded*) melalui SQLAlchemy OR
    ```powershell
    Remove-Item data\citizen_reports.db -ErrorAction SilentlyContinue
    ```
+   Ini menghapus data laporan, akun, sesi, validasi, audit, dan pengaturan alert; jangan jalankan pada database yang berisi data yang perlu dipertahankan.
 
-### D. Jalankan Server FastAPI Backend
+### D. Autentikasi dan Alur Laporan
+* Registrasi warga dan login tersedia melalui `POST /api/v1/auth/register` dan `POST /api/v1/auth/login`. Gunakan token Bearer dari login untuk membuat laporan, melihat riwayat sendiri, memvalidasi laporan warga lain, dan mengakses pengaturan alert.
+* Registrasi petugas hanya diaktifkan jika `PETUGAS_REGISTRATION_CODE` dikonfigurasi pada environment backend. Simpan kode tersebut hanya pada `.env` lokal/secret deployment; jangan commit atau mengirimkannya ke frontend.
+* Petugas dapat menggunakan endpoint status laporan dan audit trail; lokasi presisi pelapor hanya tersedia bagi petugas dan aksesnya dicatat. Respons publik menghilangkan identitas/kontak dan membulatkan koordinat.
+* `GET /api/v1/reports/nearby` memakai koordinat saat diminta untuk pencarian radius 1, 3, 5, atau 10 km. Pengaturan alert hanya menyimpan status dan radius, bukan koordinat GPS. Alert laporan warga bukan peringatan darurat atau konfirmasi kebakaran.
+
+### E. Jalankan Server FastAPI Backend
 ```powershell
 .\.venv\Scripts\uvicorn backend.app.main:app --reload --port 8000
 ```
@@ -133,7 +140,7 @@ Server aktif di:
 * **Dokumentasi Interaktif (Swagger UI):** `http://localhost:8000/docs`
 * **Health Check:** `http://localhost:8000/health`
 
-### E. Jalankan Dashboard Frontend
+### F. Jalankan Dashboard Frontend
 Pada terminal terpisah:
 ```powershell
 cd frontend
@@ -248,9 +255,9 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
   },
   "boundary_layer": {
     "available": true,
-    "source": "Batas Daratan 34 Provinsi Indonesia (WGS84 EPSG:4326)",
-    "status_message": "Geometri batas wilayah daratan Indonesia aktif untuk filter spasial.",
-    "feature_count": 34
+    "source": "Batas 5 provinsi Kalimantan (WGS84 EPSG:4326)",
+    "status_message": "Geometri 5 provinsi Kalimantan aktif untuk filter spasial.",
+    "feature_count": 5
   }
 }
 ```
@@ -259,7 +266,7 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
 
 ## 6. Menjalankan Pengujian (Testing)
 
-### A. Eksekusi Seluruh Suite Backend (113 Tests)
+### A. Eksekusi Seluruh Suite Backend
 Jalankan seluruh test suite otomatis:
 ```powershell
 .\.venv\Scripts\pytest -v
@@ -288,7 +295,6 @@ Untuk demonstrasi offline tanpa ketergantungan internet dan tanpa latensi remote
 ```
 
 ### D. Hasil Pengujian Aktual
-* **113 tests passed (100% lulus)** mencakup 15 file pengujian:
-  1. **Modul Inti FIRMS & Geospasial Nasional (50 tests):** Unit validator (`test_validation.py`), deduplikasi 5 desimal (`test_cleaner.py`), STRtree Point-in-Polygon 34 provinsi daratan Indonesia (`test_spatial_filter.py`), snapshot integritas SHA-256 (`test_snapshot_manager.py`), integrasi NASA FIRMS API live (`test_firms_integration.py`), orkestrasi pipeline (`test_pipeline.py`), kontrak endpoint REST API & health (`test_api_endpoints.py`, `test_hotspots.py`), audit pipeline independen (`test_audit_pipeline_independent.py`), dan integrasi frontend live (`test_frontend_integration_live.py`).
-  2. **Modul Raster Hansen GFC & Kalimantan (43 tests):** Batas spasial 5 provinsi Kalimantan & eksklusi wilayah luar (`test_kalimantan_spatial.py`), pembacaan piksel GeoTIFF & isolasi status data demo (`test_hansen_raster_integration.py`), kalkulasi tutupan hutan (`test_forest_change.py`), verifikasi analitik transformasi koordinat GeoTIFF EPSG:4326, audit kewajaran baseline non-hutan perkotaan Palangka Raya, pembacaan paralel multi-layer (*ThreadPoolExecutor*), batas waktu tunggu ketat (*strict timeout* 3.0s), dan *dual-tier caching* memori grid 30m.
-  3. **Modul Laporan Bukti Warga & Privasi (20 tests):** Siklus hidup laporan warga, anti-duplikasi, & status verifikasi operator (`test_citizen_reports.py`), serta proteksi kontak pelapor, penyamaran koordinat publik (*privacy obfuscation*), dan penilaian bukti (*evidence assessment*) terpisah (`test_citizen_evidence_and_privacy.py`).
+* Backend: **117 passed, 1 skipped** pada eksekusi terakhir seluruh suite (`pytest -q backend/tests`). Satu warning deprecation berasal dari integrasi Starlette TestClient/httpx.
+* Frontend: `npm run build` berhasil. `npm run lint` berhasil dengan dua warning `react(set-state-in-effect)` yang sudah ada di `ReportFormModal.tsx`.
+* Cakupan test meliputi pipeline FIRMS, validasi geospasial, layer Hansen, autentikasi/sesi, alur laporan warga/petugas, privasi, alert, dan endpoint API.

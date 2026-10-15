@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { Hotspot, HotspotFilterParams } from './types/hotspot';
+import type { CitizenReport } from './types/report';
 import type { DataSourceMode, SystemStatus } from './types/status';
-import { fetchHotspots, fetchSystemStatus } from './services/api';
+import { fetchCitizenReports, fetchHotspots, fetchSystemStatus } from './services/api';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
 import { DetectionList } from './components/detection/DetectionList';
 import { HotspotDetailModal } from './components/detection/HotspotDetailModal';
+import { ReportFormModal } from './components/reports/ReportFormModal';
+import { ReportDetailModal } from './components/reports/ReportDetailModal';
+import { ReportList } from './components/reports/ReportList';
+import { ForestLossModal } from './components/forest/ForestLossModal';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { EmptyState } from './components/common/EmptyState';
 import { ErrorBanner } from './components/common/ErrorBanner';
@@ -21,6 +26,18 @@ export function App() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+
+  // Data pelaporan masyarakat
+  const [reports, setReports] = useState<CitizenReport[]>([]);
+  const [selectedReport, setSelectedReport] = useState<CitizenReport | null>(null);
+  const [activeTab, setActiveTab] = useState<'satelit' | 'laporan'>('satelit');
+
+  // Modal pelaporan & mode pilih koordinat peta
+  const [isReportFormOpen, setIsReportFormOpen] = useState<boolean>(false);
+  const [isForestModalOpen, setIsForestModalOpen] = useState<boolean>(false);
+  const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
+  const [pickedCoords, setPickedCoords] = useState<{ lat: number; lng: number } | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState<boolean>(false);
@@ -42,7 +59,7 @@ export function App() {
     }
   }, [isDark]);
 
-  // Muat data dari backend
+  // Muat data dari backend (Hotspot Satelit & Laporan Warga)
   useEffect(() => {
     let ignore = false;
 
@@ -51,6 +68,7 @@ export function App() {
       setErrorMessage(null);
 
       try {
+        // Ambil status sistem
         try {
           const statusRes = await fetchSystemStatus();
           if (!ignore) setSystemStatus(statusRes);
@@ -58,6 +76,7 @@ export function App() {
           // Status call minor
         }
 
+        // Ambil data hotspot satelit
         const res = await fetchHotspots({
           ...filters,
           mode,
@@ -72,6 +91,16 @@ export function App() {
             }
           }
         }
+
+        // Ambil data laporan warga
+        try {
+          const repRes = await fetchCitizenReports();
+          if (!ignore) {
+            setReports(repRes.records || []);
+          }
+        } catch {
+          // Gagal laporan warga bersifat non-fatal bagi alur satelit
+        }
       } catch (err: unknown) {
         if (!ignore) {
           const msg = err instanceof Error ? err.message : 'Gagal menghubungi backend API';
@@ -84,7 +113,7 @@ export function App() {
               });
               setHotspots(snapshotRes.records || []);
               setMode('snapshot');
-              setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan snapshot lokal 7 hari (Benchmark JOINTS 2026).');
+              setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan snapshot lokal tim.');
             } catch {
               setHotspots([]);
             }
@@ -118,6 +147,29 @@ export function App() {
     });
   };
 
+  // Muat ulang daftar laporan warga setelah laporan baru dibuat atau status diubah
+  const handleReloadReports = async () => {
+    try {
+      const repRes = await fetchCitizenReports();
+      setReports(repRes.records || []);
+    } catch {
+      // ignore
+    }
+  };
+
+  // Handler saat tombol 'Pilih di Peta' pada form ditekan
+  const handleRequestPickOnMap = () => {
+    setIsReportFormOpen(false);
+    setIsPickingLocation(true);
+  };
+
+  // Handler saat titik pada peta diklik
+  const handleLocationPicked = (coords: { lat: number; lng: number }) => {
+    setPickedCoords(coords);
+    setIsPickingLocation(false);
+    setIsReportFormOpen(true);
+  };
+
   return (
     <div className={`app-root ${isDark ? 'theme-dark' : 'theme-light'}`}>
       {/* Top Bar Header */}
@@ -128,6 +180,12 @@ export function App() {
         isDark={isDark}
         onToggleTheme={() => setIsDark((prev) => !prev)}
         totalCount={hotspots.length}
+        reportsCount={reports.length}
+        onOpenReportModal={() => {
+          setPickedCoords(null);
+          setIsReportFormOpen(true);
+        }}
+        onOpenForestModal={() => setIsForestModalOpen(true)}
       />
 
       {/* Main Container: Map-first Full Viewport Layout */}
@@ -152,40 +210,79 @@ export function App() {
               </div>
             )}
 
-            {/* Panel Filter */}
+            {/* Tab Navigasi Antara Satelit & Laporan Warga */}
             <div className="sidebar-section">
-              <FilterPanel
-                filters={filters}
-                onFilterChange={(newFilters) => setFilters(newFilters)}
-                onReset={handleResetFilters}
-                totalFiltered={hotspots.length}
-              />
+              <div className="sidebar-tabs">
+                <button
+                  type="button"
+                  className={`tab-btn ${activeTab === 'satelit' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('satelit')}
+                >
+                  <span>🔥</span>
+                  <span>Satelit FIRMS ({hotspots.length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`tab-btn ${activeTab === 'laporan' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('laporan')}
+                >
+                  <span>📢</span>
+                  <span>Laporan Warga ({reports.length})</span>
+                </button>
+              </div>
             </div>
 
-            {/* List Deteksi / Loading / Empty */}
-            <div className="sidebar-section list-section">
-              {isLoading ? (
-                <LoadingSpinner label="Mengambil deteksi satelit FIRMS untuk wilayah terpilih..." />
-              ) : hotspots.length === 0 ? (
-                <EmptyState
-                  message="Tidak ada anomali termal terdeteksi oleh satelit VIIRS pada rentang waktu terpilih di wilayah Indonesia."
-                  actionLabel="Perluas Rentang ke 7 Hari"
-                  onAction={() => setFilters((f) => ({ ...f, dayRange: 7, startDate: '', endDate: '' }))}
+            {activeTab === 'satelit' ? (
+              <>
+                {/* Panel Filter Observasi Satelit */}
+                <div className="sidebar-section">
+                  <FilterPanel
+                    filters={filters}
+                    onFilterChange={(newFilters) => setFilters(newFilters)}
+                    onReset={handleResetFilters}
+                    totalFiltered={hotspots.length}
+                  />
+                </div>
+
+                {/* List Deteksi Satelit */}
+                <div className="sidebar-section list-section">
+                  {isLoading ? (
+                    <LoadingSpinner label="Mengambil deteksi satelit FIRMS untuk wilayah terpilih..." />
+                  ) : hotspots.length === 0 ? (
+                    <EmptyState
+                      message="Tidak ada anomali termal terdeteksi oleh satelit VIIRS pada rentang waktu terpilih di wilayah Indonesia."
+                      actionLabel="Perluas Rentang ke 7 Hari"
+                      onAction={() => setFilters((f) => ({ ...f, dayRange: 7, startDate: '', endDate: '' }))}
+                    />
+                  ) : (
+                    <DetectionList
+                      hotspots={hotspots}
+                      onSelectHotspot={(h) => setSelectedHotspot(h)}
+                      selectedId={selectedHotspot?.id}
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Panel Laporan Partisipasi Warga */
+              <div className="sidebar-section list-section" style={{ flex: 1 }}>
+                <ReportList
+                  reports={reports}
+                  onSelectReport={(r) => setSelectedReport(r)}
+                  selectedId={selectedReport?.id}
+                  onOpenCreateModal={() => {
+                    setPickedCoords(null);
+                    setIsReportFormOpen(true);
+                  }}
                 />
-              ) : (
-                <DetectionList
-                  hotspots={hotspots}
-                  onSelectHotspot={(h) => setSelectedHotspot(h)}
-                  selectedId={selectedHotspot?.id}
-                />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Disclaimer Faktual */}
             <div className="sidebar-footer">
               <p>
-                Data satelit NASA FIRMS VIIRS (NOAA-20 / Suomi NPP).
-                Anomali termal merupakan indikasi sensor satelit, bukan kepastian kebakaran.
+                Sistem FireGuard memadukan sensor termal satelit NASA FIRMS dan pelaporan partisipatif warga.
+                Laporan masyarakat bertindak sebagai informasi awal dan diverifikasi bertahap.
               </p>
             </div>
           </div>
@@ -198,7 +295,7 @@ export function App() {
           onClick={() => setIsMobilePanelOpen((prev) => !prev)}
           aria-label={isMobilePanelOpen ? 'Tutup panel kontrol' : 'Buka panel kontrol'}
         >
-          {isMobilePanelOpen ? 'Tutup Panel' : `Kontrol & Deteksi (${hotspots.length})`}
+          {isMobilePanelOpen ? 'Tutup Panel' : `Kontrol & Deteksi (${hotspots.length + reports.length})`}
         </button>
 
         {/* Map Canvas Kanvas Peta Interaktif */}
@@ -207,15 +304,43 @@ export function App() {
             hotspots={hotspots}
             selectedHotspot={selectedHotspot}
             onSelectHotspot={(h) => setSelectedHotspot(h)}
+            reports={reports}
+            selectedReport={selectedReport}
+            onSelectReport={(r) => setSelectedReport(r)}
+            isPickingLocation={isPickingLocation}
+            onLocationPicked={handleLocationPicked}
+            onCancelPickLocation={() => setIsPickingLocation(false)}
             isDark={isDark}
           />
         </section>
       </main>
 
-      {/* Modal Detail Titik Terpilih */}
+      {/* Modal Detail Titik Hotspot Satelit */}
       <HotspotDetailModal
         hotspot={selectedHotspot}
         onClose={() => setSelectedHotspot(null)}
+      />
+
+      {/* Modal Form Pelaporan Masyarakat */}
+      <ReportFormModal
+        isOpen={isReportFormOpen}
+        onClose={() => setIsReportFormOpen(false)}
+        onSuccess={handleReloadReports}
+        initialCoords={pickedCoords}
+        onPickOnMapRequest={handleRequestPickOnMap}
+      />
+
+      {/* Modal Detail Laporan Masyarakat */}
+      <ReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+      />
+
+      {/* Modal Analisis Tutupan Pohon Hansen GFC */}
+      <ForestLossModal
+        isOpen={isForestModalOpen}
+        onClose={() => setIsForestModalOpen(false)}
+        isDark={isDark}
       />
     </div>
   );

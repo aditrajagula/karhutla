@@ -11,7 +11,9 @@ export interface Hotspot {
   confidence: ConfidenceLevel;
   frp?: number; // Fire Radiative Power (MW)
   daynight: 'D' | 'N';
-  source_provenance: string; // 'NASA_FIRMS_API' | 'JOINTS_BENCHMARK_SNAPSHOT'
+  source_provenance: string; // 'NASA_FIRMS_API' | 'LOCAL_TEAM_SNAPSHOT' | 'JOINTS_BENCHMARK_SNAPSHOT'
+  province?: string;
+  brightness?: number;
 }
 
 export interface HotspotFilterParams {

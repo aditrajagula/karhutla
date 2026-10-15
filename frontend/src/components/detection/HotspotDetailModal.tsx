@@ -52,6 +52,14 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
               {hotspot.latitude.toFixed(5)}, {hotspot.longitude.toFixed(5)}
             </span>
           </div>
+          {hotspot.province && (
+            <div className="detail-row">
+              <span className="detail-label">Provinsi Daratan:</span>
+              <span className="detail-val">
+                {hotspot.province}
+              </span>
+            </div>
+          )}
           <div className="detail-row">
             <span className="detail-label">Waktu Observasi:</span>
             <span className="detail-val">
@@ -86,8 +94,8 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
             <span className="detail-label">Sumber Provenance:</span>
             <span className="detail-val">
               {hotspot.source_provenance === 'NASA_FIRMS_API'
-                ? 'Deteksi Satelit VIIRS NASA FIRMS'
-                : 'Data Statis (Snapshot Benchmark JOINTS 2026)'}
+                ? 'Deteksi Satelit VIIRS NASA FIRMS (Live API)'
+                : 'Snapshot Hasil Pengambilan Mandiri Tim (Bukan Benchmark Panitia)'}
             </span>
           </div>
         </div>

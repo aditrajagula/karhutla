@@ -32,7 +32,7 @@ for sensor in SENSORS:
         
         # Cek kalau response bukan HTML error
         if "html" in r.headers.get('Content-Type', '').lower():
-            print(f"  ⚠️ {sensor}返回了 HTML error. Skip.")
+            print(f"  ⚠️ {sensor} HTML error. Skip.")
             continue
 
         df = pd.read_csv(pd.io.common.StringIO(r.text))

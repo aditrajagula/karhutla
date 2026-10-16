@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { FeatureCollection } from 'geojson';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Hotspot } from '../../types/hotspot';
@@ -7,9 +8,11 @@ import { CATEGORY_LABELS, STATUS_LABELS } from '../../types/report';
 import {
   fetchClassifiedHotspotsGeoJSON,
   fetchContextLayers,
+  fetchForestGeoJSON,
   fetchFirmsMapManifest,
   fetchKalimantanBoundaries,
   fetchPeatlandGeoJSON,
+  fetchSegmentedHotspotsGeoJSON,
 } from '../../services/api';
 import type {
   ClassifiedHotspotsGeoJSON,
@@ -64,10 +67,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const hotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const reportsLayerRef = useRef<L.LayerGroup | null>(null);
   const kalimantanLayerRef = useRef<L.GeoJSON | null>(null);
+  const forestLayerRef = useRef<L.GeoJSON | null>(null);
   const peatlandLayerRef = useRef<L.GeoJSON | null>(null);
+  const segmentedHotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const classifiedHotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const classifiedHotspotsLayersRef = useRef<{ peat: L.GeoJSON; nonPeat: L.GeoJSON } | null>(null);
+  const forestGeoJSONRef = useRef<FeatureCollection | null>(null);
   const peatlandGeoJSONRef = useRef<PeatlandGeoJSON | null>(null);
+  const segmentedHotspotsGeoJSONRef = useRef<ClassifiedHotspotsGeoJSON | null>(null);
   const classifiedHotspotsGeoJSONRef = useRef<ClassifiedHotspotsGeoJSON | null>(null);
   const firmsManifestRef = useRef<FirmsMapManifest | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -76,7 +83,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [showHotspots, setShowHotspots] = useState<boolean>(true);
   const [showReports, setShowReports] = useState<boolean>(true);
   const [showKalimantanBoundaries, setShowKalimantanBoundaries] = useState<boolean>(true);
-  const [showPeatland, setShowPeatland] = useState<boolean>(false);
+  const [showForest, setShowForest] = useState<boolean>(true);
+  const [showPeatland, setShowPeatland] = useState<boolean>(true);
+  const [showSegmentedHotspots, setShowSegmentedHotspots] = useState<boolean>(true);
   const [showClassifiedHotspots, setShowClassifiedHotspots] = useState<boolean>(false);
   const [classifiedHotspotFilter, setClassifiedHotspotFilter] = useState<'all' | 'peat'>('all');
   const [peatlandFeatureCount, setPeatlandFeatureCount] = useState<number | null>(null);
@@ -201,7 +210,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     fetchContextLayers()
       .then((layers) => {
         if (!isSubscribed) return;
-        setContextStatus(layers.forest_layer.status_message);
+        setContextStatus(`Sumber hutan: ${layers.forest_layer.source}. ${layers.forest_layer.status_message}`);
       })
       .catch((error: unknown) => {
         if (!isSubscribed) return;
@@ -213,6 +222,67 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   }, []);
 
   // Layer poligon gambut resmi; data disederhanakan khusus untuk tampilan peta.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (forestLayerRef.current) {
+      map.removeLayer(forestLayerRef.current);
+      forestLayerRef.current = null;
+    }
+    if (!showForest) return;
+
+    let isSubscribed = true;
+    const controller = new AbortController();
+
+    const loadForest = async () => {
+      try {
+        const geojson = forestGeoJSONRef.current || await fetchForestGeoJSON(controller.signal);
+        if (!isSubscribed || !mapInstanceRef.current) return;
+        forestGeoJSONRef.current = geojson;
+
+        const layer = L.geoJSON(geojson, {
+          style: {
+            color: '#16A34A',
+            weight: 1,
+            fillColor: '#4ADE80',
+            fillOpacity: 0.18,
+          },
+          onEachFeature: (feature, featureLayer) => {
+            const properties = feature.properties || {};
+            const name = typeof properties.nkws === 'string' ? escapeHtml(properties.nkws) : 'Kawasan hutan';
+            const functionType = typeof properties.fungsitap === 'string' ? escapeHtml(properties.fungsitap) : 'Tidak tersedia';
+            featureLayer.bindPopup(`
+              <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
+                <div style="font-weight: 700; color: #166534; margin-bottom: 4px;">Segmentasi Hutan Kalimantan STRICT</div>
+                <div><b>Nama:</b> ${name}</div>
+                <div><b>Kode fungsi:</b> ${functionType}</div>
+                <div style="margin-top: 5px; font-size: 10px; color: #64748B;">
+                  Layer ini hanya konteks wilayah, bukan klaim deforestasi atau pembukaan lahan otomatis.
+                </div>
+              </div>
+            `);
+          },
+        });
+        layer.addTo(map);
+        forestLayerRef.current = layer;
+      } catch (error: unknown) {
+        if (!isSubscribed) return;
+        setLayerError(error instanceof Error ? error.message : 'Layer hutan gagal dimuat.');
+      }
+    };
+
+    void loadForest();
+    return () => {
+      isSubscribed = false;
+      controller.abort();
+      if (forestLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(forestLayerRef.current);
+        forestLayerRef.current = null;
+      }
+    };
+  }, [showForest]);
+
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -285,6 +355,80 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       }
     };
   }, [showPeatland]);
+
+  // Hotspot segmentasi dari file GeoJSON/CSV yang sudah dipetakan terhadap kawasan hutan dan gambut.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (segmentedHotspotsLayerRef.current) {
+      map.removeLayer(segmentedHotspotsLayerRef.current);
+      segmentedHotspotsLayerRef.current = null;
+    }
+    if (!showSegmentedHotspots) return;
+
+    let isSubscribed = true;
+    const controller = new AbortController();
+
+    const loadSegmentedHotspots = async () => {
+      try {
+        const geojson = segmentedHotspotsGeoJSONRef.current
+          || await fetchSegmentedHotspotsGeoJSON(controller.signal);
+        if (!isSubscribed || !mapInstanceRef.current) return;
+        segmentedHotspotsGeoJSONRef.current = geojson;
+
+        const layerGroup = L.layerGroup();
+        geojson.features.forEach((feature) => {
+          const properties = feature.properties || {};
+          const lat = Number((feature.geometry as { coordinates?: [number, number] } | undefined)?.coordinates?.[1] ?? properties.latitude);
+          const lng = Number((feature.geometry as { coordinates?: [number, number] } | undefined)?.coordinates?.[0] ?? properties.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const inPeat = properties.in_peat === true;
+          const inForest = properties.in_forest === true;
+          const color = inPeat ? '#7C3AED' : inForest ? '#16A34A' : '#F59E0B';
+          const marker = L.circleMarker([lat, lng], {
+            radius: 5,
+            color: '#FFFFFF',
+            weight: 1,
+            fillColor: color,
+            fillOpacity: 0.9,
+          });
+
+          const peatLabel = inPeat ? 'Ya' : 'Tidak';
+          const forestLabel = inForest ? 'Ya' : 'Tidak';
+          marker.bindPopup(`
+            <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
+              <div style="font-weight: 700; color: #B45309; margin-bottom: 4px;">Hotspot Segmen Hutan/Gambut</div>
+              <div><b>Di gambut:</b> ${peatLabel}</div>
+              <div><b>Di hutan:</b> ${forestLabel}</div>
+              <div><b>FRP:</b> ${typeof properties.frp === 'number' ? properties.frp.toFixed(2) : 'Tidak tersedia'} MW</div>
+              <div><b>Confidence:</b> ${escapeHtml(String(properties.confidence || '-'))}</div>
+              <div style="margin-top: 5px; font-size: 10px; color: #64748B;">
+                Data ini merujuk pada file segmentasi final yang dipetakan terhadap gambut dan kawasan hutan.
+              </div>
+            </div>
+          `);
+          layerGroup.addLayer(marker);
+        });
+        layerGroup.addTo(map);
+        segmentedHotspotsLayerRef.current = layerGroup;
+      } catch (error: unknown) {
+        if (!isSubscribed) return;
+        setLayerError(error instanceof Error ? error.message : 'Dataset hotspot segmentasi gagal dimuat.');
+      }
+    };
+
+    void loadSegmentedHotspots();
+    return () => {
+      isSubscribed = false;
+      controller.abort();
+      if (segmentedHotspotsLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(segmentedHotspotsLayerRef.current);
+        segmentedHotspotsLayerRef.current = null;
+      }
+    };
+  }, [showSegmentedHotspots]);
 
   // Dataset FIRMS statis mempertahankan label klasifikasi gambut dari manifest lokal.
   useEffect(() => {
@@ -722,6 +866,31 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <span>Batas Kalimantan (5 Prov)</span>
         </label>
 
+        {/* Toggle layer segmentasi hutan */}
+        <label
+          style={{
+            fontSize: '11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            padding: '4px 6px',
+            borderRadius: '4px',
+            background: isDark ? '#1E293B' : '#F1F5F9',
+            border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
+            color: isDark ? '#F8FAFC' : '#0F172A',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showForest}
+            onChange={(event) => setShowForest(event.target.checked)}
+          />
+          <span style={{ width: '9px', height: '9px', background: '#22C55E', border: '1px solid #15803D', display: 'inline-block' }} />
+          <span>Segmentasi hutan STRICT</span>
+        </label>
+
         {/* Toggle layer sebaran gambut */}
         <label
           style={{
@@ -748,6 +917,31 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           />
           <span style={{ width: '9px', height: '9px', background: '#A78BFA', border: '1px solid #7C3AED', display: 'inline-block' }} />
           <span>Poligon gambut{peatlandFeatureCount ? ` (${peatlandFeatureCount})` : ''}</span>
+        </label>
+
+        {/* Toggle hotspot segmentasi dari file GeoJSON/CSV final */}
+        <label
+          style={{
+            fontSize: '11px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            padding: '4px 6px',
+            borderRadius: '4px',
+            background: isDark ? '#1E293B' : '#F1F5F9',
+            border: `1px solid ${isDark ? '#475569' : '#CBD5E1'}`,
+            color: isDark ? '#F8FAFC' : '#0F172A',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showSegmentedHotspots}
+            onChange={(event) => setShowSegmentedHotspots(event.target.checked)}
+          />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B', display: 'inline-block' }} />
+          <span>Hotspot segmentasi</span>
         </label>
 
         {/* Toggle dataset hotspot yang sudah diklasifikasikan dengan poligon gambut */}
@@ -937,10 +1131,22 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           />
           <span><b>Batas 5 Provinsi Kalimantan</b> (Indonesia)</span>
         </div>
+        {showForest && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ width: '10px', height: '10px', background: '#22C55E', border: '1px solid #15803D', display: 'inline-block', flexShrink: 0 }} />
+            <span><b>Segmentasi hutan STRICT</b> (kawasan hutan; konteks wilayah)</span>
+          </div>
+        )}
         {showPeatland && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <span style={{ width: '10px', height: '10px', background: '#A78BFA', border: '1px solid #7C3AED', display: 'inline-block', flexShrink: 0 }} />
             <span><b>Poligon gambut</b> (layer tematik; bukan area terbakar)</span>
+          </div>
+        )}
+        {showSegmentedHotspots && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#F59E0B', border: '1px solid #78350F', display: 'inline-block', flexShrink: 0 }} />
+            <span><b>Hotspot segmentasi</b> (dari GeoJSON/CSV final)</span>
           </div>
         )}
         {showClassifiedHotspots && (

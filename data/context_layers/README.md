@@ -2,9 +2,9 @@
 
 ## 1. Status Ketersediaan Saat Ini
 
-> **Status:** Layer gambut tersedia; layer kawasan hutan resmi menyeluruh belum tersedia.
+> **Status:** Layer gambut dan kawasan hutan Kalimantan tersedia.
 > GeoJSON lokal `backend/app/peat_kalimantan_big_official.geojson` mencakup 100 poligon gambut Kalimantan. Metadata tahun, sumber, lisensi, dan provenance layer tersebut belum tercatat pada manifest proyek dan harus dilengkapi berdasarkan sumber aslinya.
-> Raster Hansen GFC lokal hanya tersedia untuk demonstrasi pada tile kecil sekitar Palangka Raya; cakupannya tidak memadai untuk segmentasi hutan seluruh Kalimantan.
+> GeoJSON lokal `backend/app/forest_kalimantan_STRICT.geojson` mencakup poligon kawasan hutan yang telah dipotong ketat untuk Kalimantan. Atributnya meliputi nama kawasan, fungsi kawasan, nomor SK, dan kode provinsi. Raster Hansen GFC lokal tetap hanya tersedia untuk demonstrasi pada tile kecil sekitar Palangka Raya dan tidak digunakan sebagai layer kawasan hutan ini.
 
 ## 2. Rujukan Sumber Resmi Nasional
 
@@ -22,15 +22,16 @@ Jika di masa mendatang tim ingin mengintegrasikan layer ini secara mandiri, guna
 ## 3. Integrasi Layer Gambut ke Peta
 
 * Frontend memuat layer saat pengguna menyalakan kontrol `Poligon gambut`. Backend menyajikan `GET /api/v1/map-data/peatland`; geometri disederhanakan dengan toleransi 0.0001 derajat hanya untuk mempercepat render. File sumber tidak diubah dan bentuk yang disederhanakan tidak digunakan untuk klasifikasi titik.
+* Layer kawasan hutan dimuat dari `backend/app/forest_kalimantan_STRICT.geojson` melalui `GET /api/v1/map-data/forest`. Frontend memeriksa nama koleksi GeoJSON agar dataset yang tidak sesuai tidak dirender. Layer ini ditampilkan sebagai konteks kawasan hutan, bukan sebagai klaim tutupan pohon atau deforestasi.
 * `GET /api/v1/map-data/classified-hotspots` menyajikan snapshot FIRMS dengan atribut klasifikasi `in_peat`, `peat_class`, dan `fire_risk_priority`. `GET /api/v1/map-data/firms-manifest` menyediakan metadata waktu dan cakupan snapshot.
 * Kontrol peta memungkinkan menampilkan seluruh titik snapshot atau menyaringnya ke titik yang telah diklasifikasikan `in_peat=true`. Hasil klasifikasi tersebut berasal dari dataset snapshot yang disediakan, bukan dihitung ulang oleh frontend.
 * `GET /api/v1/context-layers` mengembalikan cakupan dan status aktual layer hutan serta gambut:
   ```json
   {
     "forest_layer": {
-      "available": false,
-      "source": "Hansen GFC 2025 v1.13 (tile lokal demonstrasi) dan rujukan KLHK",
-      "status_message": "Raster Hansen lokal hanya mencakup area kecil di sekitar Palangka Raya."
+      "available": true,
+      "source": "GeoJSON lokal forest_kalimantan_STRICT.geojson",
+      "status_message": "Layer segmentasi kawasan hutan Kalimantan tersedia untuk ditampilkan sebagai konteks wilayah."
     },
     "peatland_layer": {
       "available": true,

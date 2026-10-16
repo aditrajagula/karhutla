@@ -71,6 +71,28 @@ def test_malaysia_sarawak_sabah_excluded(spatial_filter: IndonesiaSpatialFilter)
         assert prov is None
 
 
+def test_hotspot_mask_excludes_border_overlap_and_offshore_points(
+    spatial_filter: IndonesiaSpatialFilter,
+):
+    """The hotspot-only mask rejects known Sabah/Brunei overlap and offshore FIRMS detections."""
+    excluded_points = [
+        (116.21691, 4.31276, "near Sabah"),
+        (117.25889, 4.26889, "near Sabah"),
+        (114.9, 4.4, "Brunei"),
+        (116.80958, -1.24336, "Makassar Strait"),
+        (118.31859, 1.52674, "Makassar Strait"),
+    ]
+    for longitude, latitude, label in excluded_points:
+        inside, province = spatial_filter.is_inside_kalimantan_hotspot(longitude, latitude)
+        assert inside is False, f"{label} point ({longitude}, {latitude}) must be excluded"
+        assert province is None
+
+    assert spatial_filter.is_inside_kalimantan_hotspot(113.92, -2.21) == (
+        True,
+        "Kalimantan Tengah",
+    )
+
+
 def test_brunei_darussalam_excluded(spatial_filter: IndonesiaSpatialFilter):
     """Memverifikasi bahwa Brunei Darussalam tidak masuk dalam cakupan analisis."""
     brunei_points = [

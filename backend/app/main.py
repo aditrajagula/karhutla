@@ -33,6 +33,7 @@ from .config import (
     BOUNDARIES_PATH,
     FIRMS_DEFAULT_SOURCE,
     FIRMS_MAP_KEY,
+    KALIMANTAN_HOTSPOT_MASK_PATH,
     SNAPSHOTS_DIR,
     UPLOADS_DIR,
 )
@@ -50,7 +51,9 @@ from .evidence_service import assess_report_evidence, parse_iso_utc
 
 logger = logging.getLogger(__name__)
 PEATLAND_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_big_official.geojson")
+FOREST_GEOJSON_PATH = Path(__file__).with_name("forest_kalimantan_STRICT.geojson")
 CLASSIFIED_HOTSPOTS_GEOJSON_PATH = Path(__file__).with_name("hotspots_kalimantan_final.geojson")
+SEGMENTED_HOTSPOTS_GEOJSON_PATH = Path(__file__).with_name("final_hotspots_segmentation.geojson")
 FIRMS_MANIFEST_PATH = Path(__file__).with_name("firms_manifest.json")
 PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES = 0.0001
 
@@ -272,6 +275,36 @@ def get_hotspots(
         ) from exc
 
     features = result.get("features", [])
+    kalimantan_features = []
+    outside_kalimantan_count = 0
+    for feature in features:
+        coordinates = feature.get("geometry", {}).get("coordinates", [])
+        if len(coordinates) < 2:
+            outside_kalimantan_count += 1
+            continue
+        longitude, latitude = coordinates[0], coordinates[1]
+        inside_kalimantan, province_name = pipeline_instance.spatial_filter.is_inside_kalimantan_hotspot(
+            longitude, latitude
+        )
+        if not inside_kalimantan:
+            outside_kalimantan_count += 1
+            continue
+        feature.setdefault("properties", {})["province"] = province_name
+        kalimantan_features.append(feature)
+    features = kalimantan_features
+
+    provenance = result.get("provenance", {})
+    audit_stats = provenance.get("audit_stats")
+    if isinstance(audit_stats, dict):
+        reasons = audit_stats.setdefault("reasons", {})
+        if outside_kalimantan_count:
+            reasons["outside_kalimantan_boundary"] = (
+                reasons.get("outside_kalimantan_boundary", 0) + outside_kalimantan_count
+            )
+            audit_stats["total_rejected_records"] = (
+                audit_stats.get("total_rejected_records", 0) + outside_kalimantan_count
+            )
+        audit_stats["total_valid_records"] = len(features)
 
     # Filter tanggal manual jika diberikan
     if start_date:
@@ -314,14 +347,6 @@ def get_hotspots(
             if f["properties"].get("province") and prov_target in f["properties"]["province"].lower()
         ]
 
-    if region and region.strip().lower() == "kalimantan":
-        kalimantan_names = {p.lower() for p in KALIMANTAN_PROVINCES}
-        features = [
-            f for f in features
-            if f["properties"].get("province") and f["properties"]["province"].strip().lower() in kalimantan_names
-        ]
-
-
     # Susun kembali GeoJSON hasil filter dan payload list records
     is_snap = result.get("provenance", {}).get("is_snapshot", False) or effective_force_snapshot
     records_list = [
@@ -347,7 +372,7 @@ def get_hotspots(
         "mode": "snapshot" if is_snap else "live",
         "count": len(features),
         "records": records_list,
-        "provenance": result.get("provenance", {}),
+        "provenance": provenance,
         "features": features
     }
 
@@ -400,12 +425,13 @@ def get_context_layers() -> ContextLayersResponse:
     """
     return ContextLayersResponse(
         forest_layer=ContextLayerItem(
-            available=False,
-            source="Hansen GFC 2025 v1.13 (tile lokal demonstrasi) dan rujukan KLHK",
+            available=FOREST_GEOJSON_PATH.is_file(),
+            source="GeoJSON lokal forest_kalimantan_STRICT.geojson",
             status_message=(
-                "Raster Hansen lokal hanya mencakup area kecil di sekitar Palangka Raya; "
-                "belum dapat ditampilkan sebagai segmentasi menyeluruh Kalimantan. "
-                "Layer kawasan hutan resmi belum tersedia."
+                "Layer segmentasi kawasan hutan Kalimantan tersedia untuk ditampilkan sebagai konteks wilayah. "
+                "Pemakaian bersifat kontekstual dan bukan klaim deforestasi otomatis."
+                if FOREST_GEOJSON_PATH.is_file()
+                else "Layer kawasan hutan Kalimantan belum tersedia pada server."
             )
         ),
         peatland_layer=ContextLayerItem(
@@ -465,12 +491,79 @@ def get_peatland_map_data() -> Response:
     )
 
 
-@app.get("/api/v1/map-data/classified-hotspots", summary="GeoJSON hotspot FIRMS dengan klasifikasi gambut")
-def get_classified_hotspots_map_data() -> FileResponse:
-    if not CLASSIFIED_HOTSPOTS_GEOJSON_PATH.is_file():
-        raise HTTPException(status_code=503, detail="GeoJSON hotspot terklasifikasi belum tersedia.")
+@lru_cache(maxsize=2)
+def _kalimantan_hotspot_display_geojson_bytes(dataset_path: str) -> bytes:
+    path = Path(dataset_path)
+    if not path.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON hotspot lokal belum tersedia.")
+
+    with path.open(encoding="utf-8") as source_file:
+        collection = json.load(source_file)
+    if collection.get("type") != "FeatureCollection" or not isinstance(
+        collection.get("features"), list
+    ):
+        raise HTTPException(status_code=500, detail="Format GeoJSON hotspot lokal tidak valid.")
+
+    filtered_features = []
+    for feature in collection["features"]:
+        geometry = feature.get("geometry") or {}
+        coordinates = geometry.get("coordinates")
+        if (
+            geometry.get("type") != "Point"
+            or not isinstance(coordinates, list)
+            or len(coordinates) < 2
+            or not isinstance(coordinates[0], (int, float))
+            or not isinstance(coordinates[1], (int, float))
+            or not math.isfinite(coordinates[0])
+            or not math.isfinite(coordinates[1])
+        ):
+            raise HTTPException(status_code=500, detail="Fitur hotspot memiliki koordinat yang tidak valid.")
+
+        inside_kalimantan, _ = pipeline_instance.spatial_filter.is_inside_kalimantan_hotspot(
+            coordinates[0], coordinates[1]
+        )
+        if inside_kalimantan:
+            filtered_features.append(feature)
+
+    collection["features"] = filtered_features
+    return json.dumps(collection, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+@app.get("/api/v1/map-data/hotspot-mask", summary="Mask daratan Kalimantan untuk filter hotspot")
+def get_kalimantan_hotspot_mask() -> FileResponse:
+    if not KALIMANTAN_HOTSPOT_MASK_PATH.is_file():
+        raise HTTPException(status_code=503, detail="Mask hotspot Kalimantan belum tersedia.")
     return FileResponse(
-        CLASSIFIED_HOTSPOTS_GEOJSON_PATH,
+        KALIMANTAN_HOTSPOT_MASK_PATH,
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/v1/map-data/forest", summary="GeoJSON segmentasi kawasan hutan Kalimantan")
+def get_forest_map_data() -> FileResponse:
+    if not FOREST_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON kawasan hutan belum tersedia.")
+    return FileResponse(
+        FOREST_GEOJSON_PATH,
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/api/v1/map-data/classified-hotspots", summary="GeoJSON hotspot FIRMS dengan klasifikasi gambut")
+def get_classified_hotspots_map_data() -> Response:
+    return Response(
+        content=_kalimantan_hotspot_display_geojson_bytes(str(CLASSIFIED_HOTSPOTS_GEOJSON_PATH)),
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/api/v1/map-data/segmented-hotspots", summary="GeoJSON hotspot yang telah dipetakan terhadap gambut dan kawasan hutan")
+def get_segmented_hotspots_map_data() -> Response:
+    return Response(
+        content=_kalimantan_hotspot_display_geojson_bytes(str(SEGMENTED_HOTSPOTS_GEOJSON_PATH)),
         media_type="application/geo+json",
         headers={"Cache-Control": "public, max-age=3600"},
     )

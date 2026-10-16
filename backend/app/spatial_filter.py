@@ -11,6 +11,7 @@ from shapely.geometry import Point, shape
 from shapely.validation import make_valid
 from shapely.strtree import STRtree
 
+from .config import KALIMANTAN_HOTSPOT_MASK_PATH
 from .models import HotspotRecord, RejectionStats
 
 
@@ -19,12 +20,21 @@ class IndonesiaSpatialFilter:
     Filter spasial Point-in-Polygon menggunakan batas administratif terverifikasi.
     """
 
-    def __init__(self, geojson_path: Path):
+    def __init__(
+        self,
+        geojson_path: Path,
+        kalimantan_hotspot_mask_path: Path = KALIMANTAN_HOTSPOT_MASK_PATH,
+    ):
         self.geojson_path = Path(geojson_path)
+        self.kalimantan_hotspot_mask_path = Path(kalimantan_hotspot_mask_path)
         self.geometries = []
         self.feature_props = []
         self.tree: Optional[STRtree] = None
+        self.kalimantan_hotspot_geometries = []
+        self.kalimantan_hotspot_feature_props = []
+        self.kalimantan_hotspot_tree: Optional[STRtree] = None
         self._load_boundaries()
+        self._load_kalimantan_hotspot_mask()
 
     def _load_boundaries(self) -> None:
         if not self.geojson_path.exists():
@@ -49,6 +59,32 @@ class IndonesiaSpatialFilter:
 
         # Bangun spatial index STRtree (vektorisasi C)
         self.tree = STRtree(self.geometries)
+
+    def _load_kalimantan_hotspot_mask(self) -> None:
+        if not self.kalimantan_hotspot_mask_path.is_file():
+            raise FileNotFoundError(
+                f"Mask hotspot Kalimantan tidak ditemukan di: {self.kalimantan_hotspot_mask_path}."
+            )
+        with self.kalimantan_hotspot_mask_path.open("r", encoding="utf-8") as source_file:
+            data = json.load(source_file)
+
+        features = data.get("features", [])
+        if data.get("type") != "FeatureCollection" or not features:
+            raise ValueError(
+                f"File {self.kalimantan_hotspot_mask_path} bukan FeatureCollection dengan fitur."
+            )
+
+        for feature in features:
+            raw_geometry = shape(feature["geometry"])
+            valid_geometry = make_valid(raw_geometry)
+            if valid_geometry.is_empty:
+                raise ValueError(
+                    f"File {self.kalimantan_hotspot_mask_path} memiliki geometri kosong."
+                )
+            self.kalimantan_hotspot_geometries.append(valid_geometry)
+            self.kalimantan_hotspot_feature_props.append(feature.get("properties", {}))
+
+        self.kalimantan_hotspot_tree = STRtree(self.kalimantan_hotspot_geometries)
 
     def is_inside(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
         """
@@ -90,6 +126,18 @@ class IndonesiaSpatialFilter:
         inside, prov_name = self.is_inside(lon, lat)
         if inside and prov_name in kalimantan_provinces:
             return True, prov_name
+        return False, None
+
+    def is_inside_kalimantan_hotspot(self, lon: float, lat: float) -> Tuple[bool, Optional[str]]:
+        """Use the detailed land mask and border-uncertainty exclusion for hotspot points."""
+        if self.kalimantan_hotspot_tree is None:
+            return False, None
+
+        point = Point(lon, lat)
+        for index in self.kalimantan_hotspot_tree.query(point):
+            if self.kalimantan_hotspot_geometries[index].covers(point):
+                province = self.kalimantan_hotspot_feature_props[index].get("province")
+                return True, province
         return False, None
 
     def filter_records(
@@ -154,4 +202,3 @@ class IndonesiaSpatialFilter:
 
         stats.total_valid_records = len(filtered_records)
         return filtered_records, stats
-

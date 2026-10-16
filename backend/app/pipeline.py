@@ -27,6 +27,8 @@ from .snapshot_manager import (
 )
 from .spatial_filter import IndonesiaSpatialFilter
 
+STRICT_KALIMANTAN_CSV_PATH = Path(__file__).with_name("firms_kalimantan_STRICT.csv")
+
 
 class HotspotPipeline:
     """Orkestrator pipeline pemrosesan data hotspot."""
@@ -38,7 +40,8 @@ class HotspotPipeline:
         map_key: str = FIRMS_MAP_KEY,
         default_source: str = FIRMS_DEFAULT_SOURCE,
         bbox: str = FIRMS_AREA_BBOX,
-        timeout_seconds: int = FIRMS_REQUEST_TIMEOUT_SECONDS
+        timeout_seconds: int = FIRMS_REQUEST_TIMEOUT_SECONDS,
+        strict_kalimantan_csv_path: Path = STRICT_KALIMANTAN_CSV_PATH,
     ):
         self.boundaries_path = Path(boundaries_path)
         self.snapshots_dir = Path(snapshots_dir)
@@ -46,6 +49,7 @@ class HotspotPipeline:
         self.default_source = default_source
         self.bbox = bbox
         self.timeout_seconds = timeout_seconds
+        self.strict_kalimantan_csv_path = Path(strict_kalimantan_csv_path)
 
         # Inisialisasi filter spasial (memuat poligon batas Indonesia)
         self.spatial_filter = IndonesiaSpatialFilter(self.boundaries_path)
@@ -84,32 +88,17 @@ class HotspotPipeline:
 
         # 2. Mode Force Snapshot
         elif force_snapshot:
-            latest = find_latest_valid_snapshot(self.snapshots_dir)
-            if latest:
-                csv_path, manifest = latest
-                with open(csv_path, "r", encoding="utf-8") as f:
-                    raw_csv = f.read()
-                data_source_label = "LOCAL_TEAM_SNAPSHOT"
+            if self.strict_kalimantan_csv_path.is_file():
+                raw_csv = self.strict_kalimantan_csv_path.read_text(encoding="utf-8-sig")
+                data_source_label = "LOCAL_KALIMANTAN_STRICT_CSV"
                 is_snapshot = True
-                snapshot_type = manifest.snapshot_type
-                fetched_at_utc = manifest.fetched_at_utc
-                active_source = manifest.sensor_product
+                snapshot_type = "KALIMANTAN_STRICT_CSV"
+                fetched_at_utc = None
                 status_message = (
-                    f"Mode snapshot aktif. Menampilkan snapshot lokal tim yang diambil pada {fetched_at_utc}."
+                    "Menampilkan dataset statis firms_kalimantan_STRICT.csv. "
+                    "Waktu pengambilan dataset tidak tersedia."
                 )
             else:
-                return self._build_empty_response(
-                    status_message=(
-                        "Mode snapshot diaktifkan, tetapi tidak ditemukan snapshot lokal tim yang valid di disk."
-                    ),
-                    processed_at_utc=now_utc,
-                    source=active_source
-                )
-
-        # 3. Mode Live API dengan Fallback
-        else:
-            if not self.map_key:
-                # Kunci API belum diatur -> Coba fallback snapshot
                 latest = find_latest_valid_snapshot(self.snapshots_dir)
                 if latest:
                     csv_path, manifest = latest
@@ -121,18 +110,57 @@ class HotspotPipeline:
                     fetched_at_utc = manifest.fetched_at_utc
                     active_source = manifest.sensor_product
                     status_message = (
-                        "FIRMS_MAP_KEY belum diatur di .env. Menggunakan fallback snapshot lokal tim "
-                        f"(diambil pada {fetched_at_utc})."
+                        f"Mode snapshot aktif. Menampilkan snapshot lokal tim yang diambil pada {fetched_at_utc}."
                     )
                 else:
                     return self._build_empty_response(
                         status_message=(
-                            "FIRMS_MAP_KEY belum dikonfigurasi di backend (.env) dan belum ada "
-                            "snapshot lokal tim yang tersimpan. Harap konfigurasikan MAP_KEY untuk penarikan live."
+                            "Mode snapshot aktif, tetapi dataset firms_kalimantan_STRICT.csv dan "
+                            "snapshot lokal tim tidak tersedia."
                         ),
                         processed_at_utc=now_utc,
                         source=active_source
                     )
+
+        # 3. Mode Live API dengan Fallback
+        else:
+            if not self.map_key:
+                # Kunci API belum diatur -> Coba fallback snapshot
+                if self.strict_kalimantan_csv_path.is_file():
+                    raw_csv = self.strict_kalimantan_csv_path.read_text(encoding="utf-8-sig")
+                    data_source_label = "LOCAL_KALIMANTAN_STRICT_CSV"
+                    is_snapshot = True
+                    snapshot_type = "KALIMANTAN_STRICT_CSV"
+                    fetched_at_utc = None
+                    status_message = (
+                        "FIRMS_MAP_KEY belum diatur. Menampilkan dataset statis "
+                        "firms_kalimantan_STRICT.csv; data ini bukan pemantauan live dan "
+                        "waktu pengambilan dataset tidak tersedia."
+                    )
+                else:
+                    latest = find_latest_valid_snapshot(self.snapshots_dir)
+                    if latest:
+                        csv_path, manifest = latest
+                        with open(csv_path, "r", encoding="utf-8") as f:
+                            raw_csv = f.read()
+                        data_source_label = "LOCAL_TEAM_SNAPSHOT"
+                        is_snapshot = True
+                        snapshot_type = manifest.snapshot_type
+                        fetched_at_utc = manifest.fetched_at_utc
+                        active_source = manifest.sensor_product
+                        status_message = (
+                            "FIRMS_MAP_KEY belum diatur di .env. Menggunakan fallback snapshot lokal tim "
+                            f"(diambil pada {fetched_at_utc})."
+                        )
+                    else:
+                        return self._build_empty_response(
+                            status_message=(
+                                "FIRMS_MAP_KEY belum dikonfigurasi di backend (.env), dan dataset "
+                                "firms_kalimantan_STRICT.csv maupun snapshot lokal tim tidak tersedia."
+                            ),
+                            processed_at_utc=now_utc,
+                            source=active_source
+                        )
             else:
                 # Coba penarikan live via API
                 client = FirmsClient(
@@ -164,29 +192,41 @@ class HotspotPipeline:
                         )
                 except FirmsAPIError as exc:
                     # API gagal -> Coba fallback snapshot
-                    latest = find_latest_valid_snapshot(self.snapshots_dir)
-                    if latest:
-                        csv_path, manifest = latest
-                        with open(csv_path, "r", encoding="utf-8") as f:
-                            raw_csv = f.read()
-                        data_source_label = "LOCAL_TEAM_SNAPSHOT"
+                    if self.strict_kalimantan_csv_path.is_file():
+                        raw_csv = self.strict_kalimantan_csv_path.read_text(encoding="utf-8-sig")
+                        data_source_label = "LOCAL_KALIMANTAN_STRICT_CSV"
                         is_snapshot = True
-                        snapshot_type = manifest.snapshot_type
-                        fetched_at_utc = manifest.fetched_at_utc
-                        active_source = manifest.sensor_product
+                        snapshot_type = "KALIMANTAN_STRICT_CSV"
+                        fetched_at_utc = None
                         status_message = (
-                            f"Panggilan API gagal ({str(exc)}). Menampilkan fallback snapshot lokal tim "
-                            f"(diambil pada {fetched_at_utc})."
+                            f"Panggilan FIRMS gagal ({exc}). Menampilkan dataset statis "
+                            "firms_kalimantan_STRICT.csv; data ini bukan pemantauan live dan "
+                            "waktu pengambilan dataset tidak tersedia."
                         )
                     else:
-                        return self._build_empty_response(
-                            status_message=(
-                                f"Panggilan API gagal ({str(exc)}) dan belum ada snapshot lokal tim "
-                                "yang tersimpan sebagai fallback."
-                            ),
-                            processed_at_utc=now_utc,
-                            source=active_source
-                        )
+                        latest = find_latest_valid_snapshot(self.snapshots_dir)
+                        if latest:
+                            csv_path, manifest = latest
+                            with open(csv_path, "r", encoding="utf-8") as f:
+                                raw_csv = f.read()
+                            data_source_label = "LOCAL_TEAM_SNAPSHOT"
+                            is_snapshot = True
+                            snapshot_type = manifest.snapshot_type
+                            fetched_at_utc = manifest.fetched_at_utc
+                            active_source = manifest.sensor_product
+                            status_message = (
+                                f"Panggilan API gagal ({str(exc)}). Menampilkan fallback snapshot lokal tim "
+                                f"(diambil pada {fetched_at_utc})."
+                            )
+                        else:
+                            return self._build_empty_response(
+                                status_message=(
+                                    f"Panggilan API gagal ({str(exc)}) dan tidak tersedia dataset "
+                                    "firms_kalimantan_STRICT.csv atau snapshot lokal sebagai fallback."
+                                ),
+                                processed_at_utc=now_utc,
+                                source=active_source
+                            )
 
         # 4. Parsing baris data CSV
         raw_rows = parse_csv_content(raw_csv or "")

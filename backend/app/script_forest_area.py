@@ -9,22 +9,23 @@ LAYER_ID = 0
 OUTPUT_FILE = "kawasan_hutan_kalimantan.geojson"
 query_url = f"{BASE_URL}/{LAYER_ID}/query"
 
-# Bounding Box Kalimantan (Filter langsung di server biar cepat!)
-BBOX_KALIMANTAN = "108.5,-4.5,119.5,4.5"
-
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Referer": "https://gis.bnpb.go.id/" # Sesuaikan jika server beda
 }
 
 print("1. Cek total feature Kawasan Hutan di Kalimantan...")
-count_params = {
-    "where": "1=1",
-    "geometry": BBOX_KALIMANTAN,
+params = {
+    "where": where_clause,
+    "geometry": "108.5,-4.5,119.5,4.5",  # BBOX KALIMANTAN
     "geometryType": "esriGeometryEnvelope",
     "spatialRel": "esriSpatialRelIntersects",
-    "returnCountOnly": "true",
-    "f": "json"
+    "inSR": "4326",
+    "outFields": "OBJECTID,ID_Penutu4,KELAS_PL,Kode_Provi",
+    "outSR": "4326",
+    "f": "geojson",
+    "resultRecordCount": 2000,
+    "resultOffset": offset
 }
 resp = requests.get(query_url, params=count_params, headers=headers, timeout=60)
 total = resp.json().get("count", 0)

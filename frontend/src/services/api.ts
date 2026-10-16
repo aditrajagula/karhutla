@@ -1,6 +1,6 @@
 import type { ConfidenceLevel, Hotspot, HotspotFilterParams, HotspotResponse } from '../types/hotspot';
 import type { DataSourceMode, SystemStatus } from '../types/status';
-import type { FeatureCollection } from 'geojson';
+import type { FeatureCollection, Position } from 'geojson';
 import type {
   CitizenReport,
   CitizenReportsResponse,
@@ -86,6 +86,103 @@ function normalizeConfidence(raw: string | undefined): ConfidenceLevel {
   return 'nominal';
 }
 
+function isWithinKalimantanHotspotBounds(longitude: number, latitude: number): boolean {
+  return (
+    Number.isFinite(longitude)
+    && Number.isFinite(latitude)
+    && longitude >= 108.5
+    && longitude <= 119
+    && latitude >= -4.5
+    && latitude <= 4.5
+  );
+}
+
+function pointInRing(longitude: number, latitude: number, ring: Position[]): boolean {
+  let inside = false;
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+    const [x1, y1] = ring[previous];
+    const [x2, y2] = ring[index];
+    const cross = (longitude - x1) * (y2 - y1) - (latitude - y1) * (x2 - x1);
+    if (
+      Math.abs(cross) < 1e-10
+      && longitude >= Math.min(x1, x2)
+      && longitude <= Math.max(x1, x2)
+      && latitude >= Math.min(y1, y2)
+      && latitude <= Math.max(y1, y2)
+    ) {
+      return true;
+    }
+    if ((y1 > latitude) !== (y2 > latitude)) {
+      const crossingLongitude = ((x2 - x1) * (latitude - y1)) / (y2 - y1) + x1;
+      if (longitude < crossingLongitude) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function pointInPolygon(
+  longitude: number,
+  latitude: number,
+  rings: Position[][],
+): boolean {
+  return Boolean(
+    rings.length
+    && pointInRing(longitude, latitude, rings[0])
+    && !rings.slice(1).some((ring) => pointInRing(longitude, latitude, ring)),
+  );
+}
+
+function isPointInKalimantanMask(
+  longitude: number,
+  latitude: number,
+  mask: FeatureCollection,
+): boolean {
+  if (!isWithinKalimantanHotspotBounds(longitude, latitude)) return false;
+  return mask.features.some((feature) => {
+    const geometry = feature.geometry;
+    if (!geometry) return false;
+    if (geometry.type === 'Polygon') {
+      return pointInPolygon(longitude, latitude, geometry.coordinates);
+    }
+    if (geometry.type === 'MultiPolygon') {
+      return geometry.coordinates.some((polygon) => pointInPolygon(longitude, latitude, polygon));
+    }
+    return false;
+  });
+}
+
+let kalimantanHotspotMaskPromise: Promise<FeatureCollection> | null = null;
+
+export async function fetchKalimantanHotspotMask(): Promise<FeatureCollection> {
+  if (!kalimantanHotspotMaskPromise) {
+    kalimantanHotspotMaskPromise = fetchMapData('/map-data/hotspot-mask').then((data: unknown) => {
+      if (!isFeatureCollection(data)) {
+        throw new Error('Format mask hotspot Kalimantan tidak valid.');
+      }
+      return data;
+    }).catch((error: unknown) => {
+      kalimantanHotspotMaskPromise = null;
+      throw error;
+    });
+  }
+  return kalimantanHotspotMaskPromise;
+}
+
+async function filterKalimantanHotspotFeatures(data: FeatureCollection): Promise<FeatureCollection> {
+  const mask = await fetchKalimantanHotspotMask();
+  return {
+    ...data,
+    features: data.features.filter((feature) => (
+      feature.geometry.type === 'Point'
+      && isPointInKalimantanMask(
+        feature.geometry.coordinates[0],
+        feature.geometry.coordinates[1],
+        mask,
+      )
+    )),
+  };
+}
+
 export async function fetchHotspots(params?: HotspotFilterParams): Promise<HotspotResponse> {
   const query = new URLSearchParams();
 
@@ -112,7 +209,15 @@ export async function fetchHotspots(params?: HotspotFilterParams): Promise<Hotsp
 
   const data: GeoJSONResponse = await res.json();
   const provenance = data.provenance || {};
-  const features = Array.isArray(data.features) ? data.features : [];
+  const hotspotMask = await fetchKalimantanHotspotMask();
+  const features = Array.isArray(data.features)
+    ? data.features.filter((feature) => {
+      const coordinates = feature.geometry?.coordinates;
+      if (!Array.isArray(coordinates) || coordinates.length < 2) return false;
+      const [longitude, latitude] = coordinates;
+      return isPointInKalimantanMask(longitude, latitude, hotspotMask);
+    })
+    : [];
 
   const records: Hotspot[] = features.map((feat, idx) => {
     const coords = feat.geometry?.coordinates || [0, 0];
@@ -151,7 +256,9 @@ export async function fetchHotspots(params?: HotspotFilterParams): Promise<Hotsp
   return {
     mode: isSnapshotMode ? 'snapshot' : 'live',
     count: records.length,
-    last_sync_utc: provenance.fetched_at_utc || provenance.processed_at_utc,
+    last_sync_utc: provenance.data_source === 'LOCAL_KALIMANTAN_STRICT_CSV'
+      ? undefined
+      : provenance.fetched_at_utc || provenance.processed_at_utc,
     records,
     message: provenance.status_message,
   };
@@ -170,7 +277,9 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
   return {
     apiConfigured: Boolean(data.data_source === 'NASA_FIRMS_API' || data.status === 'LIVE_API'),
     activeMode: mode,
-    lastSyncUtc: data.fetched_at_utc || data.processed_at_utc || null,
+    lastSyncUtc: data.data_source === 'LOCAL_KALIMANTAN_STRICT_CSV'
+      ? null
+      : data.fetched_at_utc || data.processed_at_utc || null,
     snapshotPath: data.snapshot_type || '',
     disclaimer: data.status_message || '',
   };
@@ -242,6 +351,24 @@ export async function fetchPeatlandGeoJSON(signal?: AbortSignal): Promise<Peatla
   return data;
 }
 
+export async function fetchForestGeoJSON(signal?: AbortSignal): Promise<FeatureCollection> {
+  const data: unknown = await fetchMapData('/map-data/forest', signal);
+  if (!isFeatureCollection(data) || !isRecord(data) || data.name !== 'forest_kalimantan_STRICT') {
+    throw new Error('GeoJSON layer hutan STRICT tidak valid atau bukan dataset terbaru.');
+  }
+  return data;
+}
+
+export async function fetchSegmentedHotspotsGeoJSON(
+  signal?: AbortSignal,
+): Promise<ClassifiedHotspotsGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/segmented-hotspots', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON hotspot segmentasi tidak valid.');
+  }
+  return filterKalimantanHotspotFeatures(data);
+}
+
 export async function fetchClassifiedHotspotsGeoJSON(
   signal?: AbortSignal,
 ): Promise<ClassifiedHotspotsGeoJSON> {
@@ -249,7 +376,7 @@ export async function fetchClassifiedHotspotsGeoJSON(
   if (!isFeatureCollection(data)) {
     throw new Error('Format GeoJSON hotspot terklasifikasi tidak valid.');
   }
-  return data;
+  return filterKalimantanHotspotFeatures(data);
 }
 
 export async function fetchFirmsMapManifest(signal?: AbortSignal): Promise<FirmsMapManifest> {

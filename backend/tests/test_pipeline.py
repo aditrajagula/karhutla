@@ -16,7 +16,8 @@ def test_pipeline_with_synthetic_stream(synthetic_csv_content: str, tmp_path: Pa
     pipeline = HotspotPipeline(
         boundaries_path=BOUNDARIES_PATH,
         snapshots_dir=tmp_path,
-        map_key=""
+        map_key="",
+        strict_kalimantan_csv_path=tmp_path / "missing.csv",
     )
 
     result = pipeline.run(raw_csv_override=synthetic_csv_content)
@@ -69,7 +70,8 @@ def test_pipeline_no_api_key_and_no_snapshot(tmp_path: Path):
     pipeline = HotspotPipeline(
         boundaries_path=BOUNDARIES_PATH,
         snapshots_dir=tmp_path,
-        map_key=""
+        map_key="",
+        strict_kalimantan_csv_path=tmp_path / "missing.csv",
     )
 
     result = pipeline.run()
@@ -79,7 +81,7 @@ def test_pipeline_no_api_key_and_no_snapshot(tmp_path: Path):
     prov = result["provenance"]
     assert prov["data_source"] == "NONE"
     assert "belum dikonfigurasi" in prov["status_message"]
-    assert "belum ada snapshot lokal tim" in prov["status_message"]
+    assert "snapshot lokal tim tidak tersedia" in prov["status_message"]
 
 
 def test_pipeline_fallback_to_team_snapshot(tmp_path: Path):
@@ -105,7 +107,8 @@ def test_pipeline_fallback_to_team_snapshot(tmp_path: Path):
     pipeline = HotspotPipeline(
         boundaries_path=BOUNDARIES_PATH,
         snapshots_dir=tmp_path,
-        map_key=""
+        map_key="",
+        strict_kalimantan_csv_path=tmp_path / "missing.csv",
     )
 
     result = pipeline.run()

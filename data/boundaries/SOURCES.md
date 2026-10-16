@@ -34,3 +34,13 @@ Untuk integrasi level produksi dengan sertifikasi nasional:
 ## 4. Batasan & Caveat
 
 Data poligon batas ini digunakan murni untuk memfilter titik anomali satelit agar tidak mencakup laut lepas dan negara tetangga yang terbawa oleh *bounding box* kueri NASA FIRMS. Data ini **bukan penentu sengketa perbatasan teritorial negara**.
+
+## 5. Mask Daratan untuk Tampilan Hotspot Kalimantan
+
+* **File turunan:** `data/boundaries/kalimantan_hotspot_mask.geojson`
+* **Sumber geometri:** GADM v4.1, Indonesia level 1 (provinsi), Malaysia level 1 (Sabah dan Sarawak), dan Brunei Darussalam level 0.
+* **CRS keluaran:** WGS84/CRS84 dengan urutan koordinat `[longitude, latitude]`.
+* **Metode:** Geometri lima provinsi Kalimantan diproyeksikan ke UTM zona 50N (EPSG:32650), lalu dikurangi zona konservatif selebar 10.000 meter di sekitar batas internasional Sabah, Sarawak, dan Brunei. Hasilnya ditransformasikan kembali ke CRS84. Titik hotspot harus tercakup oleh mask ini; batas laut tidak diperluas.
+* **Cakupan:** Mask hanya digunakan untuk tampilan hotspot dan overlay hotspot. Filter laporan warga dan layer batas administratif lainnya tetap menggunakan geometri yang sudah ada.
+* **Caveat:** Zona 10 km bukan representasi batas hukum atau klaim kedaulatan. Ini adalah zona ketidakpastian konservatif yang dapat membuang deteksi hotspot sah di dekat perbatasan. Mask ini tidak menyatakan akurasi yang lebih tinggi daripada sumber geometri.
+* **Lisensi dan atribusi:** GADM menyediakan datanya untuk penggunaan akademik dan non-komersial dengan ketentuan penggunaan/redistribusi tersendiri. Periksa [ketentuan GADM](https://gadm.org/license.html) sebelum menggunakan atau mendistribusikan dataset turunan, termasuk mask ini; penggunaan komersial memerlukan izin yang sesuai. File sumber GADM mentah tidak disertakan di repositori.

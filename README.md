@@ -21,7 +21,8 @@ Sesuai ketentuan [PRD.md](file:///c:/Data-Karhutla/PRD.md):
    * Jika snapshot tim lokal tersedia: Sistem beralih otomatis ke snapshot terbaru (`"FALLBACK_LOCAL_SNAPSHOT"`).
    * Jika belum ada snapshot: Sistem mengembalikan status jelas `"NO_DATA_AVAILABLE"` tanpa mengalami crash.
 4. **Cakupan fitur laporan warga:** Dibatasi pada geometri administratif lima provinsi Kalimantan Indonesia (EPSG:4326); batas disimpan dalam GeoJSON dan diverifikasi dengan point-in-polygon.
-5. **Layer Hutan dan Gambut:** Layer poligon gambut Kalimantan tersedia dari GeoJSON lokal; raster Hansen untuk hutan masih terbatas pada area kecil sekitar Palangka Raya. Provenance, tahun, dan lisensi GeoJSON gambut perlu dilengkapi dari sumber dataset.
+5. **Layer Hutan dan Gambut:** Layer poligon gambut tersedia dari GeoJSON lokal dan kawasan hutan Kalimantan menggunakan `backend/app/forest_kalimantan_STRICT.geojson`. Metadata provenance, tahun, dan lisensi data gambut perlu dilengkapi dari sumber dataset.
+6. **Penyaringan hotspot:** Titik hotspot pada endpoint peta dan overlay lokal dicocokkan dengan `data/boundaries/kalimantan_hotspot_mask.geojson`, bukan hanya bounding box atau batas administratif yang tergeneralisasi. Mask menghilangkan laut dan menggunakan zona pengecualian konservatif 10 km di dekat batas internasional Malaysia/Brunei. Zona ini dapat membuang deteksi sah di dekat perbatasan dan bukan batas hukum; sumber dan ketentuan GADM dijelaskan di [`data/boundaries/SOURCES.md`](data/boundaries/SOURCES.md). Setelah memperbarui mask atau kode filter, muat ulang backend agar endpoint menggunakannya.
 
 ---
 
@@ -161,8 +162,10 @@ Mengambil data hotspot yang telah divalidasi dan difilter dalam format GeoJSON F
 * `source` *(string, opsional)*: Sensor satelit (misal `VIIRS_NOAA20_NRT` atau `VIIRS_NOAA21_NRT`).
 * `confidence` *(string, opsional)*: Tingkat keyakinan (`low`, `nominal`, `high`).
 * `min_frp` *(float, opsional, $\ge 0.0$)*: Ambang batas minimum Fire Radiative Power (MW).
-* `province` *(string, opsional)*: Nama provinsi daratan Indonesia (misal `Riau`, `Kalimantan Barat`).
+* `province` *(string, opsional)*: Nama provinsi Kalimantan.
 * `force_snapshot` *(boolean, default false)*: Memaksa membaca snapshot lokal tim tanpa menghubungi API.
+
+Endpoint hotspot dan overlay hotspot lokal selalu memeriksa titik dengan geometri batas lima provinsi Kalimantan sebelum mengembalikan hasil, terlepas dari parameter `region` atau metadata provinsi dari FIRMS. Jika API key tidak tersedia, mode snapshot diminta, atau panggilan live gagal, backend menggunakan `backend/app/firms_kalimantan_STRICT.csv` sebelum snapshot umum lainnya. File tersebut merupakan dataset statis, bukan data live; waktu pengambilannya tidak tersedia.
 
 > [!NOTE]
 > **Status Contoh:** Payload JSON di bawah ini adalah **CONTOH ILUSTRATIF SKEMA RESPON** untuk panduan kontrak antarmuka API dan integrasi frontend, bukan rekaman kebakaran nyata dari lapangan.
@@ -266,10 +269,12 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
 Frontend memuat layer ini hanya saat pengguna menyalakannya. Backend mencari aset lokal berikut di `backend/app/`:
 
 * `GET /api/v1/map-data/peatland` — poligon gambut; endpoint mengembalikan geometri yang disederhanakan hanya untuk tampilan peta (toleransi 0.0001 derajat, sekitar 11 m). File sumber tidak diubah dan geometri hasil tampilan tidak digunakan untuk klasifikasi hotspot.
+* `GET /api/v1/map-data/forest` — poligon kawasan hutan Kalimantan dari `backend/app/forest_kalimantan_STRICT.geojson`.
 * `GET /api/v1/map-data/classified-hotspots` — snapshot titik FIRMS beserta `in_peat`, `peat_class`, dan `fire_risk_priority`.
+* `GET /api/v1/map-data/segmented-hotspots` — snapshot titik FIRMS dari `final_hotspots_segmentation.geojson` dengan atribut `in_peat`, `in_forest`, dan `is_focus_hotspot`.
 * `GET /api/v1/map-data/firms-manifest` — sumber, tanggal pengambilan, bbox, dan jumlah catatan snapshot.
 
-Kontrol peta menyediakan overlay poligon gambut, snapshot hotspot terklasifikasi, dan filter semua titik / hanya titik di gambut. Snapshot ini terpisah dari layer hotspot near-real-time API. Pastikan tiga file data tersedia di `backend/app/` pada deployment. Hotspot adalah indikasi anomali termal, bukan bukti kebakaran atau batas area terbakar; metadata asal, tahun, dan lisensi GeoJSON gambut masih perlu dicatat.
+Kontrol peta menyediakan overlay poligon gambut dan kawasan hutan, snapshot hotspot terklasifikasi, serta hotspot segmentasi. Snapshot ini terpisah dari layer hotspot near-real-time API. Pastikan file GeoJSON sumber yang dipakai endpoint tersedia di `backend/app/` pada deployment. Hotspot adalah indikasi anomali termal, bukan bukti kebakaran atau batas area terbakar; metadata asal, tahun, dan lisensi GeoJSON gambut masih perlu dicatat.
 
 ---
 

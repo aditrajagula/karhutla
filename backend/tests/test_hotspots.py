@@ -25,10 +25,15 @@ def test_hotspots_snapshot_mode():
     data = response.json()
     assert data["mode"] == "snapshot"
     assert data["count"] > 0
+    assert data["provenance"]["data_source"] == "LOCAL_KALIMANTAN_STRICT_CSV"
     assert len(data["records"]) <= 10
+    assert all(
+        108.5 <= record["longitude"] <= 119.0
+        and -4.5 <= record["latitude"] <= 4.5
+        for record in data["records"]
+    )
     first = data["records"][0]
     assert "latitude" in first
     assert "longitude" in first
     assert "confidence" in first
     assert "satellite" in first
-

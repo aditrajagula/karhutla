@@ -29,11 +29,15 @@ else:
 FIRMS_MAP_KEY = os.getenv("FIRMS_MAP_KEY", "").strip()
 FIRMS_DEFAULT_SOURCE = os.getenv("FIRMS_DEFAULT_SOURCE", "VIIRS_NOAA20_NRT")
 FIRMS_BACKUP_SOURCE = os.getenv("FIRMS_BACKUP_SOURCE", "VIIRS_NOAA21_NRT")
-FIRMS_AREA_BBOX = os.getenv("FIRMS_AREA_BBOX", "95.0,-11.0,141.5,6.0")
+FIRMS_AREA_BBOX = os.getenv("FIRMS_AREA_BBOX", "108.5,-4.5,119.0,4.5")
 FIRMS_REQUEST_TIMEOUT_SECONDS = int(os.getenv("FIRMS_REQUEST_TIMEOUT_SECONDS", "20"))
 
 # Direktori Data, Database, dan Uploads
 BOUNDARIES_PATH = BASE_DIR / os.getenv("BOUNDARIES_PATH", "data/boundaries/indonesia_provinces.geojson")
+KALIMANTAN_HOTSPOT_MASK_PATH = BASE_DIR / os.getenv(
+    "KALIMANTAN_HOTSPOT_MASK_PATH",
+    "data/boundaries/kalimantan_hotspot_mask.geojson",
+)
 SNAPSHOTS_DIR = BASE_DIR / os.getenv("SNAPSHOTS_DIR", "data/snapshots")
 REPORTS_DB_PATH = BASE_DIR / os.getenv("REPORTS_DB_PATH", "data/citizen_reports.db")
 UPLOADS_DIR = BASE_DIR / os.getenv("UPLOADS_DIR", "data/uploads/reports")

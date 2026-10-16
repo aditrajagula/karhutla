@@ -3,10 +3,13 @@ FastAPI Backend Application.
 Menyediakan REST API untuk data hotspot, metadata provenance, dan status layer konteks.
 """
 
+import asyncio
 import base64
+from contextlib import asynccontextmanager
 import json
 import logging
 import math
+import os
 import uuid
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
@@ -53,13 +56,34 @@ FOREST_OVERLAY_PNG_PATH = GLAD_FOREST_DIR / "kalimantan" / "kalteng_forest_overl
 FOREST_SUBSET_TIF_PATH = GLAD_FOREST_DIR / "kalimantan" / "GLAD_Forest_extent_2020_00N_110E_kalteng_demo.tif"
 PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES = 0.0001
 
+REFRESH_INTERVAL_SECONDS = int(os.getenv("FIRMS_REFRESH_INTERVAL_SECONDS", "1800"))
+
+
+async def _firms_auto_refresh_loop() -> None:
+    # ponytail: single-process asyncio loop, pakai OS cron jika multi-worker
+    while True:
+        try:
+            await asyncio.to_thread(pipeline_instance.run, total_days=5, force_snapshot=False)
+        except Exception as exc:
+            logger.warning("Auto-refresh FIRMS gagal: %s", exc)
+        await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(_firms_auto_refresh_loop())
+    yield
+    task.cancel()
+
+
 app = FastAPI(
     title="Pantau Hotspot, Jaga Hutan dan Gambut API",
     description=(
         "Backend REST API untuk pemantauan anomali termal satelit (hotspot) NASA FIRMS "
         "dengan validasi batas daratan Indonesia dan analisis tutupan pohon Kalimantan."
     ),
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Pastikan folder upload ada dan mount StaticFiles untuk foto laporan masyarakat

@@ -125,10 +125,13 @@ class FirmsClient:
         active_source = source or self.default_source
 
         if total_days <= 5:
-            return self._fetch_single_window(active_source, total_days, end_date)
+            start_param = None
+            if end_date:
+                ref_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                start_param = (ref_dt - timedelta(days=total_days - 1)).strftime("%Y-%m-%d")
+            return self._fetch_single_window(active_source, total_days, start_param)
 
-        # Pemecahan jendela waktu (chunking)
-        # Menghitung tanggal referensi jendela
+        # Pemecahan jendela waktu (chunking): parameter tanggal FIRMS adalah START DATE
         if end_date:
             ref_dt = datetime.strptime(end_date, "%Y-%m-%d")
         else:
@@ -136,16 +139,23 @@ class FirmsClient:
 
         chunks_data: List[str] = []
         days_remaining = total_days
-        current_ref = ref_dt
+        current_end = ref_dt
+        is_first_chunk = True
 
         while days_remaining > 0:
             window_days = min(5, days_remaining)
-            date_param = current_ref.strftime("%Y-%m-%d")
+            if is_first_chunk and not end_date:
+                date_param = None
+            else:
+                start_dt = current_end - timedelta(days=window_days - 1)
+                date_param = start_dt.strftime("%Y-%m-%d")
+
             csv_part = self._fetch_single_window(active_source, window_days, date_param)
             chunks_data.append(csv_part)
 
             days_remaining -= window_days
-            current_ref = current_ref - timedelta(days=window_days)
+            current_end = current_end - timedelta(days=window_days)
+            is_first_chunk = False
 
         # Gabungkan hasil CSV dan buang baris header duplikat
         return self._merge_csv_chunks(chunks_data)

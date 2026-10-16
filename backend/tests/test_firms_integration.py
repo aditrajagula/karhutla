@@ -255,3 +255,18 @@ def test_pipeline_empty_csv_does_not_overwrite_prior_rich_snapshot(mock_fetch, t
     assert latest_snap is not None
     _, manifest = latest_snap
     assert manifest.record_count == 1
+
+
+@patch("httpx.Client.get")
+def test_firms_client_chunking_uses_start_date_and_no_date_for_latest_window(mock_get):
+    """Chunk pertama tanpa end_date wajib tanpa date_str, chunk kedua wajib memakai start_date."""
+    header = "latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight\n"
+    mock_get.return_value = httpx.Response(status_code=200, text=header)
+    client = FirmsClient(map_key="dummy_key")
+    client.fetch_area_hotspots(total_days=7)
+
+    urls = [call.args[0] for call in mock_get.call_args_list]
+    assert len(urls) == 2
+    assert urls[0].endswith("/5")
+    assert "/2/" in urls[1]
+

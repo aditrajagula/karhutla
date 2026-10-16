@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from starlette.staticfiles import StaticFiles
@@ -24,6 +24,7 @@ from shapely.geometry import mapping, shape
 
 from .config import (
     BOUNDARIES_PATH,
+    CORS_ORIGINS,
     FIRMS_DEFAULT_SOURCE,
     FIRMS_MAP_KEY,
     GLAD_FOREST_DIR,
@@ -32,7 +33,14 @@ from .config import (
 )
 from .pipeline import HotspotPipeline
 from .snapshot_manager import find_latest_valid_snapshot
-from .reports_storage import reports_repo, ReportCategory, ReportStatus
+from .reports_storage import (
+    reports_repo,
+    ReportCategory,
+    ReportStatus,
+    UserRole,
+    create_auth_token,
+    verify_auth_token,
+)
 from .forest_change_service import (
     get_forest_loss_summary,
     evaluate_forest_change_point,
@@ -91,8 +99,8 @@ app = FastAPI(
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads/reports", StaticFiles(directory=str(UPLOADS_DIR)), name="reports_uploads")
 
-# Aktifkan CORS agar frontend (Vite dev server & browser klien) dapat mengakses API secara aman
-ALLOWED_ORIGINS = [
+# Aktifkan CORS agar frontend (lokal maupun domain produksi Railway/Render/Vercel) dapat mengakses API
+DEFAULT_LOCAL_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:4173",
@@ -100,11 +108,20 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+if not CORS_ORIGINS or CORS_ORIGINS == "*":
+    ALLOWED_ORIGINS = ["*"]
+else:
+    custom_origins = [
+        o.strip().strip('"').strip("'")
+        for o in CORS_ORIGINS.strip("[]").split(",")
+        if o.strip()
+    ]
+    ALLOWED_ORIGINS = list(dict.fromkeys(DEFAULT_LOCAL_ORIGINS + custom_origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=ALLOWED_ORIGINS != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -775,11 +792,79 @@ def get_boundaries_alias():
 
 
 # ==============================================================================
-# Model Skema Pelaporan Masyarakat (Citizen Reports)
+# Model Skema Autentikasi & Pelaporan Masyarakat (Citizen Reports)
 # ==============================================================================
 
+class LoginPayload(BaseModel):
+    email: str = Field(..., description="Alamat email pengguna")
+    password: str = Field(..., description="Kata sandi pengguna")
+
+
+class RegisterPayload(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100, description="Nama lengkap warga")
+    email: str = Field(..., max_length=150, description="Alamat email warga")
+    password: str = Field(..., min_length=6, max_length=100, description="Kata sandi (minimal 6 karakter)")
+
+
+def _extract_bearer_user(authorization: Optional[str]) -> Optional[Dict[str, Any]]:
+    if not authorization:
+        return None
+    parts = authorization.strip().split(" ", 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Format header Authorization tidak valid.")
+    payload = verify_auth_token(parts[1].strip())
+    if not payload:
+        raise HTTPException(status_code=401, detail="Sesi login telah berakhir atau token tidak valid.")
+    return {
+        "id": payload["sub"],
+        "email": payload["email"],
+        "name": payload["name"],
+        "role": payload["role"],
+    }
+
+
+@app.post("/api/v1/auth/login", summary="Login akun Warga atau Petugas")
+def login_user_endpoint(payload: LoginPayload) -> Dict[str, Any]:
+    user = reports_repo.authenticate_user(payload.email, payload.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Email atau kata sandi salah.")
+    token = create_auth_token(user)
+    return {
+        "status": "success",
+        "token": token,
+        "user": user,
+    }
+
+
+@app.post("/api/v1/auth/register", summary="Registrasi akun Warga baru")
+def register_user_endpoint(payload: RegisterPayload) -> Dict[str, Any]:
+    try:
+        user = reports_repo.register_user(
+            name=payload.name,
+            email=payload.email,
+            password=payload.password,
+            role=UserRole.WARGA.value,
+        )
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
+    token = create_auth_token(user)
+    return {
+        "status": "success",
+        "token": token,
+        "user": user,
+    }
+
+
+@app.get("/api/v1/auth/me", summary="Profil akun yang sedang login")
+def get_current_user_endpoint(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    user = _extract_bearer_user(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Token autentikasi diperlukan.")
+    return {"status": "success", "user": user}
+
+
 class CitizenReportCreate(BaseModel):
-    category: str = Field(..., description="Kategori: kebakaran, pembukaan_lahan, perubahan_tutupan")
+    category: str = Field(..., description="Kategori: penebangan_liar, pembukaan_lahan, perambahan_hutan, kebakaran, perubahan_tutupan")
     latitude: float = Field(..., ge=-11.0, le=6.0, description="Latitude daratan Indonesia (-11.0 s.d. 6.0)")
     longitude: float = Field(..., ge=95.0, le=141.5, description="Longitude daratan Indonesia (95.0 s.d. 141.5)")
     observed_at_utc: str = Field(..., description="Waktu pengamatan standar ISO (UTC)")
@@ -885,7 +970,7 @@ def fetch_hotspots_for_reports(
 
 @app.get("/api/v1/reports", summary="Mengambil daftar laporan masyarakat")
 def get_citizen_reports(
-    category: Optional[str] = Query(None, description="Filter kategori: kebakaran, pembukaan_lahan, perubahan_tutupan"),
+    category: Optional[str] = Query(None, description="Filter kategori: penebangan_liar, pembukaan_lahan, perambahan_hutan, kebakaran, perubahan_tutupan"),
     status: Optional[str] = Query(None, description="Filter status: PENDING, IN_REVIEW, VERIFIED, REJECTED"),
     province: Optional[str] = Query(None, description="Filter nama provinsi daratan Indonesia"),
     region: Optional[str] = Query(None, description="Filter wilayah: 'kalimantan' untuk membatasi 5 provinsi Kalimantan"),
@@ -975,8 +1060,20 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
     - Deteksi otomatis kandidat duplikasi (radius 5 km & 24 jam).
     - Penyimpanan foto opsional jika disertakan.
     """
+    raw_cat = payload.category.strip().lower()
+    cat_norm = {
+        "asap_kebakaran": "kebakaran",
+        "kebakaran_hutan": "kebakaran",
+        "deforestasi": "pembukaan_lahan",
+        "land_clearing": "pembukaan_lahan",
+        "illegal_logging": "penebangan_liar",
+        "pembalakan_liar": "penebangan_liar",
+        "perambahan": "perambahan_hutan",
+        "alih_fungsi_bekas_karhutla": "perubahan_tutupan",
+    }.get(raw_cat, raw_cat)
+
     valid_categories = [c.value for c in ReportCategory]
-    if payload.category not in valid_categories:
+    if cat_norm not in valid_categories:
         raise HTTPException(
             status_code=422,
             detail=f"Kategori '{payload.category}' tidak valid. Pilihan: {valid_categories}"
@@ -1018,7 +1115,7 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
         photo_fn, photo_url = save_report_photo(payload.photo_base64, UPLOADS_DIR)
 
     report_dict, is_dup = reports_repo.create_report(
-        category=payload.category,
+        category=cat_norm,
         latitude=payload.latitude,
         longitude=payload.longitude,
         observed_at_utc=payload.observed_at_utc,
@@ -1113,13 +1210,24 @@ def get_citizen_report_by_id(report_id: str) -> Dict[str, Any]:
     return public_report
 
 
-@app.patch("/api/v1/reports/{report_id}/status", summary="Verifikasi laporan oleh operator")
-def update_report_status(report_id: str, payload: ReportStatusUpdate) -> Dict[str, Any]:
+@app.patch("/api/v1/reports/{report_id}/status", summary="Verifikasi laporan oleh operator / petugas")
+def update_report_status(
+    report_id: str,
+    payload: ReportStatusUpdate,
+    authorization: Optional[str] = Header(None),
+) -> Dict[str, Any]:
     """
-    Memperbarui status verifikasi laporan oleh operator (disediakan untuk kompatibilitas sistem).
+    Memperbarui status verifikasi laporan oleh petugas.
     Status valid: PENDING, IN_REVIEW, VERIFIED, REJECTED.
     Jika status REJECTED, alasan penolakan wajib disertakan.
     """
+    user = _extract_bearer_user(authorization)
+    if user is not None and user.get("role") != UserRole.PETUGAS.value:
+        raise HTTPException(
+            status_code=403,
+            detail="Akses ditolak. Hanya akun Petugas yang dapat memverifikasi laporan warga."
+        )
+
     valid_statuses = [s.value for s in ReportStatus]
     if payload.status not in valid_statuses:
         raise HTTPException(
@@ -1140,7 +1248,7 @@ def update_report_status(report_id: str, payload: ReportStatusUpdate) -> Dict[st
             status=payload.status,
             verification_notes=payload.verification_notes.strip() if payload.verification_notes else None,
             rejection_reason=payload.rejection_reason.strip() if payload.rejection_reason else None,
-            public=True
+            public=False
         )
     except ValueError as val_err:
         raise HTTPException(status_code=422, detail=str(val_err)) from val_err
@@ -1148,12 +1256,21 @@ def update_report_status(report_id: str, payload: ReportStatusUpdate) -> Dict[st
     if not updated:
         raise HTTPException(status_code=404, detail=f"Laporan dengan ID '{report_id}' tidak ditemukan.")
 
+    recent_hotspots, firms_available, cov_range = fetch_hotspots_for_reports([updated])
+    evidence = assess_report_evidence(
+        report=updated,
+        hotspots=recent_hotspots,
+        firms_available=firms_available,
+        coverage_date_range=cov_range,
+    )
+
     # Sanitasi kontak pribadi dan koordinat presisi
     updated.pop("reporter_contact", None)
     if "latitude" in updated:
         updated["latitude"] = round(float(updated["latitude"]), 3)
     if "longitude" in updated:
         updated["longitude"] = round(float(updated["longitude"]), 3)
+    updated["evidence_assessment"] = evidence
 
     return {
         "status": "success",
@@ -1167,9 +1284,11 @@ def get_reports_meta() -> Dict[str, Any]:
     """Mengembalikan daftar nilai kategori, status, dan kategori penilaian bukti yang sah."""
     return {
         "categories": [
-            {"value": "kebakaran", "label": "Kebakaran atau kemunculan asap"},
-            {"value": "pembukaan_lahan", "label": "Indikasi pembukaan lahan"},
-            {"value": "perubahan_tutupan", "label": "Indikasi perubahan kondisi tutupan hutan"},
+            {"value": "penebangan_liar", "label": "Penebangan Liar / Pembalakan Ilegal (Illegal Logging)"},
+            {"value": "pembukaan_lahan", "label": "Pembukaan Lahan Hutan (Land Clearing)"},
+            {"value": "perambahan_hutan", "label": "Perambahan Kawasan Hutan Lindung/Konservasi"},
+            {"value": "kebakaran", "label": "Kebakaran Pembukaan Lahan (Slash-and-Burn)"},
+            {"value": "perubahan_tutupan", "label": "Perubahan Drastis Tutupan Kanopi Pohon"},
         ],
         "statuses": [
             {"value": "PENDING", "label": "Menunggu verifikasi"},

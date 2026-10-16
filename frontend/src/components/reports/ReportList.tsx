@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { CitizenReport, ReportCategory, EvidenceAssessmentLabel } from '../../types/report';
-import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
+import type { CitizenReport, ReportCategory, EvidenceAssessmentLabel, ReportStatus } from '../../types/report';
+import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG, STATUS_LABELS } from '../../types/report';
 import {
   LeafIcon,
   FlameIcon,
@@ -11,6 +11,7 @@ import {
   ZapIcon,
   SearchIcon,
   HourglassIcon,
+  PinIcon,
 } from '../common/SvgIcons';
 
 interface ReportListProps {
@@ -20,6 +21,13 @@ interface ReportListProps {
   onOpenCreateModal: () => void;
 }
 
+const STATUS_BADGE_COLORS: Record<ReportStatus, { bg: string; text: string; border: string }> = {
+  PENDING: { bg: 'rgba(245, 158, 11, 0.15)', text: '#D97706', border: 'rgba(245, 158, 11, 0.4)' },
+  IN_REVIEW: { bg: 'rgba(37, 99, 235, 0.15)', text: '#2563EB', border: 'rgba(37, 99, 235, 0.4)' },
+  VERIFIED: { bg: 'rgba(16, 185, 129, 0.15)', text: '#059669', border: 'rgba(16, 185, 129, 0.4)' },
+  REJECTED: { bg: 'rgba(239, 68, 68, 0.15)', text: '#DC2626', border: 'rgba(239, 68, 68, 0.4)' },
+};
+
 export const ReportList: React.FC<ReportListProps> = ({
   reports,
   onSelectReport,
@@ -27,10 +35,12 @@ export const ReportList: React.FC<ReportListProps> = ({
   onOpenCreateModal,
 }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [evidenceFilter, setEvidenceFilter] = useState<string>('');
 
   const filteredReports = reports.filter((r) => {
     if (categoryFilter && r.category !== categoryFilter) return false;
+    if (statusFilter && r.status !== statusFilter) return false;
     if (evidenceFilter) {
       const assessmentLabel = r.evidence_assessment?.category_result;
       if (assessmentLabel !== evidenceFilter) return false;
@@ -43,7 +53,7 @@ export const ReportList: React.FC<ReportListProps> = ({
       {/* Header List Laporan */}
       <div className="detection-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <span className="detection-list-title">Laporan Partisipasi Warga</span>
+          <span className="detection-list-title">Laporan Deforestasi Partisipatif</span>
           <span className="detection-list-meta" style={{ marginLeft: '6px' }}>{filteredReports.length} laporan</span>
         </div>
         <button
@@ -59,23 +69,39 @@ export const ReportList: React.FC<ReportListProps> = ({
             fontWeight: 600,
           }}
         >
-          + Buat Laporan
+          + Lapor Deforestasi
         </button>
       </div>
 
       {/* Filter Toolbar Cepat */}
-      <div style={{ display: 'flex', gap: '6px', padding: '8px 10px', background: 'var(--color-bg-subtle)', borderBottom: '1px solid var(--color-border)' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '8px 10px', background: 'var(--color-bg-subtle)', borderBottom: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
         <select
           aria-label="Filter Kategori"
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="filter-select"
-          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1 }}
+          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
         >
           <option value="">Semua Kategori</option>
-          <option value="kebakaran">Kebakaran / Asap</option>
+          <option value="penebangan_liar">Penebangan Liar</option>
           <option value="pembukaan_lahan">Pembukaan Lahan</option>
-          <option value="perubahan_tutupan">Perubahan Tutupan</option>
+          <option value="perambahan_hutan">Perambahan Hutan</option>
+          <option value="kebakaran">Kebakaran Pembukaan</option>
+          <option value="perubahan_tutupan">Kehilangan Kanopi</option>
+        </select>
+
+        <select
+          aria-label="Filter Status Verifikasi"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="filter-select"
+          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
+        >
+          <option value="">Semua Status</option>
+          <option value="PENDING">Menunggu Verifikasi</option>
+          <option value="IN_REVIEW">Perlu Pemeriksaan</option>
+          <option value="VERIFIED">Terverifikasi</option>
+          <option value="REJECTED">Ditolak</option>
         </select>
 
         <select
@@ -83,7 +109,7 @@ export const ReportList: React.FC<ReportListProps> = ({
           value={evidenceFilter}
           onChange={(e) => setEvidenceFilter(e.target.value)}
           className="filter-select"
-          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1 }}
+          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
         >
           <option value="">Semua Bukti</option>
           <option value="Ada indikasi pendukung">Ada Indikasi</option>
@@ -99,9 +125,9 @@ export const ReportList: React.FC<ReportListProps> = ({
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
               <LeafIcon size={28} color="#059669" />
             </div>
-            <div style={{ fontWeight: 500 }}>Belum ada laporan warga pada filter ini.</div>
+            <div style={{ fontWeight: 500 }}>Belum ada laporan deforestasi pada filter ini.</div>
             <div style={{ fontSize: '11px', marginTop: '4px' }}>
-              Masyarakat dapat melaporkan indikasi asap atau perubahan kondisi tutupan pohon di Kalimantan.
+              Masyarakat dapat melaporkan indikasi penebangan liar, pembukaan lahan berhutan, atau perambahan kawasan lindung di Kalimantan.
             </div>
             <button
               type="button"
@@ -109,7 +135,7 @@ export const ReportList: React.FC<ReportListProps> = ({
               className="btn-action"
               style={{ marginTop: '12px', fontSize: '11px', padding: '6px 12px' }}
             >
-              Kirim Laporan Pertama
+              Kirim Laporan Deforestasi
             </button>
           </div>
         ) : (
@@ -118,6 +144,7 @@ export const ReportList: React.FC<ReportListProps> = ({
             const evidence = r.evidence_assessment;
             const assessmentLabel = (evidence?.category_result || 'Belum dapat dinilai') as EvidenceAssessmentLabel;
             const badge = EVIDENCE_BADGE_CONFIG[assessmentLabel] || EVIDENCE_BADGE_CONFIG['Belum dapat dinilai'];
+            const stColor = STATUS_BADGE_COLORS[r.status] || STATUS_BADGE_COLORS.PENDING;
 
             const renderBadgeIcon = () => {
               if (assessmentLabel === 'Ada indikasi pendukung') {
@@ -130,13 +157,19 @@ export const ReportList: React.FC<ReportListProps> = ({
             };
 
             const renderCategoryIcon = () => {
-              if (r.category === 'kebakaran') {
-                return <FlameIcon size={13} color="#CC6F00" />;
+              if (r.category === 'penebangan_liar') {
+                return <TreeIcon size={13} color="#DC2626" />;
               }
               if (r.category === 'pembukaan_lahan') {
                 return <TractorIcon size={13} color="#D97706" />;
               }
-              return <TreeIcon size={13} color="#059669" />;
+              if (r.category === 'perambahan_hutan') {
+                return <PinIcon size={13} color="#7C3AED" />;
+              }
+              if (r.category === 'kebakaran' || r.category === 'kebakaran_hutan') {
+                return <FlameIcon size={13} color="#CC6F00" />;
+              }
+              return <LeafIcon size={13} color="#059669" />;
             };
 
             return (
@@ -190,7 +223,20 @@ export const ReportList: React.FC<ReportListProps> = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px', fontSize: '10px', color: 'var(--color-text-muted)' }}>
                   <span>{r.observed_at_utc.slice(0, 16).replace('T', ' ')} UTC</span>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        backgroundColor: stColor.bg,
+                        color: stColor.text,
+                        border: `1px solid ${stColor.border}`,
+                      }}
+                    >
+                      {STATUS_LABELS[r.status] || r.status}
+                    </span>
                     {r.photo_url && (
                       <span title="Ada foto bukti" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                         <CameraIcon size={12} color="var(--color-text-muted)" />

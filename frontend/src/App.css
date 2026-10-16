@@ -603,6 +603,23 @@
   animation: pulse-border 2s infinite;
 }
 
+/* Mode Pemilihan Titik pada Peta - disable pointer events agar klik menembus semua poligon & layer */
+.mp-map--picking,
+.mp-map--picking .leaflet-container,
+.mp-map--picking .mp-map__canvas {
+  cursor: crosshair !important;
+}
+
+.mp-map--picking .leaflet-overlay-pane,
+.mp-map--picking .leaflet-marker-pane,
+.mp-map--picking .leaflet-shadow-pane,
+.mp-map--picking .leaflet-popup-pane,
+.mp-map--picking .leaflet-peatlandPane-pane,
+.mp-map--picking .leaflet-forestPane-pane,
+.mp-map--picking .leaflet-interactive {
+  pointer-events: none !important;
+}
+
 @keyframes pulse-border {
   0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.5); }
   70% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }

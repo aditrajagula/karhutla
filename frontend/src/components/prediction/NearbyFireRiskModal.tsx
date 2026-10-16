@@ -98,6 +98,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
     }
 
     for (const r of reports) {
+      if (r.status === 'REJECTED') continue;
       const dist = calculateDistanceKm(userCoords.lat, userCoords.lon, r.latitude, r.longitude);
       if (dist <= 50) nearbyReportsCount++;
     }

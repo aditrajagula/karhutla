@@ -2,7 +2,13 @@
  * Tipe data untuk Fitur Pelaporan Masyarakat (Citizen Reports).
  */
 
-export type ReportCategory = 'kebakaran' | 'pembukaan_lahan' | 'perubahan_tutupan';
+export type ReportCategory =
+  | 'penebangan_liar'
+  | 'pembukaan_lahan'
+  | 'perambahan_hutan'
+  | 'kebakaran'
+  | 'perubahan_tutupan'
+  | 'kebakaran_hutan';
 
 export type ReportStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED';
 
@@ -90,9 +96,12 @@ export interface UpdateReportResponse {
 }
 
 export const CATEGORY_LABELS: Record<ReportCategory, string> = {
-  kebakaran: 'Kebakaran atau Kemunculan Asap',
-  pembukaan_lahan: 'Indikasi Pembukaan Lahan',
-  perubahan_tutupan: 'Indikasi Perubahan Kondisi Tutupan Hutan',
+  penebangan_liar: 'Penebangan Liar (Illegal Logging)',
+  pembukaan_lahan: 'Pembukaan Lahan (Land Clearing)',
+  perambahan_hutan: 'Perambahan Kawasan Hutan',
+  kebakaran: 'Kebakaran Pembukaan Lahan (Slash & Burn)',
+  perubahan_tutupan: 'Perubahan Drastis Tutupan Kanopi',
+  kebakaran_hutan: 'Kebakaran Hutan & Lahan',
 };
 
 export const STATUS_LABELS: Record<ReportStatus, string> = {

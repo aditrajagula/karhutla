@@ -67,7 +67,12 @@ def assess_report_evidence(
     category = report.get("category", "")
     category = {
         "asap_kebakaran": "kebakaran",
+        "kebakaran_hutan": "kebakaran",
         "deforestasi": "pembukaan_lahan",
+        "land_clearing": "pembukaan_lahan",
+        "illegal_logging": "penebangan_liar",
+        "pembalakan_liar": "penebangan_liar",
+        "perambahan": "perambahan_hutan",
         "alih_fungsi_bekas_karhutla": "perubahan_tutupan",
     }.get(category, category)
     lat = float(report.get("latitude", 0.0))
@@ -210,10 +215,24 @@ def assess_report_evidence(
             }
 
     # =========================================================================
-    # Kategori 2 & 3: Pembukaan lahan atau perubahan tutupan pohon
+    # Kategori Deforestasi: Pembukaan lahan, penebangan liar, perambahan hutan, tutupan pohon
     # =========================================================================
-    elif category in ("pembukaan_lahan", "perubahan_tutupan"):
+    elif category in ("pembukaan_lahan", "perubahan_tutupan", "penebangan_liar", "perambahan_hutan"):
         point_eval = evaluate_forest_change_point(lat=lat, lon=lon, province=province)
+
+        glad_extent_info = None
+        try:
+            from .glad_forest_reader import lookup_forest_extent
+            glad_res = lookup_forest_extent(lat=lat, lon=lon)
+            if glad_res:
+                glad_extent_info = {
+                    "classification": glad_res.classification,
+                    "status": glad_res.status,
+                    "raster_available": glad_res.raster_available,
+                    "definition": "Tutupan pohon tinggi >= 5m (GLAD 2020 baseline)",
+                }
+        except Exception:
+            glad_extent_info = None
 
         if point_eval.get("status") == "SUPPORTING_INDICATION":
             matched_prov = point_eval.get("province", "Kalimantan")
@@ -229,12 +248,14 @@ def assess_report_evidence(
                 "details": {
                     "dataset": "Hansen GFC 2025 v1.13",
                     "province": matched_prov,
+                    "category": category,
                     "pixel_area_ha": point_eval.get("pixel_area_ha"),
                     "data_period": "2000–2025",
                     "satellite_sources": "Landsat (USGS/NASA) / UMD",
                     "data_status": point_eval.get("data_status", "demonstration"),
                     "data_verified": point_eval.get("data_verified", False),
                     "pixel_data": point_eval.get("pixel_data"),
+                    "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
                     "PERINGATAN ILMIAH: Hotspot satelit TIDAK DIGUNAKAN sebagai bukti pembukaan lahan. "
@@ -256,11 +277,13 @@ def assess_report_evidence(
                 "matching_rule": point_eval.get("matching_rule", "Pemeriksaan piksel raster Hansen GFC v1.13 resolusi 30m."),
                 "details": {
                     "province": matched_prov,
+                    "category": category,
                     "data_status": point_eval.get("data_status", "demonstration"),
                     "data_verified": point_eval.get("data_verified", False),
                     "raster_available": True,
                     "pixel_area_ha": point_eval.get("pixel_area_ha"),
                     "pixel_data": point_eval.get("pixel_data"),
+                    "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
                     "PERINGATAN ILMIAH: Piksel teridentifikasi sebagai badan air permanen, area tanpa data pemetaan kanopi, "
@@ -285,10 +308,12 @@ def assess_report_evidence(
                 ),
                 "details": {
                     "province": matched_prov,
+                    "category": category,
                     "data_status": point_eval.get("data_status", "demonstration"),
                     "data_verified": point_eval.get("data_verified", False),
                     "raster_available": False,
                     "pixel_area_ha": point_eval.get("pixel_area_ha"),
+                    "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
                     "PERINGATAN ILMIAH: Status 'Belum dapat dinilai' (INSUFFICIENT_DATA) diberikan karena data raster "
@@ -297,13 +322,17 @@ def assess_report_evidence(
                 )
             }
         elif point_eval.get("status") == "NO_MATCH_FOUND":
+            dt_details = point_eval.get("pixel_data") or {}
+            if isinstance(dt_details, dict):
+                dt_details["forest_extent_2020"] = glad_extent_info
+                dt_details["category"] = category
             return {
                 "assessment_code": "NO_MATCH_FOUND",
                 "category_result": "Belum ditemukan kecocokan",
                 "evidence_type": "hansen_gfc_treecover_loss",
                 "summary": "Pemeriksaan raster Hansen GFC v1.13 tidak menemukan riwayat kehilangan tutupan pohon pada piksel ini.",
                 "matching_rule": point_eval.get("matching_rule", "Pemeriksaan piksel 30m."),
-                "details": point_eval.get("pixel_data"),
+                "details": dt_details,
                 "limitations_caveat": (
                     "Ketiadaan deteksi kehilangan kanopi bukan jaminan ketiadaan aktivitas pembukaan lahan minor di bawah kanopi."
                 )

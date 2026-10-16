@@ -40,6 +40,9 @@ FIRMS_REQUEST_TIMEOUT_SECONDS = int(os.getenv("FIRMS_REQUEST_TIMEOUT_SECONDS", "
 BOUNDARIES_PATH = BASE_DIR / os.getenv("BOUNDARIES_PATH", "data/boundaries/indonesia_provinces.geojson")
 SNAPSHOTS_DIR = BASE_DIR / os.getenv("SNAPSHOTS_DIR", "data/snapshots")
 REPORTS_DB_PATH = BASE_DIR / os.getenv("REPORTS_DB_PATH", "data/citizen_reports.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+SECRET_KEY = os.getenv("SECRET_KEY", "jagaborneo-default-secret-key-2026").strip()
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").strip()
 UPLOADS_DIR = BASE_DIR / os.getenv("UPLOADS_DIR", "data/uploads/reports")
 
 # Mode eksekusi

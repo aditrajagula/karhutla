@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import type { CitizenReport } from '../../types/report';
+import type { CitizenReport, ReportStatus } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
-import { fetchFireRiskPrediction } from '../../services/api';
+import { BACKEND_ORIGIN, fetchFireRiskPrediction, updateReportStatus } from '../../services/api';
+import { isPetugas } from '../../services/dummyAuth';
 import {
-  ClipboardIcon,
   CloseIcon,
   AlertTriangleIcon,
+  CheckCircleIcon,
   PinIcon,
   SatelliteIcon,
   ClockIcon,
@@ -18,19 +19,39 @@ import {
   ZapIcon,
   SearchIcon,
   StatusPillDot,
+  TreeIcon,
 } from '../common/SvgIcons';
 
 interface ReportDetailModalProps {
   report: CitizenReport | null;
   onClose: () => void;
+  onReportUpdated?: (updated: CitizenReport) => void;
 }
 
 export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   report,
   onClose,
+  onReportUpdated,
 }) => {
+  const canVerify = isPetugas();
   const [riskData, setRiskData] = useState<any>(report?.environmental_risk || null);
   const [loadingRisk, setLoadingRisk] = useState<boolean>(false);
+
+  // State untuk form verifikasi petugas
+  const [verifyStatus, setVerifyStatus] = useState<ReportStatus>(report?.status || 'IN_REVIEW');
+  const [verifyNotes, setVerifyNotes] = useState<string>(report?.verification_notes || '');
+  const [rejectReason, setRejectReason] = useState<string>(report?.rejection_reason || '');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+  const [verifyFeedback, setVerifyFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (report) {
+      setVerifyStatus(report.status === 'PENDING' ? 'VERIFIED' : report.status);
+      setVerifyNotes(report.verification_notes || '');
+      setRejectReason(report.rejection_reason || '');
+      setVerifyFeedback(null);
+    }
+  }, [report?.id, report?.status, report?.verification_notes, report?.rejection_reason]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,7 +62,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   }, [onClose]);
 
   useEffect(() => {
-    if (!report) return;
+    // Pada sesi petugas, panel risiko cuaca diabaikan
+    if (!report || canVerify) return;
 
     if (report.environmental_risk?.risk_level) {
       setRiskData(report.environmental_risk);
@@ -66,7 +88,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [report?.id, report?.latitude, report?.longitude, report?.province, report?.environmental_risk]);
+  }, [report?.id, report?.latitude, report?.longitude, report?.province, report?.environmental_risk, canVerify]);
 
   if (!report) return null;
 
@@ -97,8 +119,43 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
   // Buat URL absolut untuk foto jika photo_url ada
   const photoFullUrl = report.photo_url
-    ? (report.photo_url.startsWith('http') ? report.photo_url : `http://127.0.0.1:8000${report.photo_url}`)
+    ? (report.photo_url.startsWith('http') ? report.photo_url : `${BACKEND_ORIGIN}${report.photo_url}`)
     : null;
+
+  const handleSaveVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifyFeedback(null);
+
+    if (verifyStatus === 'REJECTED' && !rejectReason.trim()) {
+      setVerifyFeedback({
+        type: 'error',
+        text: 'Alasan penolakan wajib diisi jika laporan ditolak.',
+      });
+      return;
+    }
+
+    setIsUpdatingStatus(true);
+    try {
+      const res = await updateReportStatus(report.id, {
+        status: verifyStatus,
+        verification_notes: verifyNotes.trim() || null,
+        rejection_reason: verifyStatus === 'REJECTED' ? rejectReason.trim() : null,
+      });
+      setVerifyFeedback({
+        type: 'success',
+        text: res.message || `Status laporan berhasil diperbarui menjadi ${STATUS_LABELS[verifyStatus]}.`,
+      });
+      if (onReportUpdated && res.data) {
+        onReportUpdated(res.data);
+      }
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal memperbarui status verifikasi.';
+      setVerifyFeedback({ type: 'error', text: msg });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   return (
     <div
@@ -113,9 +170,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
       <div className="modal-card" style={{ maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ClipboardIcon size={18} color="#CC6F00" />
+            <TreeIcon size={18} color="#059669" />
             <h3 id="report-detail-title" className="modal-title">
-              Detail Laporan Warga & Penilaian Bukti
+              Detail Laporan Deforestasi & Penilaian Bukti
             </h3>
           </div>
           <button
@@ -199,7 +256,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Hasil Penilaian Bukti Geospasial
+                Hasil Penilaian Bukti Tutupan Hutan & Deforestasi
               </span>
               <span
                 style={{
@@ -263,12 +320,25 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     </div>
                   </div>
                 )}
-                {report.category !== 'kebakaran' && Boolean(evidence.details['dataset']) && (
+                {report.category !== 'kebakaran' && (Boolean(evidence.details['dataset']) || Boolean(evidence.details['forest_extent_2020'])) && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <BookIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Sumber Data:</b> Pemantauan Perubahan Tutupan Pohon</span>
+                      <span><b>Dataset Evaluasi:</b> Hansen GFC 2025 v1.13</span>
                     </div>
+                    {Boolean(evidence.details['forest_extent_2020']) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <TreeIcon size={13} color="#059669" />
+                        <span>
+                          <b>Klasifikasi GLAD 2020:</b>{' '}
+                          {(evidence.details['forest_extent_2020'] as any)?.classification === 'FOREST'
+                            ? 'Hutan Kanopi >= 5m (Terkonfirmasi)'
+                            : (evidence.details['forest_extent_2020'] as any)?.classification === 'NON_FOREST'
+                            ? 'Bukan Hutan'
+                            : 'Di Luar Cakupan Raster'}
+                        </span>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <RulerIcon size={13} color="var(--color-text-muted)" />
                       <span><b>Cakupan Analisis:</b> Sekitar ~{String(evidence.details['pixel_area_ha'] ?? '0.08')} hektare per titik observasi</span>
@@ -305,8 +375,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             )}
           </div>
 
-          {/* PANEL ESTIMASI RISIKO KEBAKARAN */}
-          {loadingRisk && (
+          {/* PANEL ESTIMASI RISIKO KEBAKARAN (Hanya untuk pelapor/warga jika data tersedia, disembunyikan pada sesi petugas) */}
+          {!canVerify && loadingRisk && (
             <div
               style={{
                 backgroundColor: 'rgba(204, 111, 0, 0.08)',
@@ -326,7 +396,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             </div>
           )}
 
-          {!loadingRisk && riskData?.risk_level && (
+          {!canVerify && !loadingRisk && riskData?.risk_level && riskData.risk_level !== 'TIDAK_DAPAT_DINILAI' && (
             <div
               style={{
                 backgroundColor: 'rgba(204, 111, 0, 0.08)',
@@ -336,13 +406,14 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 marginBottom: '16px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>                <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#CC6F00', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <FlameIcon size={14} color="#CC6F00" />
                     Indikator Kerentanan Cuaca Sekitar (Eksperimental)
                   </div>
                   <div style={{ fontSize: '13px', color: 'var(--color-text-main)', marginTop: '2px' }}>
-                    Indeks Kerentanan: <b style={{ color: '#CC6F00' }}>{riskData.risk_percentage}%</b>
+                    Indeks Kerentanan: <b style={{ color: '#CC6F00' }}>{riskData.risk_percentage ?? 0}%</b>
                   </div>
                 </div>
                 <span
@@ -393,9 +464,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     }
                     size={7}
                   />
-                  {riskData.risk_level === 'TIDAK_DAPAT_DINILAI'
-                    ? 'TIDAK DAPAT DINILAI'
-                    : `KERENTANAN ${riskData.risk_level}`}
+                  {`KERENTANAN ${riskData.risk_level}`}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
@@ -495,14 +564,193 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* Catatan Hasil Verifikasi Petugas (Terlihat oleh Warga & Petugas) */}
+          {(report.verification_notes || report.rejection_reason) && (
+            <div
+              style={{
+                marginTop: '14px',
+                padding: '12px 14px',
+                borderRadius: '8px',
+                backgroundColor: currentTheme.bg,
+                border: `1px solid ${currentTheme.border}`,
+                fontSize: '12px',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ fontWeight: 700, color: currentTheme.text, marginBottom: '4px' }}>
+                Hasil Tinjauan Petugas ({STATUS_LABELS[report.status]}):
+              </div>
+              {report.verification_notes && (
+                <div style={{ color: 'var(--color-text-main)' }}>
+                  <b>Catatan Petugas:</b> {report.verification_notes}
+                </div>
+              )}
+              {report.rejection_reason && (
+                <div style={{ color: '#DC2626', marginTop: '4px' }}>
+                  <b>Alasan Penolakan:</b> {report.rejection_reason}
+                </div>
+              )}
+              {report.status === 'REJECTED' && (
+                <div style={{ color: '#DC2626', marginTop: '6px', fontSize: '11px' }}>
+                  📌 <i>Titik penanda laporan ini telah ditiadakan dari peta interaktif.</i>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Panel Tindakan Verifikasi Khusus Petugas */}
+          {canVerify && (
+            <form
+              onSubmit={handleSaveVerification}
+              style={{
+                marginTop: '18px',
+                padding: '14px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--color-bg-subtle)',
+                border: '1.5px solid rgba(204, 111, 0, 0.5)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#CC6F00',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <CheckCircleIcon size={15} color="#CC6F00" />
+                <span>Panel Verifikasi Petugas</span>
+              </div>
+
+              {verifyFeedback && (
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    marginBottom: '10px',
+                    backgroundColor:
+                      verifyFeedback.type === 'success'
+                        ? 'rgba(16, 185, 129, 0.15)'
+                        : 'rgba(239, 68, 68, 0.15)',
+                    border: `1px solid ${
+                      verifyFeedback.type === 'success' ? '#059669' : '#DC2626'
+                    }`,
+                    color: verifyFeedback.type === 'success' ? '#059669' : '#DC2626',
+                  }}
+                >
+                  {verifyFeedback.text}
+                </div>
+              )}
+
+              <div style={{ marginBottom: '10px' }}>
+                <label
+                  htmlFor="verify-status-select"
+                  style={{ display: 'block', fontSize: '11px', fontWeight: 600, marginBottom: '4px' }}
+                >
+                  Keputusan Status Verifikasi:
+                </label>
+                <select
+                  id="verify-status-select"
+                  value={verifyStatus}
+                  onChange={(e) => setVerifyStatus(e.target.value as ReportStatus)}
+                  className="filter-select"
+                  style={{ width: '100%', fontSize: '12px', padding: '6px 8px' }}
+                >
+                  <option value="VERIFIED">Terverifikasi (VERIFIED)</option>
+                  <option value="IN_REVIEW">Perlu Pemeriksaan Lebih Lanjut (IN_REVIEW)</option>
+                  <option value="REJECTED">Ditolak dengan Alasan (REJECTED)</option>
+                  <option value="PENDING">Menunggu Verifikasi (PENDING)</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <label
+                  htmlFor="verify-notes-input"
+                  style={{ display: 'block', fontSize: '11px', fontWeight: 600, marginBottom: '4px' }}
+                >
+                  Catatan Verifikasi Petugas:
+                </label>
+                <textarea
+                  id="verify-notes-input"
+                  rows={2}
+                  value={verifyNotes}
+                  onChange={(e) => setVerifyNotes(e.target.value)}
+                  placeholder="Contoh: Sesuai pantauan satelit VIIRS dan laporan tim posko lapangan..."
+                  className="filter-input"
+                  style={{ width: '100%', fontSize: '12px', resize: 'vertical' }}
+                />
+              </div>
+
+              {verifyStatus === 'REJECTED' && (
+                <div style={{ marginBottom: '10px' }}>
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: '#B91C1C',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      padding: '6px 8px',
+                      borderRadius: '4px',
+                      marginBottom: '8px',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    ℹ️ <b>Info:</b> Titik penanda laporan ini akan otomatis dihapus dari peta interaktif jika status ditolak / dibatalkan.
+                  </div>
+                  <label
+                    htmlFor="reject-reason-input"
+                    style={{ display: 'block', fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#DC2626' }}
+                  >
+                    Alasan Penolakan (Wajib Diisi) *
+                  </label>
+                  <textarea
+                    id="reject-reason-input"
+                    rows={2}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Jelaskan alasan penolakan laporan ini..."
+                    className="filter-input"
+                    style={{ width: '100%', fontSize: '12px', resize: 'vertical', borderColor: '#DC2626' }}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="submit"
+                  disabled={isUpdatingStatus}
+                  className="btn-action"
+                  style={{
+                    background: '#CC6F00',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    padding: '6px 14px',
+                    border: 'none',
+                  }}
+                >
+                  {isUpdatingStatus ? 'Menyimpan...' : 'Simpan Status Verifikasi'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         <div className="modal-footer">
           <p className="disclaimer-text">
-            Platform FireGuard untuk warga: Informasi warga dipadukan dengan penginderaan jauh satelit untuk transparansi pemantauan hutan Kalimantan tanpa peran petugas tertutup.
+            Platform JagaBorneo memadukan laporan partisipatif warga dengan penginderaan jauh satelit serta verifikasi bertahap oleh petugas.
           </p>
         </div>
       </div>
     </div>
   );
 };
+

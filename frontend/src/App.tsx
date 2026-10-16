@@ -4,6 +4,7 @@ import type { CitizenReport } from './types/report';
 import type { DataSourceMode, SystemStatus } from './types/status';
 import type { FireRiskPrediction } from './types/prediction';
 import { fetchCitizenReports, fetchHotspots, fetchSystemStatus, fetchFireRiskPrediction } from './services/api';
+import { subscribeToReportsSync } from './services/reportSync';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
@@ -158,11 +159,50 @@ export function App() {
   const handleReloadReports = async () => {
     try {
       const repRes = await fetchCitizenReports();
-      setReports(repRes.records || []);
+      const freshRecords = repRes.records || [];
+      setReports(freshRecords);
+      // Sinkronkan selectedReport jika sedang terbuka
+      setSelectedReport((prevSelected) => {
+        if (!prevSelected) return null;
+        const fresh = freshRecords.find((r) => r.id === prevSelected.id);
+        return fresh || prevSelected;
+      });
     } catch {
       // ignore
     }
   };
+
+  // Sinkronisasi otomatis data laporan warga secara berkala dan antar-tab
+  // (Hanya memuat ulang laporan warga lokal, TANPA memuat ulang satelit NASA FIRMS)
+  useEffect(() => {
+    // 1. Listener BroadcastChannel & StorageEvent saat tab lain menambah/memverifikasi laporan
+    const unsubscribeSync = subscribeToReportsSync(() => {
+      void handleReloadReports();
+    });
+
+    // 2. Refresh saat tab kembali aktif/fokus
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void handleReloadReports();
+      }
+    };
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    // 3. Polling latar belakang setiap 5 detik saat tab aktif (untuk sinkronisasi lintas browser/perangkat)
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void handleReloadReports();
+      }
+    }, 5000);
+
+    return () => {
+      unsubscribeSync();
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   // Handler saat tombol 'Pilih di Peta' pada form ditekan
   const handleRequestPickOnMap = () => {
@@ -294,7 +334,7 @@ export function App() {
                 className={`mp-tabs__item ${activeTab === 'laporan' ? 'is-active' : ''}`}
                 onClick={() => setActiveTab('laporan')}
               >
-                Laporan Warga ({reports.length})
+                Laporan Deforestasi ({reports.length})
               </button>
             </div>
 
@@ -372,6 +412,7 @@ export function App() {
             onCheckNearbyRisk={handleCheckNearbyRisk}
             isLocatingNearby={isLocatingNearby}
             onOpenNearbyModal={() => setIsNearbyModalOpen(true)}
+            pickedCoords={pickedCoords}
           />
         </section>
       </main>
@@ -395,6 +436,11 @@ export function App() {
       <ReportDetailModal
         report={selectedReport}
         onClose={() => setSelectedReport(null)}
+        onReportUpdated={(updated) => {
+          setSelectedReport(null);
+          setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+          void handleReloadReports();
+        }}
       />
 
       {/* Modal Analisis Tutupan Pohon Hansen GFC */}

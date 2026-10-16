@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import type { CreateCitizenReportPayload, ReportCategory } from '../../types/report';
-import { CATEGORY_LABELS } from '../../types/report';
 import { submitCitizenReport } from '../../services/api';
+import { getCurrentUser } from '../../services/dummyAuth';
 import {
-  MegaphoneIcon,
   CloseIcon,
   CheckCircleIcon,
   AlertTriangleIcon,
@@ -13,6 +12,7 @@ import {
   TreeIcon,
   PinIcon,
   MapPinIcon,
+  LeafIcon,
 } from '../common/SvgIcons';
 
 interface ReportFormModalProps {
@@ -30,7 +30,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
   initialCoords,
   onPickOnMapRequest,
 }) => {
-  const [category, setCategory] = useState<ReportCategory>('kebakaran');
+  const [category, setCategory] = useState<ReportCategory>('penebangan_liar');
   const [latitude, setLatitude] = useState<string>(
     initialCoords ? initialCoords.lat.toFixed(5) : ''
   );
@@ -43,8 +43,8 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
     return now.toISOString().slice(0, 16);
   });
   const [description, setDescription] = useState<string>('');
-  const [reporterName, setReporterName] = useState<string>('');
-  const [reporterContact, setReporterContact] = useState<string>('');
+  const [reporterName, setReporterName] = useState<string>(() => getCurrentUser()?.name || '');
+  const [reporterContact, setReporterContact] = useState<string>(() => getCurrentUser()?.email || '');
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoFileName, setPhotoFileName] = useState<string>('');
 
@@ -62,6 +62,10 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
     if (isOpen) {
       setSuccessInfo(null);
       setErrorMessage(null);
+      const user = getCurrentUser();
+      if (user && !reporterName) {
+        setReporterName(user.name);
+      }
       if (!initialCoords) {
         setDescription('');
         setPhotoBase64(null);
@@ -206,9 +210,9 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
       <div className="modal-card report-form-card" style={{ maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MegaphoneIcon size={18} color="#CC6F00" />
+            <TreeIcon size={18} color="#059669" />
             <h3 id="report-modal-title" className="modal-title">
-              Pelaporan Kejadian Lapangan oleh Warga
+              Pelaporan Deforestasi & Kerusakan Hutan
             </h3>
           </div>
           <button
@@ -229,7 +233,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               <CheckCircleIcon size={48} color="#10B981" />
             </div>
             <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '8px' }}>
-              Laporan Berhasil Terkirim
+              Laporan Deforestasi Berhasil Terkirim
             </h4>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px', lineHeight: 1.5 }}>
               {successInfo.message}
@@ -250,12 +254,12 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               {successInfo.isDuplicate && (
                 <div style={{ marginTop: '6px', color: '#D97706', fontSize: '11px', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                   <AlertTriangleIcon size={14} color="#D97706" style={{ marginTop: '1px', flexShrink: 0 }} />
-                  <span>Terdeteksi laporan serupa di lokasi terdekat. Laporan tetap tersimpan untuk ditinjau operator.</span>
+                  <span>Terdeteksi laporan serupa di lokasi terdekat. Laporan tetap tersimpan untuk ditinjau petugas.</span>
                 </div>
               )}
             </div>
             <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
-              Laporan warga digunakan sebagai informasi awal untuk ditinjau oleh operator, bukan sebagai konfirmasi otomatis kebakaran atau deforestasi.
+              Laporan warga digunakan sebagai informasi awal peninjauan lapangan oleh petugas kehutanan/lingkungan, diverifikasi dengan data satelit tutupan pohon Hansen GFC & GLAD 2020.
             </p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button
@@ -321,37 +325,54 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               {/* Kategori Kejadian */}
               <div className="filter-group" style={{ marginBottom: '14px' }}>
                 <label className="filter-label" htmlFor="report-category">
-                  Kategori Kejadian <span style={{ color: '#EF4444' }}>*</span>
+                  Kategori Deforestasi & Kerusakan Hutan <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' }}>
-                  {(['kebakaran', 'pembukaan_lahan', 'perubahan_tutupan'] as ReportCategory[]).map((cat) => (
+                  {([
+                    {
+                      cat: 'penebangan_liar',
+                      label: 'Penebangan Liar',
+                      sub: 'Illegal logging / pembalakan',
+                      icon: (active: boolean) => <TreeIcon size={14} color={active ? '#fff' : '#DC2626'} />,
+                    },
+                    {
+                      cat: 'pembukaan_lahan',
+                      label: 'Pembukaan Lahan',
+                      sub: 'Land clearing berhutan',
+                      icon: (active: boolean) => <TractorIcon size={14} color={active ? '#fff' : '#D97706'} />,
+                    },
+                    {
+                      cat: 'perambahan_hutan',
+                      label: 'Perambahan Hutan',
+                      sub: 'Okupasi kawasan lindung',
+                      icon: (active: boolean) => <MapPinIcon size={14} color={active ? '#fff' : '#7C3AED'} />,
+                    },
+                    {
+                      cat: 'kebakaran',
+                      label: 'Kebakaran Pembukaan',
+                      sub: 'Slash & burn pembukaan lahan',
+                      icon: (active: boolean) => <FlameIcon size={14} color={active ? '#fff' : '#CC6F00'} />,
+                    },
+                    {
+                      cat: 'perubahan_tutupan',
+                      label: 'Kehilangan Kanopi',
+                      sub: 'Penurunan drastis tutupan kanopi',
+                      icon: (active: boolean) => <LeafIcon size={14} color={active ? '#fff' : '#059669'} />,
+                    },
+                  ] as const).map(({ cat, label, sub, icon }) => (
                     <button
                       key={cat}
                       type="button"
                       className={`btn-day ${category === cat ? 'active' : ''}`}
                       style={{ padding: '8px 10px', fontSize: '12px', textAlign: 'left', height: 'auto' }}
-                      onClick={() => setCategory(cat)}
+                      onClick={() => setCategory(cat as ReportCategory)}
                     >
                       <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {cat === 'kebakaran' ? (
-                          <>
-                            <FlameIcon size={14} color={category === cat ? '#fff' : '#CC6F00'} />
-                            <span>Kebakaran / Asap</span>
-                          </>
-                        ) : cat === 'pembukaan_lahan' ? (
-                          <>
-                            <TractorIcon size={14} color={category === cat ? '#fff' : '#D97706'} />
-                            <span>Pembukaan Lahan</span>
-                          </>
-                        ) : (
-                          <>
-                            <TreeIcon size={14} color={category === cat ? '#fff' : '#059669'} />
-                            <span>Perubahan Tutupan</span>
-                          </>
-                        )}
+                        {icon(category === cat)}
+                        <span>{label}</span>
                       </div>
                       <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '2px' }}>
-                        {CATEGORY_LABELS[cat]}
+                        {sub}
                       </div>
                     </button>
                   ))}
@@ -439,12 +460,12 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               {/* Deskripsi Pengamatan */}
               <div className="filter-group" style={{ marginBottom: '14px' }}>
                 <label className="filter-label" htmlFor="report-desc">
-                  Deskripsi / Keterangan Kejadian <span style={{ color: '#EF4444' }}>*</span>
+                  Deskripsi / Keterangan Temuan Lapangan <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <textarea
                   id="report-desc"
                   rows={3}
-                  placeholder="Ceritakan detail pengamatan Anda (misal: asap pekat tercium di tepi kanal gambut, perkiraan arah, atau ciri tutupan lahan)..."
+                  placeholder="Ceritakan detail temuan deforestasi (contoh: perkiraan luas tutupan hutan yang ditebang, alat berat / chainsaw, kayu gelondongan diangkut, perambahan kawasan lindung, atau indikasi pembakaran)..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="filter-input"
@@ -459,7 +480,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               {/* Foto Bukti Opsional */}
               <div className="filter-group" style={{ marginBottom: '14px' }}>
                 <label className="filter-label">
-                  Foto Pendukung (Opsional)
+                  Foto Bukti Kerusakan Hutan (Opsional)
                 </label>
                 {photoBase64 ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>

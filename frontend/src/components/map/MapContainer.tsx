@@ -46,6 +46,7 @@ interface MapContainerProps {
   onCheckNearbyRisk?: () => void;
   isLocatingNearby?: boolean;
   onOpenNearbyModal?: () => void;
+  pickedCoords?: { lat: number; lng: number } | null;
 }
 
 const KALIMANTAN_BOUNDS: [[number, number], [number, number]] = [
@@ -145,7 +146,7 @@ const BASE_LEGEND_ITEMS = [
   { color: HOTSPOT_COLORS.high, label: 'Hotspot Suhu Tinggi', flame: true },
   { color: HOTSPOT_COLORS.nominal, label: 'Hotspot Suhu Sedang', flame: true },
   { color: HOTSPOT_COLORS.low, label: 'Hotspot Suhu Rendah', flame: true },
-  { color: REPORT_COLOR, label: 'Laporan Warga', flame: false },
+  { color: REPORT_COLOR, label: 'Laporan Deforestasi', flame: false },
 ];
 
 function escapeHtml(value: unknown): string {
@@ -218,12 +219,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   onCheckNearbyRisk,
   isLocatingNearby = false,
   onOpenNearbyModal,
+  pickedCoords = null,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const hotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const reportsLayerRef = useRef<L.LayerGroup | null>(null);
   const userLayerRef = useRef<L.LayerGroup | null>(null);
+  const pickedLocationLayerRef = useRef<L.LayerGroup | null>(null);
   const kalimantanLayerRef = useRef<L.GeoJSON | null>(null);
   const maskLayerRef = useRef<L.GeoJSON | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -301,6 +304,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     const userGroup = L.layerGroup().addTo(map);
     userLayerRef.current = userGroup;
 
+    const pickedGroup = L.layerGroup().addTo(map);
+    pickedLocationLayerRef.current = pickedGroup;
+
     mapInstanceRef.current = map;
 
     return () => {
@@ -316,11 +322,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     if (!map) return;
 
     if (isPickingLocation && onLocationPicked) {
+      map.closePopup();
+
       if (container) {
         container.style.cursor = 'crosshair';
       }
 
+      // Nonaktifkan pointer-events pada semua layer interaktif agar klik langsung tembus ke canvas map
+      const selectorList = [
+        '.leaflet-overlay-pane',
+        '.leaflet-marker-pane',
+        '.leaflet-shadow-pane',
+        '.leaflet-popup-pane',
+        '.leaflet-peatlandPane-pane',
+        '.leaflet-forestPane-pane',
+      ];
+      selectorList.forEach((sel) => {
+        const el = container?.querySelector(sel) as HTMLElement | null;
+        if (el) el.style.pointerEvents = 'none';
+      });
+
       const handleClick = (e: L.LeafletMouseEvent) => {
+        map.closePopup();
         onLocationPicked({
           lat: e.latlng.lat,
           lng: e.latlng.lng,
@@ -333,9 +356,42 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         if (container) {
           container.style.cursor = '';
         }
+        selectorList.forEach((sel) => {
+          const el = container?.querySelector(sel) as HTMLElement | null;
+          if (el) el.style.pointerEvents = '';
+        });
       };
     }
   }, [isPickingLocation, onLocationPicked]);
+
+  // Render Penanda Lokasi Terpilih (Pilihan Peta Laporan)
+  useEffect(() => {
+    const layerGroup = pickedLocationLayerRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!pickedCoords) return;
+
+    const marker = L.circleMarker([pickedCoords.lat, pickedCoords.lng], {
+      radius: 9,
+      fillColor: '#F59E0B',
+      color: '#FFFFFF',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+    });
+
+    marker.bindPopup(`
+      <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
+        <div style="font-weight: 700; color: #D97706; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+          <span>📍</span> Titik Terpilih Laporan
+        </div>
+        <div><b>Koordinat:</b> ${pickedCoords.lat.toFixed(5)}°, ${pickedCoords.lng.toFixed(5)}°</div>
+      </div>
+    `);
+
+    marker.addTo(layerGroup);
+  }, [pickedCoords]);
 
   // Efek ganti basemap (Esri Gray / Dark / OSM)
   useEffect(() => {
@@ -847,7 +903,10 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     layerGroup.clearLayers();
     if (!showReports) return;
 
-    reports.forEach((r) => {
+    // Filter laporan: jika status laporan REJECTED (ditolak / batal), titik penanda dihapus dari peta
+    const activeReports = reports.filter((r) => r.status !== 'REJECTED');
+
+    activeReports.forEach((r) => {
       const isSelected = selectedReport?.id === r.id;
       const evidence = r.evidence_assessment;
       const assessmentLabel = evidence?.category_result || 'Belum dapat dinilai';
@@ -872,8 +931,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 200px;">
           <div style="font-weight: 600; color: #0284C7; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
             <span style="display: flex; align-items: center; gap: 4px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
-              Laporan Warga
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M12 2l-6 7h3l-4 6h5v2h4v-2h5l-4-6h3l-6-7z"/></svg>
+              Laporan Deforestasi
             </span>
             <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${badgeConfig.bg}; color: ${badgeConfig.text}; border: 1px solid ${badgeConfig.border}; font-weight: 600;">
               ${assessmentLabel}
@@ -995,6 +1054,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   // Efek fokus saat laporan warga dipilih
   useEffect(() => {
     if (!selectedReport || !mapInstanceRef.current) return;
+    // Jika laporan berstatus REJECTED (batal/ditolak), titik tidak ada di peta sehingga tidak perlu panTo
+    if (selectedReport.status === 'REJECTED') return;
     mapInstanceRef.current.panTo([selectedReport.latitude, selectedReport.longitude], {
       animate: true,
       duration: 0.5,
@@ -1030,7 +1091,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   ];
 
   return (
-    <div className={`mp-map ${isDark ? 'mp-map--dark' : ''}`}>
+    <div className={`mp-map ${isDark ? 'mp-map--dark' : ''} ${isPickingLocation ? 'mp-map--picking' : ''}`}>
       {/* Banner Mode Pilih Koordinat */}
       {isPickingLocation && (
         <div className="map-picking-banner" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1111,7 +1172,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             {showReports && <CheckMark />}
           </span>
           <span className="mp-toggle__dot" aria-hidden="true" />
-          <span>Laporan</span>
+          <span>Laporan Deforestasi</span>
         </button>
 
         <button

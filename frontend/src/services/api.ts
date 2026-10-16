@@ -10,9 +10,13 @@ import type {
   UpdateReportStatusPayload,
 } from '../types/report';
 
+import { getAuthToken } from './dummyAuth';
+import { broadcastReportsUpdated } from './reportSync';
+
 const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 // Pastikan tidak ada trailing slash dan sertakan prefix /api/v1
 const cleanBase = rawBase.replace(/\/+$/, '');
+export const BACKEND_ORIGIN = cleanBase.replace(/\/api\/v1$/, '');
 const API_BASE_URL = cleanBase.endsWith('/api/v1') ? cleanBase : `${cleanBase}/api/v1`;
 
 interface GeoJSONFeature {
@@ -387,11 +391,16 @@ export async function fetchCitizenReportDetail(reportId: string): Promise<Citize
 export async function submitCitizenReport(
   payload: CreateCitizenReportPayload
 ): Promise<CreateReportResponse> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const res = await fetch(`${API_BASE_URL}/reports`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -400,21 +409,27 @@ export async function submitCitizenReport(
     const errorMsg = data?.detail || `Gagal menyimpan laporan (HTTP ${res.status})`;
     throw new Error(errorMsg);
   }
+  broadcastReportsUpdated();
   return data;
 }
 
 /**
- * Memperbarui status verifikasi laporan oleh operator (dipertahankan untuk kompatibilitas).
+ * Memperbarui status verifikasi laporan oleh petugas.
  */
 export async function updateReportStatus(
   reportId: string,
   payload: UpdateReportStatusPayload
 ): Promise<UpdateReportResponse> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const res = await fetch(`${API_BASE_URL}/reports/${reportId}/status`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
@@ -423,6 +438,7 @@ export async function updateReportStatus(
     const errorMsg = data?.detail || `Gagal memperbarui status laporan (HTTP ${res.status})`;
     throw new Error(errorMsg);
   }
+  broadcastReportsUpdated();
   return data;
 }
 

@@ -270,3 +270,114 @@ def test_get_report_by_id():
     res_found = client.get(f"/api/v1/reports/{target_id}")
     assert res_found.status_code == 200
     assert res_found.json()["id"] == target_id
+
+
+def test_role_based_auth_and_petugas_verification():
+    """
+    Menguji alur login Warga vs Petugas:
+    - Warga dapat login & mengirim laporan, namun ditolak (403) jika mencoba memverifikasi laporan.
+    - Petugas dapat login & memverifikasi laporan hingga berstatus VERIFIED.
+    """
+    # 1. Login sebagai Warga
+    res_warga = client.post(
+        "/api/v1/auth/login",
+        json={"email": "warga@jagaborneo.id", "password": "warga123"},
+    )
+    assert res_warga.status_code == 200
+    warga_token = res_warga.json()["token"]
+    assert res_warga.json()["user"]["role"] == "warga"
+
+    # 2. Warga mengirim laporan
+    now_utc = datetime.now(timezone.utc).isoformat()
+    res_rep = client.post(
+        "/api/v1/reports",
+        headers={"Authorization": f"Bearer {warga_token}"},
+        json={
+            "category": "kebakaran",
+            "latitude": -2.21,
+            "longitude": 113.92,
+            "observed_at_utc": now_utc,
+            "description": "Kepulan asap tebal di sekitar lahan gambut Palangka Raya.",
+        },
+    )
+    assert res_rep.status_code == 200
+    rep_id = res_rep.json()["data"]["id"]
+
+    # 3. Warga mencoba memverifikasi laporan -> harus ditolak 403 Forbidden
+    res_forbidden = client.patch(
+        f"/api/v1/reports/{rep_id}/status",
+        headers={"Authorization": f"Bearer {warga_token}"},
+        json={"status": "VERIFIED", "verification_notes": "Coba verifikasi sendiri"},
+    )
+    assert res_forbidden.status_code == 403
+
+    # 4. Login sebagai Petugas
+    res_petugas = client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@jagaborneo.id", "password": "admin123"},
+    )
+    assert res_petugas.status_code == 200
+    petugas_token = res_petugas.json()["token"]
+    assert res_petugas.json()["user"]["role"] == "petugas"
+
+    # 5. Petugas memverifikasi laporan -> sukses 200 OK
+    res_verify = client.patch(
+        f"/api/v1/reports/{rep_id}/status",
+        headers={"Authorization": f"Bearer {petugas_token}"},
+        json={
+            "status": "VERIFIED",
+            "verification_notes": "Telah diverifikasi oleh petugas posko lapangan.",
+        },
+    )
+    assert res_verify.status_code == 200
+    assert res_verify.json()["data"]["status"] == "VERIFIED"
+    assert "evidence_assessment" in res_verify.json()["data"]
+
+
+def test_create_deforestation_reports_logging_and_encroachment():
+    """Memverifikasi pelaporan kategori deforestasi baru (penebangan liar & perambahan hutan)."""
+    now_utc = datetime.now(timezone.utc).isoformat()
+
+    # 1. Laporan penebangan liar
+    res_logging = client.post(
+        "/api/v1/reports",
+        json={
+            "category": "penebangan_liar",
+            "latitude": -0.52,
+            "longitude": 117.14,
+            "observed_at_utc": now_utc,
+            "description": "Ditemukan tumpukan kayu gelondongan dan suara mesin chainsaw di dalam kawasan hutan.",
+            "reporter_name": "Masyarakat Peduli Hutan",
+        },
+    )
+    assert res_logging.status_code == 200
+    data_logging = res_logging.json()
+    assert data_logging["status"] == "success"
+    assert data_logging["data"]["category"] == "penebangan_liar"
+    assert "evidence_assessment" in data_logging["data"]
+
+    # 2. Laporan perambahan kawasan hutan
+    res_encroach = client.post(
+        "/api/v1/reports",
+        json={
+            "category": "perambahan_hutan",
+            "latitude": -1.82,
+            "longitude": 114.12,
+            "observed_at_utc": now_utc,
+            "description": "Perambahan dan pembukaan kebun baru di dalam area batas hutan konservasi.",
+            "reporter_name": "Ranger Swadaya",
+        },
+    )
+    assert res_encroach.status_code == 200
+    data_encroach = res_encroach.json()
+    assert data_encroach["status"] == "success"
+    assert data_encroach["data"]["category"] == "perambahan_hutan"
+
+    # 3. Filter berdasarkan kategori deforestasi
+    res_filter = client.get("/api/v1/reports?category=penebangan_liar")
+    assert res_filter.status_code == 200
+    recs = res_filter.json()["records"]
+    assert len(recs) >= 1
+    assert all(r["category"] == "penebangan_liar" for r in recs)
+
+

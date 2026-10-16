@@ -3,6 +3,7 @@ import type { DataSourceMode } from '../../types/status';
 import logoWhite from '../../assets/landing/logo-white.png';
 import logoOrange from '../../assets/landing/logo-orange.png';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { getCurrentUser, logout } from '../../services/dummyAuth';
 
 interface StatusBarProps {
   mode: DataSourceMode;
@@ -28,6 +29,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   onCheckNearbyRisk,
   isLocatingNearby = false,
 }) => {
+  const user = getCurrentUser();
+
+  const handleLogout = () => {
+    logout();
+    window.history.pushState(null, '', '/login');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   return (
     <header className="mp-header">
       <div className="mp-header__brand">
@@ -67,9 +76,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             type="button"
             className="mp-btn mp-btn--solid"
             onClick={onOpenReportModal}
-            title="Buka form pelaporan kejadian oleh warga"
+            title="Buka form pelaporan deforestasi dan kerusakan hutan oleh warga"
           >
-            Lapor Kejadian
+            Lapor Deforestasi
           </button>
         )}
 
@@ -94,8 +103,40 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </button>
         </div>
 
+        {user && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                backgroundColor:
+                  user.role === 'petugas'
+                    ? 'rgba(204, 111, 0, 0.2)'
+                    : 'rgba(16, 185, 129, 0.2)',
+                color: user.role === 'petugas' ? '#CC6F00' : '#10B981',
+                border: `1px solid ${user.role === 'petugas' ? '#CC6F00' : '#10B981'}`,
+              }}
+              title={`${user.name} (${user.email})`}
+            >
+              {user.role === 'petugas' ? 'Petugas' : 'Warga'}
+            </span>
+            <button
+              type="button"
+              className="mp-btn mp-btn--ghost"
+              onClick={handleLogout}
+              style={{ fontSize: '12px', padding: '5px 10px' }}
+              title="Keluar dari akun"
+            >
+              Keluar
+            </button>
+          </div>
+        )}
+
         <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
       </div>
     </header>
   );
 };
+

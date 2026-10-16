@@ -12,9 +12,12 @@ dengan kompresi LZW (~1-2 MB).
 import time
 from pathlib import Path
 import numpy as np
-import rasterio
-from rasterio.transform import from_origin
-from rasterio.windows import Window
+try:
+    import rasterio
+    from rasterio.transform import from_origin
+    from rasterio.windows import Window
+except (ImportError, Exception):
+    rasterio = None
 
 REMOTE_TILE_URL = "/vsicurl/https://glad.umd.edu/users/Potapov/GLCLUC2020/Forest_extent_2020/00N_110E.tif"
 OUTPUT_DIR = Path("data/raster/forest/kalimantan")

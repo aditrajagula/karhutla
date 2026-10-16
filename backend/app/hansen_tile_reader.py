@@ -38,7 +38,13 @@ try:
     from rasterio.windows import Window
     HAS_RASTERIO = True
 except (ImportError, Exception):
-    rasterio = None
+    class _DummyRasterio:
+        DatasetReader = Any
+        def open(self, *args, **kwargs):
+            raise RasterioError("rasterio tidak tersedia")
+        def Env(self, *args, **kwargs):
+            raise RasterioError("rasterio tidak tersedia")
+    rasterio = _DummyRasterio()
     HAS_RASTERIO = False
     class RasterioError(Exception):
         pass
@@ -394,7 +400,7 @@ def resolve_layer_source(
 
 
 def verify_geotiff_metadata_and_transform(
-    src: rasterio.DatasetReader,
+    src: Any,
     lat: float,
     lon: float,
 ) -> Dict[str, Any]:

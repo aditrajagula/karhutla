@@ -851,6 +851,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       // 1. Lingkaran buffer zona waspada bergaris putus-putus (radius 15 km)
       const bufferZone = L.circle([props.latitude, props.longitude], {
         radius: 15000,
+        // Zona hanya visual; jangan biarkan poligonnya menutupi klik hotspot lain di dalam radius.
+        interactive: false,
         color: cautionColor,
         weight: isSelected ? 2 : 1.2,
         dashArray: '4, 4',

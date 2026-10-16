@@ -3,6 +3,7 @@ import type { FireRiskPrediction } from '../../types/prediction';
 import type { Hotspot } from '../../types/hotspot';
 import type { CitizenReport } from '../../types/report';
 import { CloseIcon, MapPinIcon, RefreshIcon } from '../common/SvgIcons';
+import { TelegramAlertCard } from './TelegramAlertCard';
 
 interface NearbyFireRiskModalProps {
   isOpen: boolean;
@@ -150,7 +151,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
                   <span className="risk-modal__eyebrow">Tingkat risiko</span>
                   <strong className="risk-modal__level">{riskLevelLabel}</strong>
                 </div>
-                {riskPercent !== undefined && (
+                {typeof riskPercent === 'number' && (
                   <div className="risk-modal__score">
                     <strong>{riskPercent.toFixed(1)}%</strong>
                     <span>skor model</span>
@@ -176,6 +177,14 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
                 </section>
               )}
             </>
+          )}
+
+          {userCoords && (
+            <TelegramAlertCard
+              lat={userCoords.lat}
+              lon={userCoords.lon}
+              defaultLabel={prediction?.province ? `${prediction.province} (Lokasi pantau)` : 'Lokasi pantau'}
+            />
           )}
         </div>
 

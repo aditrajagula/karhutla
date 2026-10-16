@@ -11,7 +11,6 @@ import {
   fetchDailyPredictiveHotspots,
 } from './services/api';
 import { subscribeToReportsSync } from './services/reportSync';
-import { isPetugas } from './services/dummyAuth';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';

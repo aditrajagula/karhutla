@@ -12,6 +12,7 @@ import {
   SearchIcon,
   HourglassIcon,
   PinIcon,
+  LeafIcon,
 } from '../common/SvgIcons';
 
 interface ReportListProps {
@@ -165,52 +166,31 @@ export const ReportList: React.FC<ReportListProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-main)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <span className="mp-report-card__category">
                     {renderCategoryIcon()}
                     <span>{CATEGORY_LABELS[r.category as ReportCategory] || r.category}</span>
                   </span>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      whiteSpace: 'nowrap',
-                      backgroundColor: badge.bg,
-                      color: badge.text,
-                      border: `1px solid ${badge.border}`,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
+                  <span className="mp-report-card__evidence" style={{ backgroundColor: badge.bg, color: badge.text, borderColor: badge.border }}>
                     {renderBadgeIcon()}
                     <span>{assessmentLabel}</span>
                   </span>
                 </div>
 
-                <div className="detection-coord font-mono" style={{ fontSize: '11px' }}>
+                <div className="detection-coord font-mono mp-report-card__coord">
                   {r.latitude.toFixed(3)}°, {r.longitude.toFixed(3)}°
                   {r.province && <span style={{ marginLeft: '6px', fontWeight: 'normal', opacity: 0.85 }}>• {r.province}</span>}
                 </div>
 
-                <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="mp-report-card__description">
                   "{r.description}"
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px', fontSize: '10px', color: 'var(--color-text-muted)' }}>
+                <div className="mp-report-card__meta">
                   <span>{r.observed_at_utc.slice(0, 16).replace('T', ' ')} UTC</span>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        backgroundColor: stColor.bg,
-                        color: stColor.text,
-                        border: `1px solid ${stColor.border}`,
-                      }}
+                      className="mp-report-card__status"
+                      style={{ backgroundColor: stColor.bg, color: stColor.text, borderColor: stColor.border }}
                     >
                       {STATUS_LABELS[r.status] || r.status}
                     </span>

@@ -484,6 +484,20 @@ export async function fetchFireRiskPrediction(
   return res.json();
 }
 
+import type { PredictiveHotspotsResponse } from '../types/prediction';
+
+/**
+ * Mengambil GeoJSON hotspot prediktif harian (Siklus 24 Jam) Kalimantan.
+ * Diperbarui per hari, menyajikan titik wilayah berisiko Sedang s.d. Tinggi.
+ */
+export async function fetchDailyPredictiveHotspots(signal?: AbortSignal): Promise<PredictiveHotspotsResponse> {
+  const res = await fetch(`${API_BASE_URL}/predict/daily-hotspots`, { signal });
+  if (!res.ok) {
+    throw new Error(`Gagal memuat hotspot prediktif harian (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
 /**
  * Lookup klasifikasi tutupan hutan GLAD Forest Extent 2020 untuk koordinat tertentu.
  * Menangani status FOREST, NON_FOREST, dan UNKNOWN secara jujur tanpa default ke non-forest.

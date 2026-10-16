@@ -48,7 +48,7 @@ export const DetectionList: React.FC<DetectionListProps> = ({
               <span>Tidak ada anomali termal terdeteksi pada rentang waktu terpilih.</span>
               {onExpandRange && (
                 <button type="button" className="mp-btn mp-btn--solid mp-list__expand" onClick={onExpandRange}>
-                  Perluas Rentang ke 4 Hari
+                  Perluas Rentang ke 3 Hari
                 </button>
               )}
             </div>

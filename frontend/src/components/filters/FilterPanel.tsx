@@ -10,17 +10,20 @@ interface FilterPanelProps {
   totalFiltered: number;
 }
 
-const DAY_OPTIONS = [1, 2, 3, 4];
+const DAY_OPTIONS = [1, 2, 3];
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange, onReset }) => {
-  const activeDays = filters.dayRange ?? 2;
+  const activeDays = Math.min(filters.dayRange ?? 3, 3);
 
   return (
     <div className="mp-filter">
       <h2 className="mp-filter__title">Filter Observasi Satelit</h2>
 
       <div className="mp-filter__group">
-        <span className="mp-label">Rentang Hari Deteksi</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="mp-label">Rentang Hari Deteksi</span>
+          <span style={{ fontSize: '11px', color: '#64748B' }}>Maks. 3 Hari</span>
+        </div>
         <div className="mp-days" role="group" aria-label="Rentang hari deteksi">
           {DAY_OPTIONS.map((days) => (
             <button

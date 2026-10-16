@@ -2,13 +2,20 @@ import { useEffect, useState } from 'react';
 import type { Hotspot, HotspotFilterParams } from './types/hotspot';
 import type { CitizenReport } from './types/report';
 import type { DataSourceMode, SystemStatus } from './types/status';
-import type { FireRiskPrediction } from './types/prediction';
-import { fetchCitizenReports, fetchHotspots, fetchSystemStatus, fetchFireRiskPrediction } from './services/api';
+import type { FireRiskPrediction, PredictiveHotspotFeature } from './types/prediction';
+import {
+  fetchCitizenReports,
+  fetchHotspots,
+  fetchSystemStatus,
+  fetchFireRiskPrediction,
+  fetchDailyPredictiveHotspots,
+} from './services/api';
 import { subscribeToReportsSync } from './services/reportSync';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
 import { DetectionList } from './components/detection/DetectionList';
+import { PredictiveList } from './components/detection/PredictiveList';
 import { HotspotDetailModal } from './components/detection/HotspotDetailModal';
 import { ReportFormModal } from './components/reports/ReportFormModal';
 import { ReportDetailModal } from './components/reports/ReportDetailModal';
@@ -20,6 +27,18 @@ import { useTheme } from './hooks/useTheme';
 import './App.css';
 import './MapPage.css';
 
+// Filter ketat: buang hotspot satelit yang usianya sudah lebih dari 3 hari di UI
+function filterMax3Days(records: Hotspot[]): Hotspot[] {
+  if (!records || records.length === 0) return [];
+  const dates = records.map((h) => h.acq_date).filter(Boolean).sort();
+  if (dates.length === 0) return records;
+  const latestDateStr = dates[dates.length - 1];
+  const latest = new Date(`${latestDateStr}T00:00:00Z`);
+  const cutoff = new Date(latest.getTime() - 2 * 24 * 60 * 60 * 1000); // 3 hari: H, H-1, H-2
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return records.filter((h) => !h.acq_date || h.acq_date >= cutoffStr);
+}
+
 export function App() {
   const [isDark, toggleTheme] = useTheme();
 
@@ -28,10 +47,17 @@ export function App() {
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
 
+  // Hotspot Prediksi Model Machine Learning (Harian)
+  const [predictiveHotspots, setPredictiveHotspots] = useState<PredictiveHotspotFeature[]>([]);
+  const [selectedPredictiveHotspot, setSelectedPredictiveHotspot] = useState<PredictiveHotspotFeature | null>(null);
+  const [isPredictiveLoading, setIsPredictiveLoading] = useState<boolean>(true);
+  const [predictiveError, setPredictiveError] = useState<string | null>(null);
+  const [predictiveReloadTrigger, setPredictiveReloadTrigger] = useState<number>(0);
+
   // Data pelaporan masyarakat
   const [reports, setReports] = useState<CitizenReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<CitizenReport | null>(null);
-  const [activeTab, setActiveTab] = useState<'satelit' | 'laporan'>('satelit');
+  const [activeTab, setActiveTab] = useState<'satelit' | 'prediksi' | 'laporan'>('satelit');
 
   // Modal pelaporan & mode pilih koordinat peta
   const [isReportFormOpen, setIsReportFormOpen] = useState<boolean>(false);
@@ -52,7 +78,7 @@ export function App() {
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
 
   const [filters, setFilters] = useState<HotspotFilterParams>({
-    dayRange: 2,
+    dayRange: 3,
     startDate: '',
     endDate: '',
     minConfidence: undefined,
@@ -66,6 +92,40 @@ export function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  // Muat data hotspot prediksi model harian secara independen (Siklus Harian 24 Jam)
+  useEffect(() => {
+    let ignore = false;
+    const loadPredictive = async () => {
+      setIsPredictiveLoading(true);
+      setPredictiveError(null);
+      try {
+        const predRes = await fetchDailyPredictiveHotspots();
+        if (!ignore) {
+          if (predRes && Array.isArray(predRes.features)) {
+            setPredictiveHotspots(predRes.features);
+          } else {
+            setPredictiveHotspots([]);
+          }
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : 'Gagal memuat hotspot prediksi model.';
+          setPredictiveError(msg);
+        }
+      } finally {
+        if (!ignore) {
+          setIsPredictiveLoading(false);
+        }
+      }
+    };
+
+    void loadPredictive();
+
+    return () => {
+      ignore = true;
+    };
+  }, [predictiveReloadTrigger]);
 
   // Muat data dari backend (Hotspot Satelit & Laporan Warga)
   useEffect(() => {
@@ -84,14 +144,16 @@ export function App() {
           // Status call minor
         }
 
-        // Ambil data hotspot satelit
+        // Ambil data hotspot satelit (dibatasi maksimum 3 hari)
         const res = await fetchHotspots({
           ...filters,
+          dayRange: Math.min(filters.dayRange ?? 3, 3),
           mode,
         });
 
         if (!ignore) {
-          setHotspots(res.records || []);
+          const validRecords = filterMax3Days(res.records || []);
+          setHotspots(validRecords);
           if (res.mode === 'snapshot' && mode === 'live') {
             setMode('snapshot');
             if (res.message) {
@@ -117,9 +179,10 @@ export function App() {
             try {
               const snapshotRes = await fetchHotspots({
                 ...filters,
+                dayRange: Math.min(filters.dayRange ?? 3, 3),
                 mode: 'snapshot',
               });
-              setHotspots(snapshotRes.records || []);
+              setHotspots(filterMax3Days(snapshotRes.records || []));
               setMode('snapshot');
               setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan snapshot lokal tim.');
             } catch {
@@ -330,6 +393,15 @@ export function App() {
               <button
                 type="button"
                 role="tab"
+                aria-selected={activeTab === 'prediksi'}
+                className={`mp-tabs__item ${activeTab === 'prediksi' ? 'is-active' : ''}`}
+                onClick={() => setActiveTab('prediksi')}
+              >
+                Prediksi Model {isPredictiveLoading ? '(Memuat...)' : `(${predictiveHotspots.length})`}
+              </button>
+              <button
+                type="button"
+                role="tab"
                 aria-selected={activeTab === 'laporan'}
                 className={`mp-tabs__item ${activeTab === 'laporan' ? 'is-active' : ''}`}
                 onClick={() => setActiveTab('laporan')}
@@ -352,9 +424,18 @@ export function App() {
                   isLoading={isLoading}
                   onSelectHotspot={(h) => setSelectedHotspot(h)}
                   selectedId={selectedHotspot?.id}
-                  onExpandRange={() => setFilters((f) => ({ ...f, dayRange: 4, startDate: '', endDate: '' }))}
+                  onExpandRange={() => setFilters((f) => ({ ...f, dayRange: 3, startDate: '', endDate: '' }))}
                 />
               </>
+            ) : activeTab === 'prediksi' ? (
+              <PredictiveList
+                hotspots={predictiveHotspots}
+                isLoading={isPredictiveLoading}
+                errorMessage={predictiveError}
+                onRetry={() => setPredictiveReloadTrigger((t) => t + 1)}
+                onSelectHotspot={(feat) => setSelectedPredictiveHotspot(feat)}
+                selectedId={selectedPredictiveHotspot?.id}
+              />
             ) : (
               <div className="mp-reports">
                 <ReportList
@@ -392,6 +473,9 @@ export function App() {
             hotspots={hotspots}
             selectedHotspot={selectedHotspot}
             onSelectHotspot={(h) => setSelectedHotspot(h)}
+            predictiveHotspots={predictiveHotspots}
+            selectedPredictiveHotspot={selectedPredictiveHotspot}
+            onSelectPredictiveHotspot={(p) => setSelectedPredictiveHotspot(p)}
             reports={reports}
             selectedReport={selectedReport}
             onSelectReport={(r) => setSelectedReport(r)}

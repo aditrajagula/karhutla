@@ -1,5 +1,6 @@
 import type { ConfidenceLevel, Hotspot, HotspotFilterParams, HotspotResponse } from '../types/hotspot';
 import type { DataSourceMode, SystemStatus } from '../types/status';
+import type { FeatureCollection } from 'geojson';
 import type {
   CitizenReport,
   CitizenReportsResponse,
@@ -156,6 +157,189 @@ export interface ContextLayersStatus {
   boundary_layer: { available: boolean; source: string; status_message: string; feature_count?: number };
 }
 
+export type PeatlandGeoJSON = FeatureCollection;
+export type ClassifiedHotspotsGeoJSON = FeatureCollection;
+
+export interface FirmsMapManifest {
+  source: string;
+  sensors: string[];
+  area_bbox: string;
+  days: number;
+  fetched_at_utc: string;
+  total_records: number;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isFeatureCollection(value: unknown): value is FeatureCollection {
+  return (
+    isRecord(value)
+    && value.type === 'FeatureCollection'
+    && Array.isArray(value.features)
+    && value.features.every((feature) => (
+      isRecord(feature)
+      && feature.type === 'Feature'
+      && isRecord(feature.geometry)
+      && typeof feature.geometry.type === 'string'
+      && 'coordinates' in feature.geometry
+    ))
+  );
+}
+
+function isFirmsMapManifest(value: unknown): value is FirmsMapManifest {
+  return (
+    isRecord(value)
+    && typeof value.source === 'string'
+    && Array.isArray(value.sensors)
+    && value.sensors.every((sensor) => typeof sensor === 'string')
+    && typeof value.area_bbox === 'string'
+    && typeof value.days === 'number'
+    && typeof value.fetched_at_utc === 'string'
+    && typeof value.total_records === 'number'
+  );
+}
+
+async function fetchMapData<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, { signal });
+  if (!res.ok) {
+    throw new Error(`Gagal memuat dataset peta (HTTP ${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function fetchPeatlandGeoJSON(signal?: AbortSignal): Promise<PeatlandGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/peatland', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON layer gambut tidak valid.');
+  }
+  return data;
+}
+
+export async function fetchClassifiedHotspotsGeoJSON(
+  signal?: AbortSignal,
+): Promise<ClassifiedHotspotsGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/classified-hotspots', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON hotspot terklasifikasi tidak valid.');
+  }
+  return data;
+}
+
+export async function fetchFirmsMapManifest(signal?: AbortSignal): Promise<FirmsMapManifest> {
+  const data: unknown = await fetchMapData('/map-data/firms-manifest', signal);
+  if (!isFirmsMapManifest(data)) {
+    throw new Error('Format manifest hotspot FIRMS tidak valid.');
+  }
+  return data;
+}
+
+export interface ForestExtentMeta {
+  available: boolean;
+  dataset: string;
+  layer: string;
+  period: string;
+  tile_id: string;
+  region: string;
+  bounds: {
+    west: number;
+    east: number;
+    south: number;
+    north: number;
+  };
+  leaflet_bounds: [[number, number], [number, number]];
+  resolution_degrees: number;
+  resolution_meters: number;
+  width_pixels: number;
+  height_pixels: number;
+  crs: string;
+  overlay_format: string;
+  overlay_file_size_bytes: number;
+  geotiff_file_size_bytes: number;
+  overlay_url: string;
+  pixel_statistics: {
+    forest_pixels: number;
+    non_forest_pixels: number;
+    nodata_pixels: number;
+    forest_percentage: number;
+  };
+  legend: Array<{ label: string; color: string; value: number }>;
+  caveat: string;
+}
+
+export interface ForestExtentTileItem {
+  tile_id: string;
+  region: string;
+  province: string;
+  is_full_tile?: boolean;
+  coverage_type?: string;
+  sample_area_sq_deg?: number;
+  official_tile_bounds?: { west: number; east: number; south: number; north: number };
+  tif_file: string;
+  overlay_file: string;
+  bounds: {
+    west: number;
+    east: number;
+    south: number;
+    north: number;
+  };
+  leaflet_bounds: [[number, number], [number, number]];
+  resolution_meters: number;
+  resolution_degrees: number;
+  width_pixels: number;
+  height_pixels: number;
+  pixel_statistics: {
+    forest_pixels: number;
+    non_forest_pixels: number;
+    nodata_pixels: number;
+    forest_percentage: number;
+  };
+  available: boolean;
+  tif_size_bytes: number;
+  overlay_size_bytes: number;
+  overlay_url: string;
+  meta_url: string;
+}
+
+export interface ForestExtentTilesResponse {
+  dataset: string;
+  layer: string;
+  period: string;
+  scope: string;
+  coverage_status?: 'PARTIAL' | 'FULL';
+  is_full_coverage?: boolean;
+  coverage_percentage_of_kalimantan?: number;
+  total_quadrants: number;
+  available_quadrants: number;
+  all_quadrants_available: boolean;
+  total_forest_pixels: number;
+  total_non_forest_pixels: number;
+  sample_forest_percentage?: number;
+  overall_forest_percentage: number;
+  legend: Array<{ label: string; color: string; value: number }>;
+  caveat: string;
+  tiles: ForestExtentTileItem[];
+}
+
+export async function fetchForestExtentTiles(signal?: AbortSignal): Promise<ForestExtentTilesResponse> {
+  const data: unknown = await fetchMapData('/map-data/forest-extent/tiles', signal);
+  return data as ForestExtentTilesResponse;
+}
+
+export function getForestExtentTileOverlayUrl(tileId: string): string {
+  return `${API_BASE_URL}/map-data/forest-extent/tiles/${tileId}/overlay`;
+}
+
+export async function fetchForestExtentMeta(signal?: AbortSignal): Promise<ForestExtentMeta> {
+  const data: unknown = await fetchMapData('/map-data/forest-extent/meta', signal);
+  return data as ForestExtentMeta;
+}
+
+export function getForestExtentOverlayUrl(): string {
+  return `${API_BASE_URL}/map-data/forest-extent/overlay`;
+}
+
 export async function fetchContextLayers(): Promise<ContextLayersStatus> {
   const res = await fetch(`${API_BASE_URL}/context-layers`);
   if (!res.ok) {
@@ -265,6 +449,7 @@ export async function fetchKalimantanBoundaries(): Promise<any> {
 }
 
 import type { FireRiskPrediction } from '../types/prediction';
+import type { ForestExtentPointResult } from '../types/forest';
 
 /**
  * Mengambil estimasi probabilitas risiko kebakaran berbasis model ML dan cuaca real-time.
@@ -279,6 +464,23 @@ export async function fetchFireRiskPrediction(
   const res = await fetch(`${API_BASE_URL}/predict/fire-risk?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`Gagal memuat prediksi risiko karhutla (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+/**
+ * Lookup klasifikasi tutupan hutan GLAD Forest Extent 2020 untuk koordinat tertentu.
+ * Menangani status FOREST, NON_FOREST, dan UNKNOWN secara jujur tanpa default ke non-forest.
+ */
+export async function fetchForestExtentPoint(
+  lat: number,
+  lon: number,
+  signal?: AbortSignal
+): Promise<ForestExtentPointResult> {
+  const params = new URLSearchParams({ latitude: lat.toString(), longitude: lon.toString() });
+  const res = await fetch(`${API_BASE_URL}/forest-extent/point?${params.toString()}`, { signal });
+  if (!res.ok) {
+    throw new Error(`Gagal memuat klasifikasi tutupan hutan (HTTP ${res.status})`);
   }
   return res.json();
 }

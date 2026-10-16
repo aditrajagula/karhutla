@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import type { CitizenReport, ReportCategory, EvidenceAssessmentLabel } from '../../types/report';
 import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
+import {
+  LeafIcon,
+  FlameIcon,
+  TractorIcon,
+  TreeIcon,
+  CameraIcon,
+  AlertTriangleIcon,
+  ZapIcon,
+  SearchIcon,
+  HourglassIcon,
+} from '../common/SvgIcons';
 
 interface ReportListProps {
   reports: CitizenReport[];
@@ -85,7 +96,9 @@ export const ReportList: React.FC<ReportListProps> = ({
       <div className="detection-items-scroll" style={{ flex: 1, overflowY: 'auto' }}>
         {filteredReports.length === 0 ? (
           <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '12px' }}>
-            <div style={{ fontSize: '28px', marginBottom: '8px' }}>🍃</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+              <LeafIcon size={28} color="#059669" />
+            </div>
             <div style={{ fontWeight: 500 }}>Belum ada laporan warga pada filter ini.</div>
             <div style={{ fontSize: '11px', marginTop: '4px' }}>
               Masyarakat dapat melaporkan indikasi asap atau perubahan kondisi tutupan pohon di Kalimantan.
@@ -106,6 +119,26 @@ export const ReportList: React.FC<ReportListProps> = ({
             const assessmentLabel = (evidence?.category_result || 'Belum dapat dinilai') as EvidenceAssessmentLabel;
             const badge = EVIDENCE_BADGE_CONFIG[assessmentLabel] || EVIDENCE_BADGE_CONFIG['Belum dapat dinilai'];
 
+            const renderBadgeIcon = () => {
+              if (assessmentLabel === 'Ada indikasi pendukung') {
+                return <ZapIcon size={11} color={badge.text} />;
+              }
+              if (assessmentLabel === 'Belum ditemukan kecocokan') {
+                return <SearchIcon size={11} color={badge.text} />;
+              }
+              return <HourglassIcon size={11} color={badge.text} />;
+            };
+
+            const renderCategoryIcon = () => {
+              if (r.category === 'kebakaran') {
+                return <FlameIcon size={13} color="#CC6F00" />;
+              }
+              if (r.category === 'pembukaan_lahan') {
+                return <TractorIcon size={13} color="#D97706" />;
+              }
+              return <TreeIcon size={13} color="#059669" />;
+            };
+
             return (
               <button
                 key={r.id}
@@ -121,10 +154,10 @@ export const ReportList: React.FC<ReportListProps> = ({
                   textAlign: 'left',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                    {r.category === 'kebakaran' ? '🔥' : r.category === 'pembukaan_lahan' ? '🚜' : '🌲'}{' '}
-                    {CATEGORY_LABELS[r.category as ReportCategory] || r.category}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-main)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    {renderCategoryIcon()}
+                    <span>{CATEGORY_LABELS[r.category as ReportCategory] || r.category}</span>
                   </span>
                   <span
                     style={{
@@ -136,9 +169,13 @@ export const ReportList: React.FC<ReportListProps> = ({
                       backgroundColor: badge.bg,
                       color: badge.text,
                       border: `1px solid ${badge.border}`,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    {badge.icon} {assessmentLabel}
+                    {renderBadgeIcon()}
+                    <span>{assessmentLabel}</span>
                   </span>
                 </div>
 
@@ -153,9 +190,19 @@ export const ReportList: React.FC<ReportListProps> = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px', fontSize: '10px', color: 'var(--color-text-muted)' }}>
                   <span>{r.observed_at_utc.slice(0, 16).replace('T', ' ')} UTC</span>
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    {r.photo_url && <span title="Ada foto bukti">📷 Foto</span>}
-                    {r.is_duplicate_suspect && <span style={{ color: '#D97706', fontWeight: 600 }} title="Kemiripan area">⚠️ Duplikat?</span>}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {r.photo_url && (
+                      <span title="Ada foto bukti" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <CameraIcon size={12} color="var(--color-text-muted)" />
+                        <span>Foto</span>
+                      </span>
+                    )}
+                    {r.is_duplicate_suspect && (
+                      <span style={{ color: '#D97706', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }} title="Kemiripan area">
+                        <AlertTriangleIcon size={12} color="#D97706" />
+                        <span>Duplikat?</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>

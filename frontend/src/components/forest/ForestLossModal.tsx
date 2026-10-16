@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import type { ForestLossSummary } from '../../types/forest';
 import { fetchForestLossSummary } from '../../services/api';
+import {
+  TreeIcon,
+  CloseIcon,
+  HourglassIcon,
+  AlertTriangleIcon,
+  MapPinIcon,
+  RulerIcon,
+} from '../common/SvgIcons';
 
 interface ForestLossModalProps {
   isOpen: boolean;
@@ -82,7 +90,7 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
       >
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px' }}>🌲</span>
+            <TreeIcon size={20} color="#059669" />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h3 id="forest-loss-title" className="modal-title" style={{ margin: 0, fontSize: '15px' }}>
@@ -114,15 +122,18 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
             onClick={onClose}
             aria-label="Tutup modal analisis tutupan pohon"
             className="modal-close-btn"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
         <div className="modal-body" style={{ padding: '16px' }}>
           {isLoading ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                <HourglassIcon size={24} color="#CC6F00" />
+              </div>
               <div>Memuat data spasial tutupan pohon Kalimantan (2000–2025)...</div>
             </div>
           ) : error ? (
@@ -134,9 +145,13 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
                 border: '1px solid #EF4444',
                 color: '#DC2626',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              ⚠️ {error}
+              <AlertTriangleIcon size={16} color="#DC2626" />
+              <span>{error}</span>
             </div>
           ) : data ? (
             <>
@@ -154,7 +169,7 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
                     alignItems: 'flex-start',
                   }}
                 >
-                  <span style={{ fontSize: '18px', lineHeight: 1 }}>⚠️</span>
+                  <AlertTriangleIcon size={18} color="#D97706" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div style={{ fontSize: '11px', lineHeight: 1.5, color: isDark ? '#FDE68A' : '#92400E' }}>
                     <div style={{ fontWeight: 700, marginBottom: '2px' }}>
                       Status Data: Data Demonstrasi (Belum Terverifikasi Raster)
@@ -249,7 +264,12 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
                   lineHeight: 1.45,
                 }}
               >
-                🗺️ <b>Pengecualian Batas Geografis:</b> Analisis dibatasi ketat untuk 5 provinsi Kalimantan bagian Indonesia. Wilayah <b>Sarawak & Sabah (Malaysia)</b> serta <b>Brunei Darussalam</b> secara tegas dikecualikan dari cakupan data dan agregasi ini.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <MapPinIcon size={14} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <span>
+                    <b>Pengecualian Batas Geografis:</b> Analisis dibatasi ketat untuk 5 provinsi Kalimantan bagian Indonesia. Wilayah <b>Sarawak & Sabah (Malaysia)</b> serta <b>Brunei Darussalam</b> secara tegas dikecualikan dari cakupan data dan agregasi ini.
+                  </span>
+                </div>
               </div>
 
               {/* Rincian per 5 Provinsi */}
@@ -331,8 +351,9 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
                   lineHeight: 1.5,
                 }}
               >
-                <div style={{ fontWeight: 700, color: 'var(--color-text-main)', marginBottom: '4px' }}>
-                  📐 Metode Perhitungan Luas Geospasial
+                <div style={{ fontWeight: 700, color: 'var(--color-text-main)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <RulerIcon size={14} color="var(--color-text-main)" />
+                  <span>Metode Perhitungan Luas Geospasial</span>
                 </div>
                 <div>{data.methodology}</div>
                 <div style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>
@@ -351,7 +372,8 @@ export const ForestLossModal: React.FC<ForestLossModalProps> = ({
                 }}
               >
                 <div style={{ fontSize: '12px', fontWeight: 700, color: '#B45309', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>⚠️</span> Peringatan Ilmiah & Definisi Dataset
+                  <AlertTriangleIcon size={14} color="#B45309" />
+                  <span>Peringatan Ilmiah & Definisi Dataset</span>
                 </div>
                 <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '11px', color: 'var(--color-text-main)', lineHeight: 1.5 }}>
                   {data.limitations.map((lim, idx) => (

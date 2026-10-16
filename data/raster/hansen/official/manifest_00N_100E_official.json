@@ -1,0 +1,162 @@
+{
+  "manifest_version": "2.0",
+  "tile_id": "00N_100E",
+  "dataset_version": "GFC-2025-v1.13",
+  "source": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+  "source_base_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/",
+  "source_type": "OFFICIAL_UMD_HANSEN_GFC",
+  "is_synthetic": false,
+  "is_clipped": false,
+  "is_full_tile": true,
+  "geographic_bounds": {
+    "min_lon": 100.0,
+    "min_lat": -10.0,
+    "max_lon": 110.0,
+    "max_lat": 0.0
+  },
+  "provinces_covered": [
+    "Kalimantan Barat (bagian Selatan: Ketapang, Kayong Utara, Kubu Raya selatan)"
+  ],
+  "spatial_resolution_deg": 0.00025,
+  "spatial_resolution_approx_m": 27.83,
+  "dimensions": {
+    "width_px": 40000,
+    "height_px": 40000,
+    "total_pixels": 1600000000
+  },
+  "crs": "EPSG:4326",
+  "transform": [
+    0.00025,
+    0.0,
+    100.0,
+    0.0,
+    -0.00025,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "total_size_bytes": 389065138,
+  "total_size_mb": 371.04,
+  "total_size_gb": 0.362,
+  "ingested_at_utc": "2026-10-15T13:20:44.219003+00:00",
+  "integrity_policy": {
+    "source_checksum_published": false,
+    "source_checksum_note": "University of Maryland tidak mempublikasikan checksum publik (MD5/SHA256) untuk berkas GCS. Nilai checksum di bawah ini adalah SHA-256 integritas biner lokal hasil pengunduhan untuk audit deterministik.",
+    "download_method": "RESUMABLE_HTTP_RANGE_WITH_ATOMIC_RENAME"
+  },
+  "layers": {
+    "lossyear": {
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+      "size_bytes": 85664038,
+      "size_mb": 81.7,
+      "local_integrity_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "source_checksum_published": false,
+      "download_duration_seconds": 0.28,
+      "geospatial": {
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        },
+        "width": 40000,
+        "height": 40000,
+        "count": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "is_cog": false
+      }
+    },
+    "treecover2000": {
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+      "size_bytes": 281247373,
+      "size_mb": 268.22,
+      "local_integrity_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "source_checksum_published": false,
+      "download_duration_seconds": 0.7,
+      "geospatial": {
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        },
+        "width": 40000,
+        "height": 40000,
+        "count": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "is_cog": false
+      }
+    },
+    "datamask": {
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+      "size_bytes": 22153727,
+      "size_mb": 21.13,
+      "local_integrity_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "source_checksum_published": false,
+      "download_duration_seconds": 0.06,
+      "geospatial": {
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        },
+        "width": 40000,
+        "height": 40000,
+        "count": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "is_cog": false
+      }
+    }
+  },
+  "scientific_integrity_notes": "Citra GeoTIFF resmi diunduh langsung dari server Google Cloud Storage University of Maryland (UMD). Data merupakan tile 10°x10° penuh beresolusi 0.00025° (~27.83m) dengan 40,000 x 40,000 piksel. Evaluasi titik koordinat dalam wilayah 5 provinsi Kalimantan menggunakan poligon administratif resmi; wilayah negara tetangga (Sarawak, Sabah, Brunei) atau perairan luar diklasifikasikan sebagai OUT_OF_SCOPE."
+}

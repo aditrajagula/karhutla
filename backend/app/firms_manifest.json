@@ -1,0 +1,11 @@
+{
+  "source": "NASA FIRMS API",
+  "sensors": [
+    "VIIRS_NOAA20_NRT",
+    "VIIRS_NOAA21_NRT"
+  ],
+  "area_bbox": "108.5,-4.5,119.5,4.5",
+  "days": 3,
+  "fetched_at_utc": "2026-10-15T21:48:24.805114Z",
+  "total_records": 31028
+}

@@ -28,9 +28,14 @@ html, body {
   --color-amber-accent: #D97706;
   --color-amber-light: #FEF3C7;
   --color-focus: #2563EB;
+
+  /* Global Scrollbar (Light Mode) */
+  --scrollbar-thumb: #CC6F00;
+  --scrollbar-thumb-hover: #E07B00;
+  --scrollbar-track: #F2F2F2;
 }
 
-.theme-dark, html.dark {
+.theme-dark, html.dark, .landing--dark, .login--dark, .mp-root--dark {
   --color-bg-base: #0F172A;
   --color-bg-panel: #1E293B;
   --color-bg-subtle: #090E17;
@@ -41,6 +46,63 @@ html, body {
   --color-forest-dark: #0F766E;
   --color-amber-accent: #F59E0B;
   --color-amber-light: #78350F;
+
+  /* Global Scrollbar (Dark Mode) - Track putih diganti menjadi gelap */
+  --scrollbar-thumb: #CC6F00;
+  --scrollbar-thumb-hover: #E07B00;
+  --scrollbar-track: #1A1916;
+}
+
+/* Global scrollbar rules untuk semua tema dan elemen */
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border: 3px solid var(--scrollbar-track);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Tombol panah scrollbar warna orange di semua tema */
+::-webkit-scrollbar-button {
+  display: block;
+  width: 14px;
+  height: 14px;
+  background-color: var(--scrollbar-track);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 8px 8px;
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='5,2 9,8 1,8' fill='%23CC6F00'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='5,8 9,2 1,2' fill='%23CC6F00'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar-button:horizontal:decrement {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='2,5 8,1 8,9' fill='%23CC6F00'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar-button:horizontal:increment {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpolygon points='8,5 2,1 2,9' fill='%23CC6F00'/%3E%3C/svg%3E");
 }
 
 .font-mono {

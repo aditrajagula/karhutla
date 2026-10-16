@@ -1,0 +1,263 @@
+{
+  "validation_metadata": {
+    "case_study": "Kalimantan Timur",
+    "validation_timestamp_utc": "2026-10-15T16:16:49.913317+00:00",
+    "methodology_comparison": {
+      "method_1": "Windowed geometry_mask, Authalic Spherical polygon area (Ra=6371007.18m), Analytic row area",
+      "method_2": "Independent Simpson Quadrature WGS84 tensor, Albers Equal Area WGS84 projection, Cross-cohort loss analysis"
+    },
+    "semantic_definitions": {
+      "datamask_zero": "Nilai kelas datamask == 0 pada grid Hansen merepresentasikan laut terbuka / perairan laut lepas / luar batas observasi dataset.",
+      "technical_raster_nodata": "NoData teknis raster adalah piksel kosong di luar grid koordinat raster GeoTIFF. Seluruh poligon daratan administratif Kaltim berada 100% di dalam tile 00N_110E dan 10N_110E sehingga NoData teknis adalah 0 piksel."
+    },
+    "tolerances": {
+      "pixel_count_tolerance": "0 pixels (exact equality on identical rasterization rules)",
+      "polygon_area_tolerance": "<= 0.50% (difference due to ellipsoidal vs spherical authalic formula)",
+      "hectare_area_relative_tolerance": "<= 0.001% (floating-point quadrature precision)"
+    },
+    "intersecting_tiles_verified": [
+      "00N_110E",
+      "10N_110E"
+    ]
+  },
+  "polygon_area_comparison": {
+    "method_1_spherical_ha": 12655008.62,
+    "method_2a_albers_wgs84_ha": 12598515.14374808,
+    "method_2b_epsg6933_ha": 12598516.38000973,
+    "difference_abs_ha": 56493.48,
+    "difference_rel_pct": 0.4464,
+    "physical_explanation": "Perbedaan 0.446% disebabkan flattening elipsoid WGS84 (f=1/298.257). Luas piksel terdisketisasi (12,598,525.06 ha) cocok dengan Albers Equal Area (12,598,515.14 ha) dengan selisih hanya 9.92 ha (0.000079%)."
+  },
+  "metrics_comparison": [
+    {
+      "metric": "Total Piksel Poligon",
+      "val_method1": 163797677,
+      "val_method2": 163797677,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Daratan Valid",
+      "val_method1": 162505185,
+      "val_method2": 162505185,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Air Permanen",
+      "val_method1": 1292492,
+      "val_method2": 1292492,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel NoData/Laut",
+      "val_method1": 0,
+      "val_method2": 0,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Baseline >0%",
+      "val_method1": 155082481,
+      "val_method2": 155082481,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Baseline >=30%",
+      "val_method1": 152620133,
+      "val_method2": 152620133,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Non-Hutan Baseline",
+      "val_method1": 5892365,
+      "val_method2": 5892365,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Hutan Stabil",
+      "val_method1": 112260013,
+      "val_method2": 112260013,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Kehilangan 2001-2025",
+      "val_method1": 44352807,
+      "val_method2": 44352807,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Luas Total Piksel (ha)",
+      "val_method1": 12598525.06,
+      "val_method2": 12598525.06,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Daratan Valid (ha)",
+      "val_method1": 12499110.25,
+      "val_method2": 12499110.25,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Air Permanen (ha)",
+      "val_method1": 99414.82,
+      "val_method2": 99414.82,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Baseline >0% (ha)",
+      "val_method1": 11928155.0,
+      "val_method2": 11928155.0,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Baseline >=30% (ha)",
+      "val_method1": 11738745.8,
+      "val_method2": 11738745.8,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Kehilangan (ha)",
+      "val_method1": 3411454.84,
+      "val_method2": 3411454.84,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Hutan Stabil (ha)",
+      "val_method1": 8634412.21,
+      "val_method2": 8634412.21,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    }
+  ],
+  "numerator_denominator_analysis": {
+    "total_land_ha": 12499110.246795084,
+    "loss_total_ha": 3411454.8382416195,
+    "loss_pct_of_land": 27.29,
+    "baseline_treecover_gt0_ha": 11928154.998800576,
+    "loss_on_baseline_gt0_ha": 3293742.79,
+    "loss_on_baseline_eq0_ha": 117712.05,
+    "loss_pct_unconstrained_of_gt0": 28.6,
+    "loss_pct_strict_cohort_of_gt0": 27.61,
+    "baseline_treecover_ge30_ha": 11738745.795711631,
+    "loss_on_baseline_ge30_ha": 3246008.04,
+    "loss_pct_unconstrained_of_ge30": 29.06,
+    "loss_pct_strict_cohort_of_ge30": 27.65,
+    "observational_takeaway": "Sebanyak 1,530,339 piksel (117,712.05 ha atau 3.45% dari total kehilangan) terdeteksi pada area dengan treecover2000 == 0% yang kemudian mencatat kehilangan kanopi >5m pada periode 2001\u20132025. Penyebab kehilangan pada piksel-piksel ini belum dapat ditentukan hanya dari ketiga layer Hansen GFC yang digunakan (lossyear, treecover2000, datamask) tanpa data tutupan lahan historis atau verifikasi lapangan independen. Memasukkan kehilangan ini ke rasio baseline >0% menghasilkan rasio tak terkekang sebesar 28.60%, sedangkan rasio kohort simetris (hanya pada baseline >0%) adalah 27.61%."
+  },
+  "pixel_samples": [
+    {
+      "label": "Samarinda (-0.5022, 117.1536)",
+      "lat": -0.5022,
+      "lon": 117.1536,
+      "tile_id": "00N_110E",
+      "row": 2008,
+      "col": 28614,
+      "datamask": 1,
+      "treecover2000": 0,
+      "lossyear": 0,
+      "interpretation": "Daratan valid (datamask=1), treecover2000=0%, tanpa deteksi kehilangan kanopi (lossyear=0)",
+      "factual_note": "Nilai dilaporkan secara faktual. Status hutan primer, keutuhan ekosistem, atau penggunaan lahan aktual tidak dapat disimpulkan hanya dari nilai piksel tunggal ini."
+    },
+    {
+      "label": "Taman Nasional Kutai (0.4500, 117.2500)",
+      "lat": 0.45,
+      "lon": 117.25,
+      "tile_id": "10N_110E",
+      "row": 38200,
+      "col": 29000,
+      "datamask": 1,
+      "treecover2000": 82,
+      "lossyear": 0,
+      "interpretation": "Daratan valid (datamask=1), treecover2000=82%, tanpa deteksi kehilangan kanopi (lossyear=0)",
+      "factual_note": "Nilai dilaporkan secara faktual. Status hutan primer, keutuhan ekosistem, atau penggunaan lahan aktual tidak dapat disimpulkan hanya dari nilai piksel tunggal ini."
+    },
+    {
+      "label": "Danau Semayang / Sungai Mahakam (-0.2500, 116.5000)",
+      "lat": -0.25,
+      "lon": 116.5,
+      "tile_id": "00N_110E",
+      "row": 1000,
+      "col": 26000,
+      "datamask": 2,
+      "treecover2000": 0,
+      "lossyear": 0,
+      "interpretation": "Air permanen (datamask=2), treecover2000=0%, lossyear=0",
+      "factual_note": "Nilai dilaporkan secara faktual. Status hutan primer, keutuhan ekosistem, atau penggunaan lahan aktual tidak dapat disimpulkan hanya dari nilai piksel tunggal ini."
+    },
+    {
+      "label": "Kutai Barat (0.0500, 115.8000)",
+      "lat": 0.05,
+      "lon": 115.8,
+      "tile_id": "10N_110E",
+      "row": 39799,
+      "col": 23199,
+      "datamask": 1,
+      "treecover2000": 89,
+      "lossyear": 16,
+      "interpretation": "Daratan valid (datamask=1), treecover2000=89%, deteksi kehilangan kanopi tahun 2016 (lossyear=16)",
+      "factual_note": "Nilai dilaporkan secara faktual. Status hutan primer, keutuhan ekosistem, atau penggunaan lahan aktual tidak dapat disimpulkan hanya dari nilai piksel tunggal ini."
+    },
+    {
+      "label": "Paser / Penajam (-1.4000, 116.2000)",
+      "lat": -1.4,
+      "lon": 116.2,
+      "tile_id": "00N_110E",
+      "row": 5599,
+      "col": 24800,
+      "datamask": 1,
+      "treecover2000": 90,
+      "lossyear": 9,
+      "interpretation": "Daratan valid (datamask=1), treecover2000=90%, deteksi kehilangan kanopi tahun 2009 (lossyear=9)",
+      "factual_note": "Nilai dilaporkan secara faktual. Status hutan primer, keutuhan ekosistem, atau penggunaan lahan aktual tidak dapat disimpulkan hanya dari nilai piksel tunggal ini."
+    }
+  ],
+  "internal_consistency_verdict": {
+    "is_internally_consistent": true,
+    "notes": "Perhitungan internal Kalimantan Timur konsisten penuh pada data dan cakupan yang tersedia (selisih piksel = 0). Kedua metode berbagi berkas poligon GeoJSON yang sama dan mesin rasterisasi GDAL yang sama, sehingga ini membuktikan konsistensi perhitungan internal dan bukan validasi independen penuh tingkat sistem."
+  }
+}

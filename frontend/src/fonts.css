@@ -1,0 +1,24 @@
+@font-face {
+  font-family: 'ZT Nature';
+  src: url('./assets/fonts/ZTNature-Thin.ttf') format('truetype');
+  font-weight: 100 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Tidak ada file Regular/SemiBold; Medium dipakai untuk bobot 400-600 sesuai desain */
+@font-face {
+  font-family: 'ZT Nature';
+  src: url('./assets/fonts/ZTNature-Medium.ttf') format('truetype');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ZT Nature';
+  src: url('./assets/fonts/ZTNature-Black.ttf') format('truetype');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}

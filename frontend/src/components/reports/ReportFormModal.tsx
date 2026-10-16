@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import type { CreateCitizenReportPayload, ReportCategory } from '../../types/report';
 import { CATEGORY_LABELS } from '../../types/report';
 import { submitCitizenReport } from '../../services/api';
+import {
+  MegaphoneIcon,
+  CloseIcon,
+  CheckCircleIcon,
+  AlertTriangleIcon,
+  PlusIcon,
+  FlameIcon,
+  TractorIcon,
+  TreeIcon,
+  PinIcon,
+  MapPinIcon,
+} from '../common/SvgIcons';
 
 interface ReportFormModalProps {
   isOpen: boolean;
@@ -194,7 +206,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
       <div className="modal-card report-form-card" style={{ maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>📢</span>
+            <MegaphoneIcon size={18} color="#CC6F00" />
             <h3 id="report-modal-title" className="modal-title">
               Pelaporan Kejadian Lapangan oleh Warga
             </h3>
@@ -205,14 +217,17 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
             disabled={isSubmitting}
             aria-label="Tutup modal pelaporan"
             className="modal-close-btn"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
         {successInfo ? (
           <div className="modal-body" style={{ textAlign: 'center', padding: '24px 16px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+              <CheckCircleIcon size={48} color="#10B981" />
+            </div>
             <h4 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--color-text-main)', marginBottom: '8px' }}>
               Laporan Berhasil Terkirim
             </h4>
@@ -233,8 +248,9 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               <div><b>Nomor ID Laporan:</b> <code className="font-mono">{successInfo.id}</code></div>
               <div style={{ marginTop: '4px' }}><b>Status Awal:</b> <span className="badge-status status-PENDING">Menunggu Verifikasi</span></div>
               {successInfo.isDuplicate && (
-                <div style={{ marginTop: '6px', color: '#D97706', fontSize: '11px' }}>
-                  ⚠️ Terdeteksi laporan serupa di lokasi terdekat. Laporan tetap tersimpan untuk ditinjau operator.
+                <div style={{ marginTop: '6px', color: '#D97706', fontSize: '11px', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                  <AlertTriangleIcon size={14} color="#D97706" style={{ marginTop: '1px', flexShrink: 0 }} />
+                  <span>Terdeteksi laporan serupa di lokasi terdekat. Laporan tetap tersimpan untuk ditinjau operator.</span>
                 </div>
               )}
             </div>
@@ -250,6 +266,10 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                   background: 'var(--color-bg-subtle)',
                   color: 'var(--color-text-main)',
                   border: '1px solid var(--color-border)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
                 }}
                 onClick={() => {
                   setSuccessInfo(null);
@@ -258,7 +278,8 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                   setPhotoFileName('');
                 }}
               >
-                ➕ Buat Laporan Baru
+                <PlusIcon size={14} />
+                <span>Buat Laporan Baru</span>
               </button>
               <button
                 type="button"
@@ -287,9 +308,13 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                     fontSize: '12px',
                     marginBottom: '14px',
                     lineHeight: 1.4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
                 >
-                  ⚠️ {errorMessage}
+                  <AlertTriangleIcon size={15} color="#EF4444" style={{ flexShrink: 0 }} />
+                  <span>{errorMessage}</span>
                 </div>
               )}
 
@@ -307,8 +332,23 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       style={{ padding: '8px 10px', fontSize: '12px', textAlign: 'left', height: 'auto' }}
                       onClick={() => setCategory(cat)}
                     >
-                      <div style={{ fontWeight: 600 }}>
-                        {cat === 'kebakaran' ? '🔥 Kebakaran / Asap' : cat === 'pembukaan_lahan' ? '🚜 Pembukaan Lahan' : '🌲 Perubahan Tutupan'}
+                      <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {cat === 'kebakaran' ? (
+                          <>
+                            <FlameIcon size={14} color={category === cat ? '#fff' : '#CC6F00'} />
+                            <span>Kebakaran / Asap</span>
+                          </>
+                        ) : cat === 'pembukaan_lahan' ? (
+                          <>
+                            <TractorIcon size={14} color={category === cat ? '#fff' : '#D97706'} />
+                            <span>Pembukaan Lahan</span>
+                          </>
+                        ) : (
+                          <>
+                            <TreeIcon size={14} color={category === cat ? '#fff' : '#059669'} />
+                            <span>Perubahan Tutupan</span>
+                          </>
+                        )}
                       </div>
                       <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '2px' }}>
                         {CATEGORY_LABELS[cat]}
@@ -330,20 +370,22 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       onClick={handleGetGPS}
                       disabled={isLocating}
                       className="btn-action"
-                      style={{ fontSize: '11px', padding: '3px 8px', minHeight: '28px' }}
+                      style={{ fontSize: '11px', padding: '3px 8px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                       title="Ambil koordinat perangkat saat ini"
                     >
-                      {isLocating ? 'Mencari GPS...' : '📍 GPS Saya'}
+                      <PinIcon size={13} />
+                      <span>{isLocating ? 'Mencari GPS...' : 'GPS Saya'}</span>
                     </button>
                     {onPickOnMapRequest && (
                       <button
                         type="button"
                         onClick={onPickOnMapRequest}
                         className="btn-action"
-                        style={{ fontSize: '11px', padding: '3px 8px', minHeight: '28px' }}
+                        style={{ fontSize: '11px', padding: '3px 8px', minHeight: '28px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                         title="Tutup form dan klik titik langsung pada peta"
                       >
-                        🗺️ Pilih di Peta
+                        <MapPinIcon size={13} />
+                        <span>Pilih di Peta</span>
                       </button>
                     )}
                   </div>

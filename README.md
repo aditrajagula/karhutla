@@ -11,7 +11,8 @@ Sesuai ketentuan [PRD.md](file:///c:/Users/jutt/Documents/Coding/Practice/repos/
 * **Fokus Inti:** Mengambil data anomali termal aktif dari NASA FIRMS API (sensor VIIRS NOAA-20/21), memvalidasi koordinat dan waktu observasi UTC, membuang duplikasi, memotong titik hanya di dalam daratan Indonesia (*Point-in-Polygon*), serta menyajikan data melalui REST API berstandar GeoJSON (RFC 7946) lengkap dengan audit provenance.
 * **Auto-Refresh Scheduler & Rotasi Snapshot:** Server FastAPI menjalankan background scheduler (`asyncio` pada `lifespan`) setiap 30 menit (`FIRMS_REFRESH_INTERVAL_SECONDS=1800`) untuk menarik data terbaru dari NASA FIRMS secara otomatis dan menyimpan maksimal 5 snapshot terakhir di disk.
 * **Estimasi Kerentanan Lingkungan & Cuaca Real-Time:** Mengintegrasikan parameter meteorologi *real-time* dan riwayat curah hujan 90 hari dari **Open-Meteo API** (tanpa API key, dilengkapi fallback klimatologi Kalimantan) dengan tutupan kanopi **Hansen GFC v1.13** menggunakan model Regresi Logistik (`model_regresi_logistik.joblib`) sebagai indikator konteks kerentanan lingkungan.
-* **Batas Integritas Ilmiah:** Titik deteksi satelit adalah anomali termal, **bukan bukti tunggal kebakaran pasti**, dan estimasi risiko lingkungan disajikan terpisah dari verifikasi faktual laporan lapangan.
+* **Batas Integritas Ilmiah:** Titik deteksi satelit adalah anomali termal, **bukan bukti tunggal kebakaran pasti**. Modul estimasi risiko karhutla berbasis Machine Learning diperlakukan secara transparan sebagai **prototipe eksperimental berbasis cuaca mikro dan tutupan kanopi lokal** (bukan klaim kepastian mutlak), dan estimasi risiko lingkungan disajikan terpisah dari verifikasi faktual laporan lapangan.
+
 
 ---
 
@@ -230,21 +231,21 @@ Melaporkan metadata asal-usul data dan status mode data secara transparan.
 ```
 
 ### 3. `GET /api/v1/context-layers`
-Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang data.
+Melaporkan ketersediaan layer konteks kawasan hutan (GLAD 2020) dan gambut tanpa mengarang data.
 
 **Contoh Response (Aktual dari Server):**
 ```json
 {
   "forest_layer": {
     "available": false,
-    "source": "Kementerian Lingkungan Hidup dan Kehutanan (KLHK)",
-    "status_message": "Dataset resmi kawasan hutan belum tersedia dari panitia/instansi.",
-    "feature_count": null
+    "source": "GLAD Global Land Cover and Land Use Change 2000–2020 (Forest extent 2020, UMD)",
+    "status_message": "Dataset raster GLAD Forest Extent 2020 belum tersedia di direktori lokal data/raster/forest/.",
+    "feature_count": 0
   },
   "peatland_layer": {
-    "available": false,
-    "source": "Badan Restorasi Gambut dan Mangrove (BRGM)",
-    "status_message": "Dataset resmi kesatuan hidrologis gambut belum tersedia dari panitia/instansi.",
+    "available": true,
+    "source": "GeoJSON lokal peat_kalimantan_big_official.geojson",
+    "status_message": "Layer poligon gambut Kalimantan tersedia untuk ditampilkan. Tahun, lisensi, dan provenance dataset belum tercatat pada manifest.",
     "feature_count": null
   },
   "boundary_layer": {
@@ -268,6 +269,15 @@ Mengevaluasi statistik agregat provinsi dan pembacaan piksel GeoTIFF perubahan t
 
 ### 6. `GET /api/v1/predict/fire-risk`
 Memprediksi probabilitas kerentanan kebakaran hutan/lahan pada titik koordinat (`latitude`, `longitude`) menggunakan model Regresi Logistik yang menggabungkan cuaca *real-time* + akumulasi curah hujan 90 hari dari **Open-Meteo API** (`OPEN_METEO_API` atau fallback otomatis `CLIMATOLOGY_FALLBACK`) serta tutupan kanopi Hansen GFC v1.13.
+
+### 7. Layer GeoJSON Tematik & Raster Lookup Hutan GLAD 2020
+Backend menyediakan endpoint data statis/tematik lokal untuk visualisasi dan analisis spasial:
+* `GET /api/v1/map-data/peatland` — Layer GeoJSON poligon kesatuan hidrologis gambut Kalimantan (dilengkapi cache memori dan penyederhanaan geometri visual untuk performa tinggi).
+* `GET /api/v1/map-data/classified-hotspots` — Snapshot anomali termal FIRMS dengan atribut klasifikasi spasial kesesuaian wilayah gambut (`in_peat`), kelas gambut, dan tingkat prioritas risiko.
+* `GET /api/v1/map-data/firms-manifest` — Metadata manifest dataset snapshot hotspot FIRMS Kalimantan (sumber, tanggal pengambilan UTC, bounding box, dan total rekor).
+* `GET /api/v1/forest-extent/point?latitude={lat}&longitude={lon}` — Lookup klasifikasi tutupan hutan GLAD Forest Extent 2020 tingkat piksel 30m (`FOREST`, `NON_FOREST`, atau `UNKNOWN`).
+* `GET /api/v1/map-data/forest-extent/tiles` — Daftar metadata kuadran tile tutupan hutan Kalimantan beserta status cakupan valid (`PARTIAL` / `FULL`).
+
 
 ---
 

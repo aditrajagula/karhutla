@@ -12,9 +12,10 @@ import pandas as pd
 
 from .config import PREDICTIVE_MODEL_PATH, PREDICTIVE_SCALER_PATH
 try:
-    from .hansen_tile_reader import read_hansen_pixel
+    from .hansen_tile_reader import read_hansen_pixel, is_coordinate_in_kalimantan
 except ImportError:
     read_hansen_pixel = None
+    is_coordinate_in_kalimantan = None
 
 from .weather_client import WeatherClient
 
@@ -101,35 +102,143 @@ class FireRiskPredictionService:
                 "status": "UNAVAILABLE",
                 "message": "Model prediktif belum dimuat di server.",
                 "coordinates": {"lat": lat, "lon": lon},
+                "province": province,
                 "risk_probability": None,
-                "risk_level": "BELUM_DAPAT_DINILAI",
+                "risk_percentage": None,
+                "risk_level": "TIDAK_DAPAT_DINILAI",
+                "risk_label": "Model Tidak Tersedia",
+                "risk_color": "GRAY",
+                "primary_drivers": [],
             }
 
-        # 1. Ambil data cuaca dari Open-Meteo (dengan fallback aman)
+        # 1. Validasi cakupan spasial wilayah 5 provinsi Kalimantan
+        in_kalimantan = True
+        prov_resolved = province
+        if is_coordinate_in_kalimantan is not None:
+            in_kalimantan, prov_resolved = is_coordinate_in_kalimantan(lat, lon, province=province)
+
+        if not in_kalimantan:
+            return {
+                "status": "OUT_OF_SCOPE",
+                "message": "Koordinat berada di luar wilayah 5 provinsi Kalimantan (model prediktif tidak dapat diterapkan).",
+                "coordinates": {"lat": lat, "lon": lon},
+                "province": prov_resolved or province or "Di Luar Cakupan",
+                "risk_probability": None,
+                "risk_percentage": None,
+                "risk_level": "TIDAK_DAPAT_DINILAI",
+                "risk_label": "Di Luar Cakupan",
+                "risk_color": "GRAY",
+                "primary_drivers": [],
+                "data_quality": {
+                    "status": "OUT_OF_SCOPE",
+                    "reliability": "NOT_ASSESSABLE",
+                    "reason": "Koordinat berada di luar wilayah 5 provinsi Kalimantan.",
+                    "missing_or_imputed_features": ["f_prim", "peatd", "loss_last_prim", "loss_last_sec"],
+                },
+                "model_metadata": {
+                    "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
+                    "features_count": len(MODEL_FEATURE_NAMES),
+                    "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
+                    "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
+                    "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
+                    "interpretability_notice": "Lokasi berada di luar cakupan pelatihan model Kalimantan.",
+                }
+            }
+
+        # 2. Ambil data cuaca dari Open-Meteo (dengan fallback aman)
         weather = self.weather_client.fetch_weather_features(lat, lon)
 
-        # 2. Ambil data vegetasi dari Hansen Raster 30m jika berada di cakupan tile
-        treecover = 70
-        detected_prov = province
+        # 3. Ambil data vegetasi dari Hansen Raster 30m jika berada di cakupan tile
+        treecover = None
+        detected_prov = prov_resolved or province
         if read_hansen_pixel is not None:
             try:
                 hansen_res = read_hansen_pixel(lat=lat, lon=lon, province=province)
+                if getattr(hansen_res, "status", None) == "OUT_OF_SCOPE":
+                    return {
+                        "status": "OUT_OF_SCOPE",
+                        "message": "Tile geospasial berada di luar cakupan tile resmi Kalimantan.",
+                        "coordinates": {"lat": lat, "lon": lon},
+                        "province": getattr(hansen_res, "province", None) or detected_prov or "Di Luar Cakupan",
+                        "risk_probability": None,
+                        "risk_percentage": None,
+                        "risk_level": "TIDAK_DAPAT_DINILAI",
+                        "risk_label": "Di Luar Cakupan",
+                        "risk_color": "GRAY",
+                        "primary_drivers": [],
+                        "data_quality": {
+                            "status": "OUT_OF_SCOPE",
+                            "reliability": "NOT_ASSESSABLE",
+                            "reason": "Tile geospasial di luar cakupan resmi Kalimantan.",
+                            "missing_or_imputed_features": ["f_prim", "peatd", "loss_last_prim", "loss_last_sec"],
+                        },
+                        "model_metadata": {
+                            "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
+                            "features_count": len(MODEL_FEATURE_NAMES),
+                            "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
+                            "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
+                            "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
+                            "interpretability_notice": "Tile di luar cakupan.",
+                        }
+                    }
+
                 if getattr(hansen_res, "treecover2000", None) is not None:
                     treecover = hansen_res.treecover2000
+                else:
+                    # Fallback ke demo rasters lokal di data/raster/hansen jika official subset belum mencakup titik ini
+                    hansen_demo = read_hansen_pixel(lat=lat, lon=lon, province=province, use_official=False)
+                    if getattr(hansen_demo, "treecover2000", None) is not None:
+                        treecover = hansen_demo.treecover2000
+                        hansen_res = hansen_demo
+
                 if getattr(hansen_res, "province", None):
                     detected_prov = hansen_res.province
             except Exception as exc:
                 logger.debug("Info raster Hansen tidak dapat diakses untuk koordinat (%s, %s): %s", lat, lon, exc)
 
+        # Jika data kanopi pohon wajib tetap tidak tersedia, laporkan status INSUFFICIENT_DATA (bukan diasumsikan aman)
+        if treecover is None:
+            return {
+                "status": "INSUFFICIENT_DATA",
+                "message": "Data wajib raster tutupan pohon (f_prim) tidak tersedia untuk koordinat ini (risiko tidak dapat dinilai).",
+                "coordinates": {"lat": lat, "lon": lon},
+                "province": detected_prov or "Kalimantan",
+                "risk_probability": None,
+                "risk_percentage": None,
+                "risk_level": "TIDAK_DAPAT_DINILAI",
+                "risk_label": "Data Tidak Memadai",
+                "risk_color": "GRAY",
+                "primary_drivers": [],
+                "data_quality": {
+                    "status": "INSUFFICIENT_DATA",
+                    "reliability": "NOT_ASSESSABLE",
+                    "reason": "Data wajib raster tutupan kanopi pohon (f_prim) tidak tersedia.",
+                    "missing_or_imputed_features": ["f_prim", "peatd", "loss_last_prim", "loss_last_sec"],
+                },
+                "model_metadata": {
+                    "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
+                    "features_count": len(MODEL_FEATURE_NAMES),
+                    "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
+                    "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
+                    "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
+                    "interpretability_notice": "Evaluasi risiko ditolak karena ketiadaan data kanopi wajib.",
+                }
+            }
+
         f_prim = round(treecover / 100.0, 4)
 
-        # Cek apakah ada loss tahun lalu (misal jika data lossyear terdeteksi)
-        loss_last_prim = 0.0
-        loss_last_sec = 0.0
+        # Penanganan fitur yang belum terintegrasi:
+        # Gunakan nilai mean pelatihan scaler (mu) sebagai imputasi teknis netral (z = 0, kontribusi logit = 0)
+        # TIDAK disamarkan sebagai nilai nol atau data aktual, dan status dicatat transparan di data_quality.
+        idx_loss_prim = MODEL_FEATURE_NAMES.index("loss_last_prim")
+        idx_loss_sec = MODEL_FEATURE_NAMES.index("loss_last_sec")
+        idx_peatd = MODEL_FEATURE_NAMES.index("peatd")
+        idx_dem = MODEL_FEATURE_NAMES.index("dem")
 
-        # Gambut dan Elevasi
-        peatd = 0.0
-        dem = float(weather.get("elevation", 50.0))
+        loss_last_prim = float(self.scaler.mean_[idx_loss_prim])
+        loss_last_sec = float(self.scaler.mean_[idx_loss_sec])
+        peatd = float(self.scaler.mean_[idx_peatd])
+        dem = float(weather.get("elevation", self.scaler.mean_[idx_dem]))
 
         # 3. Bentuk vektor fitur sebagai DataFrame berlabel
         feature_dict = {
@@ -155,49 +264,89 @@ class FireRiskPredictionService:
         prob = float(self.model.predict_proba(X_scaled)[0, 1])
         prob_percent = round(prob * 100, 2)
 
-        # Klasifikasi level risiko
+        # Klasifikasi level risiko (Indikatif Prototipe)
         if prob < 0.35:
             risk_level = "RENDAH"
             risk_color = "GREEN"
+            risk_label = "Rendah (Data Terbatas)"
         elif prob < 0.70:
             risk_level = "SEDANG"
             risk_color = "YELLOW"
+            risk_label = "Sedang"
         else:
             risk_level = "TINGGI"
             risk_color = "RED"
+            risk_label = "Tinggi"
 
-        # 5. Analisis kontribusi faktor pemicu (Driver explainability)
+        # 5. Analisis kontribusi faktor penentu lokal (Local Linear Logit Contribution)
+        # Kontribusi linier lokal: delta_logit_i = beta_i * z_i
         coefficients = self.model.coef_[0]
+        z_scores = X_scaled[0]
         drivers = []
-        for feat_name, coef, val in zip(MODEL_FEATURE_NAMES, coefficients, df_input.iloc[0]):
-            # Dampak positif memperbesar risiko, negatif memperkecil
-            impact = "Meningkatkan Risiko" if coef > 0 else "Menurunkan Risiko"
+        for feat_name, coef, val, z_val in zip(MODEL_FEATURE_NAMES, coefficients, df_input.iloc[0], z_scores):
+            contrib = float(coef * z_val)
+            # Arah dorongan statistik terhadap logit:
+            if abs(contrib) < 0.01:
+                impact = "Pengaruh Netral (Mendekati Rata-rata)"
+            elif contrib > 0:
+                impact = "Mendorong Skor Lebih Tinggi"
+            else:
+                impact = "Menahan Skor Lebih Rendah"
+
+            is_imputed = feat_name in ("peatd", "loss_last_prim", "loss_last_sec", "tp_3", "tp_4", "tp_5")
+
             drivers.append({
                 "feature": feat_name,
                 "label": FEATURE_HUMAN_LABELS.get(feat_name, feat_name),
                 "value": round(float(val), 2),
+                "z_score": round(float(z_val), 3),
                 "coefficient": round(float(coef), 4),
+                "contribution_to_logit": round(contrib, 4),
                 "impact": impact,
+                "is_imputed": is_imputed,
             })
 
-        # Urutkan faktor dengan koefisien absolut terbesar
-        drivers.sort(key=lambda d: abs(d["coefficient"]), reverse=True)
+        # Urutkan faktor berdasarkan kontribusi absolut lokal terbesar terhadap logit
+        drivers.sort(key=lambda d: abs(d["contribution_to_logit"]), reverse=True)
 
         return {
             "status": "SUCCESS",
             "coordinates": {"lat": lat, "lon": lon},
-            "province": detected_prov or "Wilayah Sekitar Pengguna",
+            "province": detected_prov or "Kalimantan",
             "risk_probability": round(prob, 4),
             "risk_percentage": prob_percent,
             "risk_level": risk_level,
+            "risk_label": risk_label,
             "risk_color": risk_color,
             "primary_drivers": drivers[:5],
             "weather_source": weather.get("source", "UNKNOWN"),
             "input_features": feature_dict,
+            "data_quality": {
+                "status": "PARTIAL",
+                "reliability": "LOW_EXPERIMENTAL",
+                "missing_or_imputed_features": [
+                    "peatd (Kedalaman Gambut)",
+                    "loss_last_prim (Kehilangan Hutan Primer)",
+                    "loss_last_sec (Kehilangan Hutan Sekunder)",
+                    "tp_3", "tp_4", "tp_5 (Defisit Hujan 3-5 Bulan)"
+                ],
+                "imputation_method": "TECHNICAL_NEUTRAL_MEAN",
+                "imputation_caveat": (
+                    "Fitur yang layernya belum terintegrasi diimputasi dengan rata-rata pelatihan (z=0) "
+                    "agar netral terhadap logit. Imputasi teknis ini TIDAK menjamin validitas prediksi di lapangan."
+                ),
+                "precipitation_metadata": weather.get("precipitation_metadata", {}),
+            },
             "model_metadata": {
-                "model_type": "Logistic Regression (ERA5 + Open-Meteo + Hansen GFC)",
+                "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
                 "features_count": len(MODEL_FEATURE_NAMES),
-                "roc_auc_evaluation": 0.81,
+                "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
+                "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
+                "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
+                "interpretability_notice": (
+                    "Kontribusi faktor adalah relasi deviasi statistik linier terhadap logit (beta * z), "
+                    "bukan bukti kausalitas pemicu kebakaran darat."
+                )
             }
         }
 

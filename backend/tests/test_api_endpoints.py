@@ -27,14 +27,48 @@ def test_get_context_layers(client: TestClient):
     assert response.status_code == 200
     data = response.json()
 
-    assert data["forest_layer"]["available"] is False
-    assert "belum tersedia" in data["forest_layer"]["status_message"]
+    assert data["forest_layer"]["available"] is True
+    assert "aktif" in data["forest_layer"]["status_message"]
 
-    assert data["peatland_layer"]["available"] is False
-    assert "belum tersedia" in data["peatland_layer"]["status_message"]
+    assert data["peatland_layer"]["available"] is True
+    assert "tersedia" in data["peatland_layer"]["status_message"]
 
     assert data["boundary_layer"]["available"] is True
     assert data["boundary_layer"]["feature_count"] == 34
+
+
+def test_local_kalimantan_map_datasets(client: TestClient):
+    peatland = client.get("/api/v1/map-data/peatland")
+    assert peatland.status_code == 200
+    assert peatland.headers["content-type"].startswith("application/geo+json")
+    peatland_data = peatland.json()
+    assert peatland_data["type"] == "FeatureCollection"
+
+    # Test layer tutupan hutan GLAD 2020 (metadata dan overlay PNG)
+    forest_meta = client.get("/api/v1/map-data/forest-extent/meta")
+    assert forest_meta.status_code == 200
+    assert forest_meta.json()["available"] is True
+    assert forest_meta.json()["region"] == "Kalimantan Tengah (Palangka Raya & Sekitarnya)"
+
+    forest_overlay = client.get("/api/v1/map-data/forest-extent/overlay")
+    assert forest_overlay.status_code == 200
+    assert forest_overlay.headers["content-type"] == "image/png"
+    assert len(forest_overlay.content) > 10000
+    assert len(peatland_data["features"]) == 100
+
+    hotspots = client.get("/api/v1/map-data/classified-hotspots")
+    assert hotspots.status_code == 200
+    hotspots_data = hotspots.json()
+    assert hotspots_data["type"] == "FeatureCollection"
+    assert len(hotspots_data["features"]) == 31028
+    assert all(
+        isinstance(feature["properties"].get("in_peat"), bool)
+        for feature in hotspots_data["features"]
+    )
+
+    manifest = client.get("/api/v1/map-data/firms-manifest")
+    assert manifest.status_code == 200
+    assert manifest.json()["total_records"] == len(hotspots_data["features"])
 
 
 def test_get_hotspots_no_key_and_no_snapshot(client: TestClient, tmp_path: Path):

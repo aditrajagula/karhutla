@@ -1,0 +1,111 @@
+{
+  "manifest_version": "1.0",
+  "tile_id": "00N_110E",
+  "dataset_version": "GFC-2025-v1.13",
+  "source": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+  "source_base_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/",
+  "source_type": "OFFICIAL_UMD_HANSEN_GFC",
+  "is_synthetic": false,
+  "is_clipped": true,
+  "target_region_label": "Kalimantan Tengah - Koridor Palangka Raya & Pulang Pisau",
+  "provinces_covered": [
+    "Kalimantan Tengah",
+    "Kalimantan Selatan"
+  ],
+  "bounding_box": {
+    "min_lon": 113.6,
+    "min_lat": -2.5,
+    "max_lon": 114.2,
+    "max_lat": -2.0
+  },
+  "spatial_resolution_deg": 0.00025,
+  "spatial_resolution_approx_m": 27.83,
+  "total_size_bytes": 2125093,
+  "total_size_kb": 2075.29,
+  "total_size_mb": 2.03,
+  "ingestion_duration_seconds": 60.15,
+  "ingested_at_utc": "2026-10-15T11:15:48Z",
+  "layers": {
+    "lossyear": {
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "size_bytes": 393600,
+      "size_kb": 384.38,
+      "checksum_sha256": "d6e626cf72f7871e1b66bbeffe1794abc0d4f9c08a94a374128ea66adf366561",
+      "shape": [
+        2000,
+        2400
+      ],
+      "unique_values_count": 26,
+      "unique_sample": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "treecover2000": {
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "size_bytes": 1677210,
+      "size_kb": 1637.9,
+      "checksum_sha256": "77b6143296f4d0ce0f0b9cc7e1d17253b0895fa229ff4bfb6213a45066a91110",
+      "shape": [
+        2000,
+        2400
+      ],
+      "unique_values_count": 101,
+      "unique_sample": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "datamask": {
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "file_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "size_bytes": 54283,
+      "size_kb": 53.01,
+      "checksum_sha256": "028e034e38c8e2185a0ef6fc03bcc6b34efacd928c91ba7da21d23c983bf7cd4",
+      "shape": [
+        2000,
+        2400
+      ],
+      "unique_values_count": 2,
+      "unique_sample": [
+        1,
+        2
+      ]
+    }
+  },
+  "scientific_integrity_notes": "Data subset resmi diekstraksi langsung dari citra GeoTIFF University of Maryland (UMD) pada Google Cloud Storage melalui windowed spatial query. Berkas disimpan dalam format Cloud-Optimized Tiled GeoTIFF LZW untuk pembacaan sub-milidetik. Nilai tutupan dan kehilangan pohon adalah data satelit Landsat/Sentinel historis 2000-2025."
+}

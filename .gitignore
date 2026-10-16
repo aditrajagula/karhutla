@@ -55,3 +55,27 @@ data/*.parquet
 *.sqlite3
 
 data/era5_features.parquet
+
+# Large raster files (>100MB exceeds GitHub limit)
+data/raster/forest/*.tif
+data/raster/forest/tiles_full/
+data/raster/hansen/official/*.tif
+data/raster/hansen/official/backup_subset_palangka_raya/
+
+# Auto-refresh runtime snapshots
+data/snapshots/*.csv
+!data/snapshots/snapshot_team_20261013_134622.csv
+!data/snapshots/snapshot_team_20261016_060249.csv
+!data/snapshots/snapshot_team_20261016_061007.csv
+!data/snapshots/snapshot_team_20261016_061014.csv
+!data/snapshots/snapshot_team_20261016_061016.csv
+!data/snapshots/snapshot_team_20261016_061031.csv
+data/snapshots/*.json
+!data/snapshots/manifest_20261013_134622.json
+!data/snapshots/manifest_20261016_060249.json
+!data/snapshots/manifest_20261016_061007.json
+!data/snapshots/manifest_20261016_061014.json
+!data/snapshots/manifest_20261016_061016.json
+!data/snapshots/manifest_20261016_061031.json
+
+

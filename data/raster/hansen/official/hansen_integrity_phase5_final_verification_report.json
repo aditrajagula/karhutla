@@ -1,0 +1,154 @@
+{
+  "audit_metadata": {
+    "title": "Tahap 5 — Final Verification & Code Change Review",
+    "project": "FireGuard",
+    "phase": "Tahap 5 - Pemeriksaan Akhir dan Tinjauan Perubahan Kode",
+    "audit_timestamp_utc": "2026-10-15T18:15:15.969310+00:00",
+    "operational_status_compliance": {
+      "data_status": "demonstration",
+      "data_verified": false,
+      "retained_strictly": true
+    }
+  },
+  "executive_summary": {
+    "verdict": "VERIFIED_AND_STABLE",
+    "safe_to_proceed_with_demonstration_status": true,
+    "all_tests_passed": true,
+    "total_tests_passed": 181,
+    "total_tests_skipped": 1,
+    "total_tests_failed": 0,
+    "total_tests_error": 0,
+    "canonical_raster_total_bytes": 1492292838,
+    "ground_truth_reconciled": true,
+    "discrepancy_510035_resolved": true,
+    "sentinel_attribution_eliminated": true,
+    "scientific_validation_claimed": false
+  },
+  "section_1_code_changes_review": [
+    {
+      "file": "backend/app/hansen_tile_reader.py",
+      "behavior_before": "Ketika membaca piksel dari berkas GeoTIFF lokal (baik sintetis maupun resmi), mengembalikan data_status='raster_verified' dan data_verified=True.",
+      "behavior_after": "Mengembalikan data_status='demonstration' dan data_verified=False. Keberhasilan pembacaan raster ditandai dengan raster_available=True dan transform_verified=True jika rumus Affine spasial terverifikasi secara matematis.",
+      "rationale": "Keberhasilan membaca piksel raster lokal hanya membuktikan integritas berkas lokal, bukan verifikasi ilmiah independen atau validasi lapangan. Menghilangkan kontradiksi dengan status global proyek.",
+      "regression_risk": "Rendah. Konsumen yang bergantung pada boolean data_verified untuk mengaktifkan fitur produksi tidak terpengaruh karena proyek memang berada dalam status demonstrasi terpandu. Frontend modal dan status bar telah mendukung data_status='demonstration'."
+    },
+    {
+      "file": "backend/app/forest_change_service.py",
+      "behavior_before": "Pada evaluasi titik (evaluate_forest_change_point) jalur fallback sintetis dan perolehan titik, mengembalikan data_status='raster_verified' dan data_verified=True.",
+      "behavior_after": "Mengembalikan data_status=res.data_status ('demonstration') dan data_verified=res.data_verified (False).",
+      "rationale": "Memastikan konsistensi berjenjang dari tile reader ke endpoint API agregat dan detail.",
+      "regression_risk": "Rendah. Struktur payload API tetap utuh, tidak ada perubahan skema kunci (schema keys), hanya nilai semantik yang diselaraskan."
+    },
+    {
+      "file": "backend/app/evidence_service.py",
+      "behavior_before": "Menyebutkan satellite_sources='Landsat / Sentinel / UMD' dan teks 'riwayat perubahan tutupan pohon terkonfirmasi'. Menggunakan fallback data_status='raster_verified' dan data_verified=True.",
+      "behavior_after": "Menyebutkan satellite_sources='Landsat (USGS/NASA) / UMD' dan teks 'indikasi deteksi riwayat kehilangan tutupan kanopi'. Menggunakan fallback data_status='demonstration' dan data_verified=False.",
+      "rationale": "Dokumentasi resmi Hansen GFC v1.13 berbasis seri satelit Landsat (5/7/8/9), bukan Sentinel-2. Kata 'terkonfirmasi' diganti 'indikasi deteksi' agar tidak mengklaim validasi lapangan.",
+      "regression_risk": "Rendah. Menghindari misinformasi saintifik pada bukti laporan warga."
+    },
+    {
+      "file": "scripts/ingest_hansen_official.py",
+      "behavior_before": "Manifest catatan integritas menyebutkan data satelit 'Landsat/Sentinel'.",
+      "behavior_after": "Manifest catatan integritas menyebutkan data satelit 'Landsat (USGS/NASA)'.",
+      "rationale": "Menyesuaikan deskripsi provenance dengan sumber rujukan resmi UMD GFC v1.13.",
+      "regression_risk": "Nol. Skrip ingestion bersifat offline/batch dan tidak memengaruhi runtime backend."
+    },
+    {
+      "file": "backend/tests/ (seluruh berkas tes Hansen & forest change)",
+      "behavior_before": "Assertion tes mengharapkan data_status=='raster_verified' dan data_verified is True setiap kali piksel lokal terbaca.",
+      "behavior_after": "Assertion tes diselaraskan secara ketat pada data_status=='demonstration' dan data_verified is False. Ditambahkan 2 uji regresi baru untuk mengunci status dan atribusi.",
+      "rationale": "Mencegah regresi di masa depan di mana pengembang tidak sengaja mengembalikan data_verified=True sebelum verifikasi ilmiah nyata dilakukan.",
+      "regression_risk": "Rendah. Memperkuat proteksi build otomatis (CI/CD)."
+    }
+  ],
+  "section_2_semantic_status_verification": {
+    "fields_evaluated": {
+      "raster_available": {
+        "definition": "Menunjukkan apakah berkas raster lokal (GeoTIFF) ada dan dapat diekstraksi nilainya.",
+        "actual_value_when_read": true,
+        "actual_value_when_missing": false,
+        "complies_with_reality": true
+      },
+      "transform_verified": {
+        "definition": "Menunjukkan bahwa transformasi koordinat Affine (WGS84 EPSG:4326) telah diverifikasi secara analitik dan konsisten dengan indeks piksel rasterio.",
+        "actual_value_when_verified": true,
+        "complies_with_reality": true
+      },
+      "data_status": {
+        "definition": "Status operasional dataset dalam sistem FireGuard.",
+        "actual_value": "demonstration",
+        "complies_with_reality": true
+      },
+      "data_verified": {
+        "definition": "Status verifikasi ilmiah independen dan/atau validasi faktual lapangan.",
+        "actual_value": false,
+        "complies_with_reality": true
+      }
+    },
+    "frontend_compatibility": {
+      "ForestLossModal_tsx": "Mendeteksi !data.data_verified || data.data_status dan menampilkan banner transparansi 'Data Demonstrasi (Belum Terverifikasi Raster)'.",
+      "ReportDetailModal_tsx": "Menampilkan luas piksel analitik WGS84 ~0.0769 ha/piksel dengan keterangan bervariasi menurut lintang.",
+      "breaking_changes_detected": false
+    }
+  },
+  "section_3_test_execution_results": {
+    "hansen_targeted_tests": {
+      "command": ".venv\\Scripts\\pytest backend/tests/ -k \"hansen\" -v",
+      "passed": 97,
+      "failed": 0,
+      "skipped": 0,
+      "error": 0,
+      "deselected": 85,
+      "duration_seconds": 22.23
+    },
+    "full_test_suite": {
+      "command": ".venv\\Scripts\\pytest backend/tests/ -v",
+      "total_collected": 182,
+      "passed": 181,
+      "failed": 0,
+      "skipped": 1,
+      "skipped_reason": "backend/tests/test_frontend_integration_live.py dilewati secara sengaja karena live server port 8000 tidak dijalankan selama unit test.",
+      "error": 0,
+      "duration_seconds": 139.82
+    }
+  },
+  "section_4_phase4_report_validation": {
+    "report_path": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\hansen_integrity_phase4_report.json",
+    "is_valid_json": true,
+    "calculated_dynamically_from_12_rasters": true,
+    "actual_total_bytes": 1492292838,
+    "expected_total_bytes": 1492292838,
+    "discrepancy_510035_explanation": "Berasal dari transcription typo pada teks narasi respons chat Tahap 2 (1.492.802.873 vs 1.492.292.838). Seluruh artefak JSON, manifest v2.0, dan remote GCS konsisten pada 1.492.292.838 byte.",
+    "cryptographic_hashes_provenance": "Header GCS x-goog-hash (crc32c) dan metadata native (md5Hash) terdokumentasi lengkap pada laporan Tahap 2 dan Tahap 3 tanpa manipulasi.",
+    "scientific_ground_truth_boundary": "Laporan Tahap 4 memisahkan secara tegas antara integritas berkas lokal, kesesuaian remote GCS, validitas spasial matematis, dan verifikasi lapangan/ilmiah (UNVERIFIED)."
+  },
+  "section_5_attribution_audit": {
+    "sentinel_attribution_eliminated_from_active_code": true,
+    "landsat_umd_properly_attributed": true,
+    "canopy_cover_loss_indication_wording_preserved": true,
+    "legacy_manifest_preserved": {
+      "manifest_path": "data/raster/hansen/manifest_00N_110E_official.json",
+      "status": "UNTOUCHED_AS_LEGACY_RECORD"
+    }
+  },
+  "section_6_issues_and_resolutions": {
+    "issues_fixed_in_phase5": [],
+    "unresolved_issues": [],
+    "residual_regression_risks": [
+      {
+        "risk": "Operator atau pengguna eksternal menganggap raster_available=True sebagai dataset terverifikasi resmi pemerintah.",
+        "mitigation": "Banner edukasi 'Data Demonstrasi' pada frontend dan caveat saintifik eksplisit pada API tetap aktif secara permanen."
+      },
+      {
+        "risk": "Penambahan tile di luar 4 tile Kalimantan di masa depan memerlukan unduhan penuh.",
+        "mitigation": "Skrip ingest_hansen_official.py dan downloader aman siap digunakan dengan validasi otomatis."
+      }
+    ]
+  },
+  "conclusion": {
+    "status": "SAFE_FOR_DEMONSTRATION",
+    "data_status": "demonstration",
+    "data_verified": false,
+    "statement": "Tahap 5 Final Verification & Code Change Review mengonfirmasi bahwa seluruh perubahan Tahap 4 valid, tidak menimbulkan efek samping regresi, seluruh 181 pengujian otomatis lulus, rekonsiliasi ukuran berkas raster 100% tepat, dan batasan semantik ilmiah dipertahankan secara ketat. Proyek FireGuard aman melanjutkan pengembangan dalam status demonstrasi terpandu."
+  }
+}

@@ -253,6 +253,7 @@ def get_forest_loss_summary() -> Dict[str, Any]:
 
 
 from .config import HANSEN_TILES_DIR
+from .glad_forest_reader import lookup_forest_extent
 from .hansen_tile_reader import (
     is_coordinate_in_kalimantan,
     read_hansen_pixel,
@@ -264,7 +265,7 @@ from .hansen_tile_reader import (
 )
 
 
-def evaluate_forest_change_point(
+def _evaluate_hansen_point(
     lat: float,
     lon: float,
     province: Optional[str] = None,
@@ -529,3 +530,37 @@ def evaluate_forest_change_point(
         "cache_hit": res.cache_hit,
         "access_method": res.access_method,
     }
+
+
+def evaluate_forest_change_point(
+    lat: float,
+    lon: float,
+    province: Optional[str] = None,
+    pixel_raster_available: bool = False,
+    raster_pixel_value: Optional[Dict[str, Any]] = None,
+    tiles_dir: Optional[Any] = None,
+    enable_remote: Optional[bool] = None,
+    use_official: Optional[bool] = None,
+    glad_forest_dir: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """
+    Evaluasi indikasi tutupan pohon untuk lokasi spesifik (lat, lon) di Kalimantan.
+    Mengintegrasikan pembaca raster Hansen GFC dan layer klasifikasi tutupan hutan
+    GLAD Forest Extent 2020 (GLCLUC2020) secara terpisah tanpa saling menimpa.
+    """
+    hansen_res = _evaluate_hansen_point(
+        lat=lat,
+        lon=lon,
+        province=province,
+        pixel_raster_available=pixel_raster_available,
+        raster_pixel_value=raster_pixel_value,
+        tiles_dir=tiles_dir,
+        enable_remote=enable_remote,
+        use_official=use_official,
+    )
+
+    # Lookup klasifikasi hutan GLAD 2020
+    forest_extent_res = lookup_forest_extent(lat=lat, lon=lon, forest_dir=glad_forest_dir)
+    hansen_res["forest_extent_2020"] = forest_extent_res.to_dict()
+
+    return hansen_res

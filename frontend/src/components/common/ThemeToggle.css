@@ -1,0 +1,61 @@
+.theme-toggle {
+  --tt-orange: #CC6F00;
+  position: absolute;
+  top: 25px;
+  right: 30px;
+  width: 95px;
+  height: 50px;
+  padding: 0 6.5px;
+  display: flex;
+  align-items: center;
+  border: 0.5px solid var(--landing-fg);
+  border-radius: 51px;
+  background: var(--landing-bg);
+  cursor: pointer;
+}
+
+.theme-toggle__knob {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tt-orange);
+  color: var(--tt-orange);
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.theme-toggle--dark .theme-toggle__knob {
+  transform: translateX(45px);
+  color: #11100D;
+}
+
+.theme-toggle__icon {
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+@media (max-width: 640px) {
+  .theme-toggle { right: 16px; }
+}
+
+/* Ikon mode lawan di sisi kosong toggle, berwarna orange */
+.theme-toggle__hint {
+  position: absolute;
+  top: 50%;
+  right: 6.5px;
+  width: 36px;
+  height: 24px;
+  transform: translateY(-50%);
+  background-color: var(--tt-orange);
+  -webkit-mask: var(--icon) center / 24px 24px no-repeat;
+  mask: var(--icon) center / 24px 24px no-repeat;
+}
+
+.theme-toggle--dark .theme-toggle__hint {
+  right: auto;
+  left: 6.5px;
+}

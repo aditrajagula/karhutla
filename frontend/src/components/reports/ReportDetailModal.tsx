@@ -2,6 +2,23 @@ import React, { useEffect, useState } from 'react';
 import type { CitizenReport } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
 import { fetchFireRiskPrediction } from '../../services/api';
+import {
+  ClipboardIcon,
+  CloseIcon,
+  AlertTriangleIcon,
+  PinIcon,
+  SatelliteIcon,
+  ClockIcon,
+  FlameIcon,
+  BookIcon,
+  RulerIcon,
+  CalendarIcon,
+  InfoCircleIcon,
+  HourglassIcon,
+  ZapIcon,
+  SearchIcon,
+  StatusPillDot,
+} from '../common/SvgIcons';
 
 interface ReportDetailModalProps {
   report: CitizenReport | null;
@@ -68,6 +85,16 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   const assessmentLabel = evidence?.category_result || 'Belum dapat dinilai';
   const badgeConfig = EVIDENCE_BADGE_CONFIG[assessmentLabel] || EVIDENCE_BADGE_CONFIG['Belum dapat dinilai'];
 
+  const renderBadgeIcon = () => {
+    if (assessmentLabel === 'Ada indikasi pendukung') {
+      return <ZapIcon size={12} color={badgeConfig.text} />;
+    }
+    if (assessmentLabel === 'Belum ditemukan kecocokan') {
+      return <SearchIcon size={12} color={badgeConfig.text} />;
+    }
+    return <HourglassIcon size={12} color={badgeConfig.text} />;
+  };
+
   // Buat URL absolut untuk foto jika photo_url ada
   const photoFullUrl = report.photo_url
     ? (report.photo_url.startsWith('http') ? report.photo_url : `http://127.0.0.1:8000${report.photo_url}`)
@@ -86,7 +113,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
       <div className="modal-card" style={{ maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>📋</span>
+            <ClipboardIcon size={18} color="#CC6F00" />
             <h3 id="report-detail-title" className="modal-title">
               Detail Laporan Warga & Penilaian Bukti
             </h3>
@@ -96,8 +123,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             onClick={onClose}
             aria-label="Tutup detail modal"
             className="modal-close-btn"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
@@ -150,7 +178,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 lineHeight: 1.4,
               }}
             >
-              ⚠️ <b>Indikasi Kemungkinan Duplikat:</b> Laporan ini terdeteksi berada dalam radius &lt; 5 km dan waktu berdekatan dengan laporan pendahulu (<b>{report.duplicate_of_id || 'serupa'}</b>). Data tetap disimpan untuk melengkapi informasi.
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <AlertTriangleIcon size={16} color="#D97706" style={{ marginTop: '2px', flexShrink: 0 }} />
+                <span>
+                  <b>Indikasi Kemungkinan Duplikat:</b> Laporan ini terdeteksi berada dalam radius &lt; 5 km dan waktu berdekatan dengan laporan pendahulu (<b>{report.duplicate_of_id || 'serupa'}</b>). Data tetap disimpan untuk melengkapi informasi.
+                </span>
+              </div>
             </div>
           )}
 
@@ -172,7 +205,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '6px',
                   padding: '4px 10px',
                   borderRadius: '12px',
                   fontSize: '11px',
@@ -182,7 +215,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                   border: `1px solid ${badgeConfig.border}`,
                 }}
               >
-                <span>{badgeConfig.icon}</span> {assessmentLabel}
+                {renderBadgeIcon()}
+                <span>{assessmentLabel}</span>
               </span>
             </div>
 
@@ -210,18 +244,39 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 }}
               >
                 {report.category === 'kebakaran' && Boolean(evidence.details['distance_km'] !== undefined) && (
-                  <div>
-                    <div>📍 <b>Jarak ke Hotspot Terdekat:</b> {String(evidence.details['distance_km'])} km</div>
-                    <div>🛰️ <b>Satelit & Sensor:</b> {String(evidence.details['satellite'] || 'VIIRS')} ({String(evidence.details['instrument'] || 'VIIRS')})</div>
-                    <div>🕒 <b>Waktu Akuisisi Satelit:</b> {String(evidence.details['acq_date'])} pk. {String(evidence.details['acq_time'])} UTC</div>
-                    <div>🔥 <b>FRP:</b> {String(evidence.details['frp_mw'] ?? '-')} MW | <b>Confidence:</b> {String(evidence.details['confidence'] ?? '-')}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <PinIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Jarak ke Titik Panas Terdekat:</b> {String(evidence.details['distance_km'])} km</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <SatelliteIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Sensor Satelit:</b> {String(evidence.details['satellite'] || 'VIIRS')} ({String(evidence.details['instrument'] || 'VIIRS')})</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <ClockIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Waktu Deteksi Satelit:</b> {String(evidence.details['acq_date'])} pk. {String(evidence.details['acq_time'])} UTC</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FlameIcon size={13} color="#CC6F00" />
+                      <span><b>Daya Panas:</b> {String(evidence.details['frp_mw'] ?? '-')} MW | <b>Tingkat Keyakinan:</b> {String(evidence.details['confidence'] ?? '-')}</span>
+                    </div>
                   </div>
                 )}
                 {report.category !== 'kebakaran' && Boolean(evidence.details['dataset']) && (
-                  <div>
-                    <div>📚 <b>Dataset:</b> {String(evidence.details['dataset'])} (UMD/Google/NASA)</div>
-                    <div>📐 <b>Luas Piksel (WGS84):</b> ~{String(evidence.details['pixel_area_ha'] ?? '0.0769')} ha / piksel (bervariasi menurut lintang)</div>
-                    <div>📅 <b>Periode Analisis:</b> {String(evidence.details['data_period'] ?? '2000–2025')} (Data historis)</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <BookIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Sumber Data:</b> Pemantauan Perubahan Tutupan Pohon</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <RulerIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Cakupan Analisis:</b> Sekitar ~{String(evidence.details['pixel_area_ha'] ?? '0.08')} hektare per titik observasi</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CalendarIcon size={13} color="var(--color-text-muted)" />
+                      <span><b>Periode Analisis:</b> {String(evidence.details['data_period'] ?? '2000–2025')}</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -242,52 +297,59 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                   lineHeight: 1.45,
                 }}
               >
-                ℹ️ <b>Keterbatasan Ilmiah:</b> {evidence.limitations_caveat}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <InfoCircleIcon size={14} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <span><b>Keterbatasan Ilmiah:</b> {evidence.limitations_caveat}</span>
+                </div>
               </div>
             )}
           </div>
 
-          {/* PANEL INDEKS KERENTANAN WILAYAH (MODEL ML) */}
+          {/* PANEL ESTIMASI RISIKO KEBAKARAN */}
           {loadingRisk && (
             <div
               style={{
-                backgroundColor: 'var(--color-bg-card)',
-                border: '1px solid var(--color-border)',
+                backgroundColor: 'rgba(204, 111, 0, 0.08)',
+                border: '1px solid rgba(204, 111, 0, 0.25)',
                 borderRadius: '8px',
                 padding: '10px 14px',
                 marginBottom: '16px',
                 fontSize: '12px',
                 color: 'var(--color-text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              ⏳ Memuat estimasi kerentanan cuaca mikro (Open-Meteo & ML)...
+              <HourglassIcon size={14} color="#CC6F00" />
+              <span>Memuat estimasi risiko cuaca wilayah...</span>
             </div>
           )}
 
           {!loadingRisk && riskData?.risk_level && (
             <div
               style={{
-                backgroundColor: 'var(--color-bg-card)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                padding: '12px 14px',
+                backgroundColor: 'rgba(204, 111, 0, 0.08)',
+                border: '1.5px solid rgba(204, 111, 0, 0.45)',
+                borderRadius: '10px',
+                padding: '12px 16px',
                 marginBottom: '16px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
-                    Indeks Kerentanan Wilayah (Model ML)
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#CC6F00', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FlameIcon size={14} color="#CC6F00" />
+                    Indikator Kerentanan Cuaca Sekitar (Eksperimental)
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-main)', marginTop: '2px' }}>
-                    Probabilitas: <b>{riskData.risk_percentage}%</b>{' '}
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                      (Sumber Cuaca: <b>{riskData.weather_source}</b>)
-                    </span>
+                  <div style={{ fontSize: '13px', color: 'var(--color-text-main)', marginTop: '2px' }}>
+                    Indeks Kerentanan: <b style={{ color: '#CC6F00' }}>{riskData.risk_percentage}%</b>
                   </div>
                 </div>
                 <span
                   style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     padding: '4px 10px',
                     borderRadius: '6px',
                     fontSize: '11px',
@@ -297,28 +359,55 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                         ? 'rgba(239, 68, 68, 0.15)'
                         : riskData.risk_level === 'SEDANG'
                         ? 'rgba(234, 179, 8, 0.15)'
-                        : 'rgba(34, 197, 94, 0.15)',
+                        : riskData.risk_level === 'RENDAH'
+                        ? 'rgba(34, 197, 94, 0.15)'
+                        : 'rgba(156, 163, 175, 0.15)',
                     color:
                       riskData.risk_level === 'TINGGI'
                         ? '#ef4444'
                         : riskData.risk_level === 'SEDANG'
-                        ? '#eab308'
-                        : '#22c55e',
+                        ? '#CC6F00'
+                        : riskData.risk_level === 'RENDAH'
+                        ? '#22c55e'
+                        : '#6B7280',
                     border: `1px solid ${
                       riskData.risk_level === 'TINGGI'
                         ? '#ef4444'
                         : riskData.risk_level === 'SEDANG'
-                        ? '#eab308'
-                        : '#22c55e'
+                        ? '#CC6F00'
+                        : riskData.risk_level === 'RENDAH'
+                        ? '#22c55e'
+                        : '#9CA3AF'
                     }`,
                   }}
                 >
-                  {riskData.risk_level === 'TINGGI' ? '🔴 TINGGI' : riskData.risk_level === 'SEDANG' ? '🟡 SEDANG' : '🟢 RENDAH'}
+                  <StatusPillDot
+                    color={
+                      riskData.risk_level === 'TINGGI'
+                        ? '#ef4444'
+                        : riskData.risk_level === 'SEDANG'
+                        ? '#CC6F00'
+                        : riskData.risk_level === 'RENDAH'
+                        ? '#22c55e'
+                        : '#6B7280'
+                    }
+                    size={7}
+                  />
+                  {riskData.risk_level === 'TIDAK_DAPAT_DINILAI'
+                    ? 'TIDAK DAPAT DINILAI'
+                    : `KERENTANAN ${riskData.risk_level}`}
                 </span>
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
+                *Berdasarkan anomali mikroklimat satelit (bukan konfirmasi kepastian titik api darat).
+              </div>
               {riskData.primary_drivers && riskData.primary_drivers.length > 0 && (
-                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--color-border)', fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                  <b>Pemicu Utama:</b> {riskData.primary_drivers[0].label} ({riskData.primary_drivers[0].impact})
+                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed rgba(204, 111, 0, 0.25)', fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                  <b>Deviasi Utama:</b>{' '}
+                  {riskData.primary_drivers[0].label
+                    .replace(/Suhu Udara Permukaan \(2m\)/i, 'Suhu Udara Permukaan')
+                    .replace(/Kerapatan Kanopi/i, 'Kerapatan Tutupan Pohon')
+                    .replace(/Elevasi Topografi \(Ketinggian\)/i, 'Ketinggian Wilayah')} ({riskData.primary_drivers[0].impact})
                 </div>
               )}
             </div>

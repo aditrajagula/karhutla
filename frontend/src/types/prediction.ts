@@ -8,10 +8,28 @@ export interface PredictionDriver {
   value: number;
   coefficient: number;
   impact: string;
+  z_score?: number;
+  contribution_to_logit?: number;
+  is_imputed?: boolean;
+}
+
+export interface DataQualityInfo {
+  status: 'COMPLETE' | 'PARTIAL' | 'INSUFFICIENT' | string;
+  reliability?: string;
+  missing_or_imputed_features?: string[];
+  imputation_method?: string;
+  imputation_caveat?: string;
+  precipitation_metadata?: {
+    aggregation?: string;
+    calendar_aligned?: boolean;
+    semantic_limitation?: string;
+    measured_lags?: string[];
+    unavailable_lags?: string[];
+  };
 }
 
 export interface FireRiskPrediction {
-  status: 'SUCCESS' | 'UNAVAILABLE' | string;
+  status: 'SUCCESS' | 'OUT_OF_SCOPE' | 'INSUFFICIENT_DATA' | 'UNAVAILABLE' | string;
   message?: string;
   coordinates: {
     lat: number;
@@ -20,8 +38,9 @@ export interface FireRiskPrediction {
   province?: string;
   risk_probability: number | null;
   risk_percentage: number | null;
-  risk_level: 'RENDAH' | 'SEDANG' | 'TINGGI' | 'BELUM_DAPAT_DINILAI' | string;
-  risk_color?: 'GREEN' | 'YELLOW' | 'RED' | string;
+  risk_level: 'RENDAH' | 'SEDANG' | 'TINGGI' | 'TIDAK_DAPAT_DINILAI' | 'BELUM_DAPAT_DINILAI' | string;
+  risk_label?: string;
+  risk_color?: 'GREEN' | 'YELLOW' | 'RED' | 'GRAY' | string;
   primary_drivers?: PredictionDriver[];
   weather_source?: string;
   input_features?: {
@@ -41,10 +60,16 @@ export interface FireRiskPrediction {
     dem?: number;
     [key: string]: number | undefined;
   };
+  data_quality?: DataQualityInfo;
   model_metadata?: {
     model_type?: string;
     features_count?: number;
+    target_type?: string;
+    evaluation_status?: string;
+    operational_readiness?: string;
+    interpretability_notice?: string;
     roc_auc_evaluation?: number;
   };
 }
+
 

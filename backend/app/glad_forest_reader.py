@@ -25,9 +25,19 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import rasterio
-from rasterio.errors import RasterioError, RasterioIOError
-from rasterio.windows import Window
+try:
+    import rasterio
+    from rasterio.errors import RasterioError, RasterioIOError
+    from rasterio.windows import Window
+    HAS_RASTERIO = True
+except (ImportError, Exception):
+    rasterio = None
+    HAS_RASTERIO = False
+    class RasterioError(Exception):
+        pass
+    class RasterioIOError(Exception):
+        pass
+    Window = None
 
 from .config import GLAD_FOREST_DIR
 
@@ -301,6 +311,24 @@ def lookup_forest_extent(
             raster_available=False,
             error_message=f"Berkas raster GLAD Forest Extent 2020 untuk tile '{tile_id}' belum tersedia di direktori lokal.",
             reason="FILE_NOT_FOUND"
+        )
+        if use_cache:
+            with _CACHE_LOCK:
+                if len(_PIXEL_CACHE) < _MAX_CACHE_ENTRIES:
+                    _PIXEL_CACHE[cache_key] = result
+        return result
+
+    if not HAS_RASTERIO or rasterio is None:
+        result = GladForestPixelResult(
+            status=CLASS_UNKNOWN,
+            classification=CLASS_UNKNOWN,
+            raw_pixel_value=None,
+            latitude=lat,
+            longitude=lon,
+            tile_id=tile_id,
+            raster_available=False,
+            error_message="Library rasterio tidak tersedia di environment server.",
+            reason="RASTERIO_UNAVAILABLE"
         )
         if use_cache:
             with _CACHE_LOCK:

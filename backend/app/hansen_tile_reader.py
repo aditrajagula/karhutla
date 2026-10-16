@@ -32,9 +32,19 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
-import rasterio
-from rasterio.errors import RasterioError, RasterioIOError
-from rasterio.windows import Window
+try:
+    import rasterio
+    from rasterio.errors import RasterioError, RasterioIOError
+    from rasterio.windows import Window
+    HAS_RASTERIO = True
+except (ImportError, Exception):
+    rasterio = None
+    HAS_RASTERIO = False
+    class RasterioError(Exception):
+        pass
+    class RasterioIOError(Exception):
+        pass
+    Window = None
 
 from .config import (
     BOUNDARIES_PATH,
@@ -503,6 +513,9 @@ def read_pixel_from_raster(
     Memunculkan RasterioError, ValueError, atau FileNotFoundError jika gagal.
     """
     effective_timeout = timeout_seconds if timeout_seconds is not None else HANSEN_REMOTE_TIMEOUT_SECONDS
+
+    if not HAS_RASTERIO or rasterio is None:
+        raise RasterioError("rasterio tidak tersedia di environment ini.")
 
     # Atur opsi GDAL untuk optimasi HTTP Range
     env_options = {

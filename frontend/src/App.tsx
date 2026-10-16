@@ -11,6 +11,7 @@ import {
   fetchDailyPredictiveHotspots,
 } from './services/api';
 import { subscribeToReportsSync } from './services/reportSync';
+import { isPetugas } from './services/dummyAuth';
 import { StatusBar } from './components/status/StatusBar';
 import { MapContainer } from './components/map/MapContainer';
 import { FilterPanel } from './components/filters/FilterPanel';
@@ -359,6 +360,10 @@ export function App() {
           setIsReportFormOpen(true);
         }}
         onCheckNearbyRisk={handleCheckNearbyRisk}
+        onDemoKalimantan={() => {
+          setIsNearbyModalOpen(true);
+          void handleSelectSampleLocation(-2.2085, 113.9167, 'Palangka Raya, Kalimantan Tengah (Demo)');
+        }}
         isLocatingNearby={isLocatingNearby}
       />
 
@@ -441,7 +446,7 @@ export function App() {
                   reports={reports}
                   onSelectReport={(r) => setSelectedReport(r)}
                   selectedId={selectedReport?.id}
-                  onOpenCreateModal={() => {
+                  onOpenCreateModal={isPetugas() ? undefined : () => {
                     setPickedCoords(null);
                     setIsReportFormOpen(true);
                   }}

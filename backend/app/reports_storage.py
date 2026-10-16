@@ -452,6 +452,11 @@ class CitizenReportsRepository:
             if not report:
                 return None
 
+            if report.status in (ReportStatus.VERIFIED.value, ReportStatus.REJECTED.value):
+                raise ValueError(
+                    f"Laporan sudah berstatus {report.status} dan tidak dapat diubah lagi."
+                )
+
             now_utc = datetime.now(timezone.utc).isoformat()
             report.status = status
             report.updated_at_utc = now_utc

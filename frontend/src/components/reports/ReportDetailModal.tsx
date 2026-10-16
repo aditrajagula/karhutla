@@ -493,8 +493,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           <div className="detail-row">
             <span className="detail-label">Koordinat Lokasi:</span>
             <span className="detail-val font-mono">
-              {report.latitude.toFixed(3)}°, {report.longitude.toFixed(3)}°{' '}
-              <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>(Disamarkan ~100m demi privasi)</span>
+              {report.latitude.toFixed(3)}°, {report.longitude.toFixed(3)}°
             </span>
           </div>
 
@@ -600,7 +599,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           )}
 
           {/* Panel Tindakan Verifikasi Khusus Petugas */}
-          {canVerify && (
+          {canVerify && report.status !== 'VERIFIED' && report.status !== 'REJECTED' && (
             <form
               onSubmit={handleSaveVerification}
               style={{

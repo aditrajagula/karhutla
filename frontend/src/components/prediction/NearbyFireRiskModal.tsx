@@ -27,6 +27,7 @@ import {
   CloseIcon,
   InfoCircleIcon,
 } from '../common/SvgIcons';
+import { TelegramAlertCard } from './TelegramAlertCard';
 
 
 interface NearbyFireRiskModalProps {
@@ -953,6 +954,10 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
                 </ul>
               </div>
             </>
+          )}
+
+          {userCoords && (
+            <TelegramAlertCard lat={userCoords.lat} lon={userCoords.lon} theme={theme} />
           )}
         </div>
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Konfigurasi Environment dan Konstanta Sistem.
 """
 
@@ -83,3 +83,14 @@ GLAD_FOREST_DIR.mkdir(parents=True, exist_ok=True)
 # Predictive Fire Risk ML Model Configurations
 PREDICTIVE_MODEL_PATH = BASE_DIR / os.getenv("PREDICTIVE_MODEL_PATH", "data/model_regresi_logistik.joblib")
 PREDICTIVE_SCALER_PATH = BASE_DIR / os.getenv("PREDICTIVE_SCALER_PATH", "data/scaler_regresi_logistik.joblib")
+
+# Alert Telegram (hotspot prediktif per radius lokasi pengguna)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_BOT_USERNAME = (os.getenv("TELEGRAM_BOT_USERNAME") or os.getenv("VITE_TELEGRAM_BOT_USERNAME") or "").strip().lstrip("@")
+ALERTS_ENABLED = os.getenv("ALERTS_ENABLED", "true").lower() in ("true", "1", "yes")
+ALERTS_DRY_RUN = os.getenv("ALERTS_DRY_RUN", "false").lower() in ("true", "1", "yes")
+ALERTS_MAX_LOCATIONS = int(os.getenv("ALERTS_MAX_LOCATIONS", "5"))
+# Seberapa sering (menit) backend memeriksa hotspot prediktif baru. Alert dikirim saat ada hotspot
+# SEDANG/TINGGI baru dalam radius lokasi pengguna, bukan pada jam tertentu.
+ALERTS_CHECK_INTERVAL_MINUTES = max(1, int(os.getenv("ALERTS_CHECK_INTERVAL_MINUTES", "15")))
+

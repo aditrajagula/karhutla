@@ -15,6 +15,7 @@ interface StatusBarProps {
   reportsCount?: number;
   onOpenReportModal?: () => void;
   onCheckNearbyRisk?: () => void;
+  onDemoKalimantan?: () => void;
   isLocatingNearby?: boolean;
 }
 
@@ -25,6 +26,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   onToggleTheme,
   onOpenReportModal,
   onCheckNearbyRisk,
+  onDemoKalimantan,
   isLocatingNearby = false,
 }) => {
   const user = getCurrentUser();
@@ -58,7 +60,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </button>
         )}
 
-        {onOpenReportModal && (
+        {onDemoKalimantan && user?.role === 'warga' && (
+          <button
+            type="button"
+            className="mp-btn mp-btn--ghost"
+            onClick={onDemoKalimantan}
+            title="Demo: simulasikan GPS pengguna berada di Palangka Raya, Kalimantan"
+          >
+            Demo GPS Kalimantan
+          </button>
+        )}
+
+        {onOpenReportModal && user?.role !== 'petugas' && (
           <button
             type="button"
             className="mp-btn mp-btn--solid"

@@ -23,12 +23,15 @@ from pydantic import BaseModel, Field
 from shapely.geometry import mapping, shape
 
 from .config import (
+    ALERTS_ENABLED,
     BOUNDARIES_PATH,
     CORS_ORIGINS,
     FIRMS_DEFAULT_SOURCE,
     FIRMS_MAP_KEY,
     GLAD_FOREST_DIR,
     SNAPSHOTS_DIR,
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_BOT_USERNAME,
     UPLOADS_DIR,
 )
 from .pipeline import HotspotPipeline
@@ -100,11 +103,20 @@ async def _prewarm_predictive_cache():
 async def lifespan(app: FastAPI):
     task = asyncio.create_task(_firms_auto_refresh_loop()) if REFRESH_INTERVAL_SECONDS > 0 else None
     prewarm_task = asyncio.create_task(_prewarm_predictive_cache())
+    alert_tasks = []
+    if TELEGRAM_BOT_TOKEN and ALERTS_ENABLED:
+        from . import alerts_service
+        alert_tasks = [
+            asyncio.create_task(alerts_service.telegram_polling_loop()),
+            asyncio.create_task(alerts_service.hotspot_watch_loop()),
+        ]
     yield
     if task:
         task.cancel()
     if prewarm_task and not prewarm_task.done():
         prewarm_task.cancel()
+    for t in alert_tasks:
+        t.cancel()
 
 
 app = FastAPI(
@@ -1598,3 +1610,38 @@ def get_forest_extent_point_endpoint(
 
 
 
+
+class AlertSubscribeRequest(BaseModel):
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    radius_km: float = Field(50.0, ge=5.0, le=200.0)
+    label: Optional[str] = Field(None, max_length=60)
+
+
+@app.post("/api/v1/alerts/subscribe", summary="Buat token langganan alert Telegram untuk satu lokasi")
+def alerts_subscribe(payload: AlertSubscribeRequest) -> Dict[str, Any]:
+    """
+    Menyimpan lokasi + radius sebagai langganan belum aktif dan mengembalikan token.
+    Pengguna mengaktifkannya dengan membuka t.me/<bot>?start=<token> lalu menekan Start.
+    """
+    if not TELEGRAM_BOT_TOKEN or not ALERTS_ENABLED:
+        raise HTTPException(status_code=503, detail="Alert Telegram belum dikonfigurasi di server.")
+    from .alerts_service import create_pending_subscription
+
+    token = create_pending_subscription(payload.latitude, payload.longitude, payload.radius_km, payload.label)
+    deep_link = f"https://t.me/{TELEGRAM_BOT_USERNAME}?start={token}" if TELEGRAM_BOT_USERNAME else None
+    return {"status": "success", "token": token, "bot_username": TELEGRAM_BOT_USERNAME or None, "deep_link": deep_link}
+
+
+@app.post("/api/v1/alerts/run", summary="Jalankan siklus alert sekarang (khusus Petugas)")
+def alerts_run(
+    dry_run: bool = Query(False, description="Tulis pesan ke respons/log tanpa mengirim ke Telegram"),
+    force: bool = Query(False, description="Abaikan batas satu kali kirim per hotspot"),
+    authorization: Optional[str] = Header(None),
+) -> Dict[str, Any]:
+    user = _extract_bearer_user(authorization)
+    if user is None or user.get("role") != UserRole.PETUGAS.value:
+        raise HTTPException(status_code=403, detail="Akses ditolak. Hanya akun Petugas yang dapat menjalankan alert.")
+    from .alerts_service import run_alert_cycle
+
+    return {"status": "success", **run_alert_cycle(dry_run=dry_run, force=force)}

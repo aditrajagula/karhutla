@@ -540,3 +540,36 @@ export async function fetchForestExtentPoint(
 }
 
 
+
+export interface TelegramSubscription {
+  token: string;
+  bot_username: string | null;
+  deep_link: string | null;
+}
+
+/**
+ * Membuat token langganan alert Telegram untuk satu lokasi.
+ * Pengguna mengaktifkannya dengan membuka link bot lalu menekan Start.
+ */
+export async function createTelegramSubscription(
+  lat: number,
+  lon: number,
+  radiusKm: number,
+  label?: string
+): Promise<TelegramSubscription> {
+  const res = await fetch(`${API_BASE_URL}/alerts/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ latitude: lat, longitude: lon, radius_km: radiusKm, label: label || null }),
+  });
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch {
+      // abaikan body non-JSON
+    }
+    throw new Error(`Gagal membuat link alert Telegram: ${detail}`);
+  }
+  return res.json();
+}

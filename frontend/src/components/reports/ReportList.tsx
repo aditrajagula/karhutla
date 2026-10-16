@@ -18,7 +18,7 @@ interface ReportListProps {
   reports: CitizenReport[];
   onSelectReport: (report: CitizenReport) => void;
   selectedId?: string;
-  onOpenCreateModal: () => void;
+  onOpenCreateModal?: () => void;
 }
 
 const STATUS_BADGE_COLORS: Record<ReportStatus, { bg: string; text: string; border: string }> = {
@@ -56,21 +56,23 @@ export const ReportList: React.FC<ReportListProps> = ({
           <span className="detection-list-title">Laporan Deforestasi Partisipatif</span>
           <span className="detection-list-meta" style={{ marginLeft: '6px' }}>{filteredReports.length} laporan</span>
         </div>
-        <button
-          type="button"
-          onClick={onOpenCreateModal}
-          className="btn-action"
-          style={{
-            fontSize: '11px',
-            padding: '3px 8px',
-            minHeight: '28px',
-            background: 'var(--color-forest)',
-            color: '#fff',
-            fontWeight: 600,
-          }}
-        >
-          + Lapor Deforestasi
-        </button>
+        {onOpenCreateModal && (
+          <button
+            type="button"
+            onClick={onOpenCreateModal}
+            className="btn-action"
+            style={{
+              fontSize: '11px',
+              padding: '3px 8px',
+              minHeight: '28px',
+              background: 'var(--color-forest)',
+              color: '#fff',
+              fontWeight: 600,
+            }}
+          >
+            + Lapor Deforestasi
+          </button>
+        )}
       </div>
 
       {/* Filter Toolbar Cepat */}

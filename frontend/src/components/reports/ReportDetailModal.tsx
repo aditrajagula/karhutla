@@ -330,7 +330,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <TreeIcon size={13} color="#059669" />
                         <span>
-                          <b>Klasifikasi GLAD 2020:</b>{' '}
+                          <b>Klasifikasi Tutupan Hutan:</b>{' '}
                           {(evidence.details['forest_extent_2020'] as any)?.classification === 'FOREST'
                             ? 'Hutan Kanopi >= 5m (Terkonfirmasi)'
                             : (evidence.details['forest_extent_2020'] as any)?.classification === 'NON_FOREST'

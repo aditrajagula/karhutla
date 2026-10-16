@@ -121,7 +121,7 @@ export function App() {
               });
               setHotspots(snapshotRes.records || []);
               setMode('snapshot');
-              setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan snapshot lokal tim.');
+              setErrorMessage('Gagal menghubungi NASA FIRMS API. Menampilkan data cadangan lokal.');
             } catch {
               setHotspots([]);
             }
@@ -295,9 +295,6 @@ export function App() {
           setPickedCoords(null);
           setIsReportFormOpen(true);
         }}
-        onOpenForestModal={() => setIsForestModalOpen(true)}
-        onCheckNearbyRisk={handleCheckNearbyRisk}
-        isLocatingNearby={isLocatingNearby}
       />
 
       <main className="mp-main">
@@ -409,8 +406,6 @@ export function App() {
                   }
                 : null
             }
-            onCheckNearbyRisk={handleCheckNearbyRisk}
-            isLocatingNearby={isLocatingNearby}
             onOpenNearbyModal={() => setIsNearbyModalOpen(true)}
             pickedCoords={pickedCoords}
           />

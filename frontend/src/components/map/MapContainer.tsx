@@ -7,15 +7,11 @@ import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
 import {
   fetchKalimantanBoundaries,
   fetchPeatlandGeoJSON,
-  fetchClassifiedHotspotsGeoJSON,
-  fetchFirmsMapManifest,
   fetchForestExtentTiles,
   getForestExtentTileOverlayUrl,
 } from '../../services/api';
 import type {
   PeatlandGeoJSON,
-  ClassifiedHotspotsGeoJSON,
-  FirmsMapManifest,
   ForestExtentTilesResponse,
 } from '../../services/api';
 import kalimantanGeoJsonFallback from '../../assets/map/kalimantan_provinces.json';
@@ -24,7 +20,7 @@ import zoomInIcon from '../../assets/map/zoom-in.svg';
 import zoomOutIcon from '../../assets/map/zoom-out.svg';
 import arrowDropdown from '../../assets/map/arrow-dropdown.svg';
 import hotspotIcon from '../../assets/map/hotspot.svg';
-import { PinIcon, TargetIcon } from '../common/SvgIcons';
+import { PinIcon } from '../common/SvgIcons';
 
 interface MapContainerProps {
   hotspots: Hotspot[];
@@ -43,16 +39,10 @@ interface MapContainerProps {
     risk_percentage: number;
     risk_color?: string;
   } | null;
-  onCheckNearbyRisk?: () => void;
-  isLocatingNearby?: boolean;
   onOpenNearbyModal?: () => void;
   pickedCoords?: { lat: number; lng: number } | null;
 }
 
-const KALIMANTAN_BOUNDS: [[number, number], [number, number]] = [
-  [-4.5, 108.5],
-  [4.5, 119.5],
-];
 
 type BasemapType = 'dark' | 'light' | 'osm';
 
@@ -216,8 +206,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   isDark = false,
   userCoords = null,
   userRisk = null,
-  onCheckNearbyRisk,
-  isLocatingNearby = false,
   onOpenNearbyModal,
   pickedCoords = null,
 }) => {
@@ -231,11 +219,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const maskLayerRef = useRef<L.GeoJSON | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const peatlandLayerRef = useRef<L.GeoJSON | null>(null);
-  const classifiedHotspotsLayerRef = useRef<L.LayerGroup | null>(null);
-  const classifiedHotspotsLayersRef = useRef<{ peat: L.GeoJSON; nonPeat: L.GeoJSON } | null>(null);
   const peatlandGeoJSONRef = useRef<PeatlandGeoJSON | null>(null);
-  const classifiedHotspotsGeoJSONRef = useRef<ClassifiedHotspotsGeoJSON | null>(null);
-  const firmsManifestRef = useRef<FirmsMapManifest | null>(null);
   const forestOverlaysRef = useRef<L.ImageOverlay[]>([]);
   const forestTilesDataRef = useRef<ForestExtentTilesResponse | null>(null);
 
@@ -247,11 +231,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [showKalimantanBoundaries] = useState<boolean>(true);
   const [showPeatland, setShowPeatland] = useState<boolean>(false);
   const [showForest, setShowForest] = useState<boolean>(false);
-  const [showClassifiedHotspots, setShowClassifiedHotspots] = useState<boolean>(false);
-  const [classifiedHotspotFilter, setClassifiedHotspotFilter] = useState<'all' | 'peat'>('all');
   const [peatlandFeatureCount, setPeatlandFeatureCount] = useState<number | null>(null);
-  const [classifiedHotspotCount, setClassifiedHotspotCount] = useState<number | null>(null);
-  const [classifiedHotspotInfo, setClassifiedHotspotInfo] = useState<string | null>(null);
   const [peatlandStatus, setPeatlandStatus] = useState<string | null>(null);
   const [forestStatus, setForestStatus] = useState<string | null>(null);
   const [forestTilesData, setForestTilesData] = useState<ForestExtentTilesResponse | null>(null);
@@ -662,14 +642,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             pane: 'forestPane',
             opacity: 0.85,
             interactive: true,
-            attribution: 'GLAD GLCLUC2020 Forest Extent © University of Maryland',
+            attribution: 'Tutupan Hutan © University of Maryland',
           });
 
           overlay.bindPopup(`
             <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 230px;">
               <div style="font-weight: 700; color: #047857; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
                 <span style="display:inline-block; width:10px; height:10px; background:#10B981; border:1px solid #059669; border-radius:2px;"></span>
-                Tutupan Hutan GLAD 2020 (${escapeHtml(tile.tile_id)})
+                Tutupan Hutan (${escapeHtml(tile.tile_id)})
               </div>
               <div><b>Wilayah:</b> ${escapeHtml(tile.region)}</div>
               <div><b>Provinsi:</b> ${escapeHtml(tile.province)}</div>
@@ -690,7 +670,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
         forestOverlaysRef.current = newOverlays;
         setForestStatus(
-          `Layer tutupan hutan GLAD 2020 aktif (Cakupan parsial: 4 zona sampel di Kalteng, Kalbar, Kaltim - resolusi 30m).`
+          `Layer tutupan hutan aktif (Cakupan parsial: 4 zona sampel di Kalteng, Kalbar, Kaltim - resolusi 30m).`
         );
       } catch (error: unknown) {
         if (!isSubscribed) return;
@@ -712,135 +692,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     };
   }, [showForest]);
 
-  // Dataset Hotspot FIRMS Terklasifikasi Wilayah Gambut
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
 
-    if (classifiedHotspotsLayerRef.current) {
-      map.removeLayer(classifiedHotspotsLayerRef.current);
-      classifiedHotspotsLayerRef.current = null;
-    }
-    if (!showClassifiedHotspots) return;
-
-    let isSubscribed = true;
-    const controller = new AbortController();
-
-    const loadClassifiedHotspots = async () => {
-      try {
-        const [geojson, manifest] = await Promise.all([
-          classifiedHotspotsGeoJSONRef.current
-            ? Promise.resolve(classifiedHotspotsGeoJSONRef.current)
-            : fetchClassifiedHotspotsGeoJSON(controller.signal),
-          firmsManifestRef.current
-            ? Promise.resolve(firmsManifestRef.current)
-            : fetchFirmsMapManifest(controller.signal),
-        ]);
-        if (!isSubscribed || !mapInstanceRef.current) return;
-        classifiedHotspotsGeoJSONRef.current = geojson;
-        firmsManifestRef.current = manifest;
-
-        const peatCount = geojson.features.filter(
-          (feature) => feature.properties?.in_peat === true,
-        ).length;
-
-        if (!classifiedHotspotsLayersRef.current) {
-          const hotspotRenderer = L.canvas({ padding: 0.5 });
-          const createLayer = (inPeat: boolean) =>
-            L.geoJSON(geojson, {
-              filter: (feature) => feature.properties?.in_peat === inPeat,
-              pointToLayer: (feature, latlng) => {
-                const priority = String(feature.properties?.fire_risk_priority || '');
-                const color = inPeat
-                  ? priority.startsWith('KRITIS')
-                    ? '#7F1D1D'
-                    : priority.startsWith('Tinggi')
-                    ? '#DC2626'
-                    : '#EA580C'
-                  : '#94A3B8';
-                return L.circleMarker(latlng, {
-                  radius: inPeat ? 4.5 : 3.5,
-                  color: inPeat ? '#991B1B' : '#64748B',
-                  weight: 0.8,
-                  fillColor: color,
-                  fillOpacity: inPeat ? 0.9 : 0.6,
-                  renderer: hotspotRenderer,
-                });
-              },
-              onEachFeature: (feature, featureLayer) => {
-                const properties = feature.properties || {};
-                const date = escapeHtml(properties.acq_date || '-');
-                const time = escapeHtml(String(properties.acq_time ?? '-').padStart(4, '0'));
-                const peatClass = escapeHtml(properties.peat_class || 'Bukan Gambut');
-                const risk = escapeHtml(properties.fire_risk_priority || 'Tidak tersedia');
-                const satellite = escapeHtml(properties.satellite || 'VIIRS');
-                const confidence = escapeHtml(properties.confidence || 'Tidak tersedia');
-                const frp =
-                  typeof properties.frp === 'number'
-                    ? `${properties.frp.toFixed(2)} MW`
-                    : 'Tidak tersedia';
-
-                featureLayer.bindPopup(`
-                  <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 200px;">
-                    <div style="font-weight: 700; color: ${inPeat ? '#DC2626' : '#64748B'}; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-                      <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${inPeat ? '#DC2626' : '#94A3B8'};"></span>
-                      ${inPeat ? 'Hotspot di Wilayah Gambut' : 'Hotspot di Luar Gambut'}
-                    </div>
-                    <div><b>Wilayah Gambut:</b> ${inPeat ? 'Ya (Prioritas Tinggi)' : 'Tidak'}</div>
-                    <div><b>Kelas Gambut:</b> ${peatClass}</div>
-                    <div><b>Prioritas Dataset:</b> ${risk}</div>
-                    <div><b>Satelit/Sensor:</b> ${satellite} (${confidence})</div>
-                    <div><b>Waktu Pengamatan:</b> ${date} pk. ${time} UTC</div>
-                    <div><b>Radiatif (FRP):</b> ${frp}</div>
-                    <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; padding-top: 4px;">
-                      Anomali termal satelit dalam snapshot terklasifikasi; kebakaran gambut menghasilkan asap pekat berkepanjangan.
-                    </div>
-                  </div>
-                `);
-              },
-            });
-
-          classifiedHotspotsLayersRef.current = {
-            peat: createLayer(true),
-            nonPeat: createLayer(false),
-          };
-        }
-
-        const preparedLayers = classifiedHotspotsLayersRef.current;
-        const visibleLayers =
-          classifiedHotspotFilter === 'peat'
-            ? [preparedLayers.peat]
-            : [preparedLayers.peat, preparedLayers.nonPeat];
-        const layerGroup = L.layerGroup(visibleLayers).addTo(map);
-        classifiedHotspotsLayerRef.current = layerGroup;
-
-        const renderedCount =
-          classifiedHotspotFilter === 'peat' ? peatCount : geojson.features.length;
-        setClassifiedHotspotCount(renderedCount);
-        setClassifiedHotspotInfo(
-          `${renderedCount.toLocaleString('id-ID')} titik ditampilkan (${peatCount.toLocaleString('id-ID')} berada dalam gambut). Snapshot ${manifest.fetched_at_utc.replace('T', ' ').replace('Z', ' UTC')}.`,
-        );
-      } catch (error: unknown) {
-        if (!isSubscribed) return;
-        setLayerError(
-          error instanceof Error
-            ? error.message
-            : 'Dataset hotspot terklasifikasi gagal dimuat.',
-        );
-        setClassifiedHotspotInfo(null);
-      }
-    };
-
-    void loadClassifiedHotspots();
-    return () => {
-      isSubscribed = false;
-      controller.abort();
-      if (classifiedHotspotsLayerRef.current && mapInstanceRef.current) {
-        mapInstanceRef.current.removeLayer(classifiedHotspotsLayerRef.current);
-        classifiedHotspotsLayerRef.current = null;
-      }
-    };
-  }, [showClassifiedHotspots, classifiedHotspotFilter]);
 
   // Render Penanda Hotspot Satelit (VIIRS)
   useEffect(() => {
@@ -1062,13 +914,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     });
   }, [selectedReport]);
 
-  const handleFocusKalimantan = () => {
-    if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.fitBounds(KALIMANTAN_BOUNDS, {
-      padding: [20, 20],
-      animate: true,
-    });
-  };
 
   const currentBasemapLabel = BASEMAP_OPTIONS.find((o) => o.value === basemap)?.label ?? 'Map Terang';
 
@@ -1134,32 +979,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
       {/* Floating Map Control */}
       <div className="mp-controls">
-        <button type="button" className="mp-controls__pill" onClick={handleFocusKalimantan} title="Fokuskan Peta ke Pulau Kalimantan">
-          Fokus Kalimantan
-        </button>
-
-        {onCheckNearbyRisk && (
-          <button
-            type="button"
-            className="mp-controls__pill"
-            onClick={onCheckNearbyRisk}
-            disabled={isLocatingNearby}
-            title="Deteksi posisi GPS perangkat dan cek estimasi risiko kebakaran di sekitar Anda"
-            style={{ color: '#CC6F00', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-          >
-            {isLocatingNearby ? (
-              'Mencari GPS...'
-            ) : (
-              <>
-                <TargetIcon size={14} color="#CC6F00" />
-                <span>GPS Sekitar</span>
-              </>
-            )}
-          </button>
-        )}
-
-
-        <span className="mp-controls__divider" aria-hidden="true" />
 
         <button
           type="button"
@@ -1224,11 +1043,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           className="mp-toggle mp-toggle--forest"
           onClick={() => {
             if (!showForest) {
-              setForestStatus('Memuat segmentasi tutupan hutan GLAD 2020 (Cakupan parsial: 4 zona sampel)...');
+              setForestStatus('Memuat segmentasi tutupan hutan (Cakupan parsial: 4 zona sampel)...');
             }
             setShowForest((v) => !v);
           }}
-          title="Tampilkan Layer Segmentasi Tutupan Hutan GLAD 2020 (Cakupan Parsial: 4 Zona Sampel Kalimantan)"
+          title="Tampilkan Layer Segmentasi Tutupan Hutan (Cakupan Parsial: 4 Zona Sampel Kalimantan)"
         >
           <span className={`mp-checkbox ${showForest ? 'is-checked' : ''}`} aria-hidden="true">
             {showForest && <CheckMark />}
@@ -1244,50 +1063,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               flexShrink: 0,
             }}
           />
-          <span>Hutan (GLAD)</span>
+          <span>Hutan</span>
         </button>
-
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={showClassifiedHotspots}
-          className="mp-toggle mp-toggle--classified"
-          onClick={() => {
-            if (!showClassifiedHotspots) setClassifiedHotspotInfo('Memuat snapshot FIRMS terklasifikasi...');
-            setShowClassifiedHotspots((v) => !v);
-          }}
-          title="Tampilkan Snapshot Hotspot FIRMS Terklasifikasi Gambut"
-        >
-          <span className={`mp-checkbox ${showClassifiedHotspots ? 'is-checked' : ''}`} aria-hidden="true">
-            {showClassifiedHotspots && <CheckMark />}
-          </span>
-          <span
-            style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: '#DC2626',
-              display: 'inline-block',
-              flexShrink: 0,
-            }}
-          />
-          <span>Hotspot Gambut{classifiedHotspotCount !== null ? ` (${classifiedHotspotCount.toLocaleString('id-ID')})` : ''}</span>
-        </button>
-
-        {showClassifiedHotspots && (
-          <select
-            aria-label="Filter snapshot hotspot berdasarkan wilayah gambut"
-            value={classifiedHotspotFilter}
-            onChange={(e) => {
-              setClassifiedHotspotInfo('Memperbarui filter...');
-              setClassifiedHotspotFilter(e.target.value as 'all' | 'peat');
-            }}
-            className="mp-controls__filter"
-          >
-            <option value="all">Semua Titik</option>
-            <option value="peat">Hanya Gambut</option>
-          </select>
-        )}
 
         <span className="mp-controls__divider" aria-hidden="true" />
 
@@ -1364,7 +1141,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                   flexShrink: 0,
                 }}
               />
-              <span>Hutan Kanopi ≥ 5m (GLAD 2020)</span>
+              <span>Hutan (Kanopi ≥ 5m)</span>
             </div>
             <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#94A3B8' }}>
               <span
@@ -1378,7 +1155,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                   flexShrink: 0,
                 }}
               />
-              <span>Bukan Hutan (GLAD 2020)</span>
+              <span>Bukan Hutan</span>
             </div>
             {forestTilesData && (
               <div
@@ -1395,39 +1172,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             )}
           </>
         )}
-        {showClassifiedHotspots && (
-          <>
-            <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#DC2626' }}>
-              <span
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: '#DC2626',
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              />
-              <span>Hotspot di Wilayah Gambut</span>
-            </div>
-            {classifiedHotspotFilter === 'all' && (
-              <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#94A3B8' }}>
-                <span
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: '#94A3B8',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                <span>Hotspot di Luar Gambut</span>
-              </div>
-            )}
-          </>
-        )}
-        {(peatlandStatus || forestStatus || classifiedHotspotInfo || layerError) && (
+        {(peatlandStatus || forestStatus || layerError) && (
           <div
             style={{
               marginTop: '4px',
@@ -1438,7 +1183,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               lineHeight: 1.35,
             }}
           >
-            {layerError || classifiedHotspotInfo || forestStatus || peatlandStatus}
+            {layerError || forestStatus || peatlandStatus}
           </div>
         )}
       </div>

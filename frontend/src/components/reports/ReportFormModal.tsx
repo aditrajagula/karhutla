@@ -259,7 +259,7 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
               )}
             </div>
             <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
-              Laporan warga digunakan sebagai informasi awal peninjauan lapangan oleh petugas kehutanan/lingkungan, diverifikasi dengan data satelit tutupan pohon Hansen GFC & GLAD 2020.
+              Laporan warga digunakan sebagai informasi awal peninjauan lapangan oleh petugas kehutanan/lingkungan, diverifikasi dengan data satelit tutupan pohon.
             </p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button

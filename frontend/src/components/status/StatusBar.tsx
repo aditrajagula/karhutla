@@ -14,9 +14,6 @@ interface StatusBarProps {
   totalCount?: number;
   reportsCount?: number;
   onOpenReportModal?: () => void;
-  onOpenForestModal?: () => void;
-  onCheckNearbyRisk?: () => void;
-  isLocatingNearby?: boolean;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -25,9 +22,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   isDark,
   onToggleTheme,
   onOpenReportModal,
-  onOpenForestModal,
-  onCheckNearbyRisk,
-  isLocatingNearby = false,
 }) => {
   const user = getCurrentUser();
 
@@ -36,6 +30,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     window.history.pushState(null, '', '/login');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
+
+  const isOfficer = !user || user.role === 'petugas';
 
   return (
     <header className="mp-header">
@@ -49,29 +45,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       <div className="mp-header__actions">
-        {onOpenForestModal && (
-          <button
-            type="button"
-            className="mp-btn mp-btn--ghost"
-            onClick={onOpenForestModal}
-            title="Buka data analisis tutupan pohon Hansen Global Forest Change v1.13"
-          >
-            Tutupan Pohon
-          </button>
-        )}
-
-        {onCheckNearbyRisk && (
-          <button
-            type="button"
-            className="mp-btn mp-btn--ghost"
-            onClick={onCheckNearbyRisk}
-            title="Deteksi posisi GPS perangkat dan cek estimasi risiko kebakaran di sekitar Anda"
-          >
-            {isLocatingNearby ? 'Mencari GPS...' : 'Prediksi Risiko'}
-          </button>
-        )}
-
-        {onOpenReportModal && (
+        {/* Tombol aksi pelaporan deforestasi: hanya untuk akun warga, disembunyikan di bagian admin / petugas */}
+        {!isOfficer && onOpenReportModal && (
           <button
             type="button"
             className="mp-btn mp-btn--solid"
@@ -97,9 +72,9 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             className={`mp-segment__item ${mode === 'snapshot' ? 'is-active' : ''}`}
             onClick={mode === 'snapshot' ? undefined : onToggleMode}
             aria-pressed={mode === 'snapshot'}
-            title="Snapshot lokal tim sebagai cadangan"
+            title="Gunakan data arsip lokal cadangan jika API atau koneksi terbatas"
           >
-            Snapshot Fallback
+            Data Cadangan
           </button>
         </div>
 

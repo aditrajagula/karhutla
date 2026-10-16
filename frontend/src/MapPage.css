@@ -635,7 +635,7 @@
   z-index: 1000;
   max-width: calc(100% - 140px);
   min-height: 48px;
-  padding: 4px;
+  padding: 4px 6px 4px 14px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

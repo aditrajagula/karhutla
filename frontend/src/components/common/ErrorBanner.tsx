@@ -34,7 +34,7 @@ export const ErrorBanner: React.FC<ErrorBannerProps> = ({
             onClick={onSwitchToSnapshot}
             className="px-2.5 py-1 rounded bg-slate-800 text-white hover:bg-slate-700 min-h-[44px]"
           >
-            Beralih ke Snapshot Benchmark
+            Beralih ke Data Cadangan
           </button>
         )}
       </div>

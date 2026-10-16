@@ -1,0 +1,1093 @@
+{
+  "audit_metadata": {
+    "title": "Audit Integritas Data dan Inventarisasi Raster Hansen GFC-2025-v1.13",
+    "project": "FireGuard",
+    "phase": "Tahap 1 - Inventarisasi dan Integritas Read-Only",
+    "timestamp_utc": "2026-10-15T16:49:01.012074+00:00",
+    "scan_mode": "READ_ONLY",
+    "total_tif_files_inspected": 21,
+    "total_manifest_files_inspected": 7
+  },
+  "status_summary": {
+    "overall_status_counts": {
+      "MISMATCH": 5,
+      "PASS": 13,
+      "UNVERIFIED": 3
+    },
+    "local_integrity_status_counts": {
+      "MISMATCH": 5,
+      "PASS": 13,
+      "UNVERIFIED": 3
+    },
+    "metadata_status_counts": {
+      "PASS": 21
+    },
+    "full_read_status_counts": {
+      "PASS": 21
+    },
+    "source_authenticity_status_counts": {
+      "UNVERIFIED": 21
+    }
+  },
+  "inventory": [
+    {
+      "relative_path": "data/raster/hansen/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "directory": "data/raster/hansen",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "is_official_suffix": false,
+      "actual_size_bytes": 2699,
+      "manifest_size_bytes": 54283,
+      "actual_sha256": "90a06ae18ae6ae2cd0593e15f7cf2573c76576714ab789a2f44bca77c798da47",
+      "manifest_sha256": null,
+      "local_integrity_status": "MISMATCH",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "MISMATCH",
+      "evidence": {
+        "actual_size_bytes": 2699,
+        "manifest_size_bytes": 54283,
+        "actual_sha256": "90a06ae18ae6ae2cd0593e15f7cf2573c76576714ab789a2f44bca77c798da47",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T09:57:05.355988+00:00",
+        "matched_manifest": "data/raster/hansen/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "local_integrity_notes": "Nama berkas berbeda dengan manifest (manifest: 'Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif'); Ukuran berkas berbeda (aktual: 2699, manifest: 54283)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(300, 300), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 300,
+          "height": 300,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.8,
+            -2.1750000000000003,
+            113.875,
+            -2.1
+          ],
+          "dtype": "uint8",
+          "val_min": 1,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "directory": "data/raster/hansen",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "is_official_suffix": false,
+      "actual_size_bytes": 2331,
+      "manifest_size_bytes": 393600,
+      "actual_sha256": "58cd40705da7273afc07fc14f257e08d42819cf2e3f915a03df8f1033c4b6690",
+      "manifest_sha256": null,
+      "local_integrity_status": "MISMATCH",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "MISMATCH",
+      "evidence": {
+        "actual_size_bytes": 2331,
+        "manifest_size_bytes": 393600,
+        "actual_sha256": "58cd40705da7273afc07fc14f257e08d42819cf2e3f915a03df8f1033c4b6690",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T09:57:05.357985+00:00",
+        "matched_manifest": "data/raster/hansen/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "local_integrity_notes": "Nama berkas berbeda dengan manifest (manifest: 'Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif'); Ukuran berkas berbeda (aktual: 2331, manifest: 393600)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(300, 300), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 300,
+          "height": 300,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.8,
+            -2.1750000000000003,
+            113.875,
+            -2.1
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 23
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "directory": "data/raster/hansen",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "is_official_suffix": false,
+      "actual_size_bytes": 2313,
+      "manifest_size_bytes": 1677210,
+      "actual_sha256": "0b234d9b694c718ea6054573ef732fb4d74a746f4303e588df4ff059f8f6de26",
+      "manifest_sha256": null,
+      "local_integrity_status": "MISMATCH",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "MISMATCH",
+      "evidence": {
+        "actual_size_bytes": 2313,
+        "manifest_size_bytes": 1677210,
+        "actual_sha256": "0b234d9b694c718ea6054573ef732fb4d74a746f4303e588df4ff059f8f6de26",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T09:57:05.359991+00:00",
+        "matched_manifest": "data/raster/hansen/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "local_integrity_notes": "Nama berkas berbeda dengan manifest (manifest: 'Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif'); Ukuran berkas berbeda (aktual: 2313, manifest: 1677210)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(300, 300), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 300,
+          "height": 300,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.8,
+            -2.1750000000000003,
+            113.875,
+            -2.1
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 85
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 22153727,
+      "manifest_size_bytes": 22153727,
+      "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 22153727,
+        "manifest_size_bytes": 22153727,
+        "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+        "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+        "mtime_utc": "2026-10-15T13:13:45.918146+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(40000, 40000), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 54283,
+      "manifest_size_bytes": 54283,
+      "actual_sha256": "028e034e38c8e2185a0ef6fc03bcc6b34efacd928c91ba7da21d23c983bf7cd4",
+      "manifest_sha256": null,
+      "local_integrity_status": "UNVERIFIED",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "UNVERIFIED",
+      "evidence": {
+        "actual_size_bytes": 54283,
+        "manifest_size_bytes": 54283,
+        "actual_sha256": "028e034e38c8e2185a0ef6fc03bcc6b34efacd928c91ba7da21d23c983bf7cd4",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T11:15:48.682657+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "local_integrity_notes": "Ukuran cocok tetapi manifest tidak memiliki hash SHA-256 (null)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(2000, 2400), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 2400,
+          "height": 2000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.6,
+            -2.5,
+            114.19999999999999,
+            -2.0
+          ],
+          "dtype": "uint8",
+          "val_min": 1,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 85664038,
+      "manifest_size_bytes": null,
+      "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "manifest_sha256": null,
+      "local_integrity_status": "MISMATCH",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "MISMATCH",
+      "evidence": {
+        "actual_size_bytes": 85664038,
+        "manifest_size_bytes": null,
+        "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T13:15:45.663373+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": null,
+        "local_integrity_notes": "Layer 'lossyear' tidak tercatat dalam manifest data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_100E_official.json",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(40000, 40000), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 393600,
+      "manifest_size_bytes": 393600,
+      "actual_sha256": "d6e626cf72f7871e1b66bbeffe1794abc0d4f9c08a94a374128ea66adf366561",
+      "manifest_sha256": null,
+      "local_integrity_status": "UNVERIFIED",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "UNVERIFIED",
+      "evidence": {
+        "actual_size_bytes": 393600,
+        "manifest_size_bytes": 393600,
+        "actual_sha256": "d6e626cf72f7871e1b66bbeffe1794abc0d4f9c08a94a374128ea66adf366561",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T11:15:02.521030+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "local_integrity_notes": "Ukuran cocok tetapi manifest tidak memiliki hash SHA-256 (null)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(2000, 2400), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 2400,
+          "height": 2000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.6,
+            -2.5,
+            114.19999999999999,
+            -2.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 281247373,
+      "manifest_size_bytes": null,
+      "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "manifest_sha256": null,
+      "local_integrity_status": "MISMATCH",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "MISMATCH",
+      "evidence": {
+        "actual_size_bytes": 281247373,
+        "manifest_size_bytes": null,
+        "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T13:16:26.576805+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": null,
+        "local_integrity_notes": "Layer 'treecover2000' tidak tercatat dalam manifest data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_100E_official.json",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(40000, 40000), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official/backup_subset_palangka_raya",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 1677210,
+      "manifest_size_bytes": 1677210,
+      "actual_sha256": "77b6143296f4d0ce0f0b9cc7e1d17253b0895fa229ff4bfb6213a45066a91110",
+      "manifest_sha256": null,
+      "local_integrity_status": "UNVERIFIED",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "UNVERIFIED",
+      "evidence": {
+        "actual_size_bytes": 1677210,
+        "manifest_size_bytes": 1677210,
+        "actual_sha256": "77b6143296f4d0ce0f0b9cc7e1d17253b0895fa229ff4bfb6213a45066a91110",
+        "manifest_sha256": null,
+        "mtime_utc": "2026-10-15T11:15:41.757206+00:00",
+        "matched_manifest": "data/raster/hansen/official/backup_subset_palangka_raya/manifest_00N_110E_official.json",
+        "manifest_version": "1.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "local_integrity_notes": "Ukuran cocok tetapi manifest tidak memiliki hash SHA-256 (null)",
+        "metadata_notes": "Struktur raster subset/demo valid: shape=(2000, 2400), crs=EPSG:4326",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 2400,
+          "height": 2000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            113.6,
+            -2.5,
+            114.19999999999999,
+            -2.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 22153727,
+      "manifest_size_bytes": 22153727,
+      "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 22153727,
+        "manifest_size_bytes": 22153727,
+        "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+        "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+        "mtime_utc": "2026-10-15T13:13:45.918146+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 23697919,
+      "manifest_size_bytes": 23697919,
+      "actual_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "manifest_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 23697919,
+        "manifest_size_bytes": 23697919,
+        "actual_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+        "manifest_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+        "mtime_utc": "2026-10-15T13:18:57.806767+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            -10.0,
+            120.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 24939799,
+      "manifest_size_bytes": 24939799,
+      "actual_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "manifest_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 24939799,
+        "manifest_size_bytes": 24939799,
+        "actual_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+        "manifest_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+        "mtime_utc": "2026-10-15T13:19:45.371693+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            0.0,
+            110.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "is_official_suffix": true,
+      "actual_size_bytes": 25120555,
+      "manifest_size_bytes": 25120555,
+      "actual_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "manifest_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 25120555,
+        "manifest_size_bytes": 25120555,
+        "actual_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+        "manifest_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+        "mtime_utc": "2026-10-15T13:20:44.151725+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: datamask in {0: laut/luar, 1: darat, 2: air}",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            0.0,
+            120.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 2
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 85664038,
+      "manifest_size_bytes": 85664038,
+      "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "manifest_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 85664038,
+        "manifest_size_bytes": 85664038,
+        "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+        "manifest_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+        "mtime_utc": "2026-10-15T13:15:45.663373+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 79708678,
+      "manifest_size_bytes": 79708678,
+      "actual_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "manifest_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 79708678,
+        "manifest_size_bytes": 79708678,
+        "actual_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+        "manifest_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+        "mtime_utc": "2026-10-15T13:16:41.217440+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            -10.0,
+            120.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 72209693,
+      "manifest_size_bytes": 72209693,
+      "actual_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "manifest_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 72209693,
+        "manifest_size_bytes": 72209693,
+        "actual_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+        "manifest_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+        "mtime_utc": "2026-10-15T13:19:08.269666+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            0.0,
+            110.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "is_official_suffix": true,
+      "actual_size_bytes": 81574427,
+      "manifest_size_bytes": 81574427,
+      "actual_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "manifest_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 81574427,
+        "manifest_size_bytes": 81574427,
+        "actual_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+        "manifest_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+        "mtime_utc": "2026-10-15T13:20:01.866958+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: lossyear in [0..25] (0: tanpa kehilangan, 1..25: 2001..2025)",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            0.0,
+            120.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 25
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 281247373,
+      "manifest_size_bytes": 281247373,
+      "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "manifest_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 281247373,
+        "manifest_size_bytes": 281247373,
+        "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+        "manifest_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+        "mtime_utc": "2026-10-15T13:16:26.576805+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            -10.0,
+            110.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 319865459,
+      "manifest_size_bytes": 319865459,
+      "actual_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "manifest_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 319865459,
+        "manifest_size_bytes": 319865459,
+        "actual_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+        "manifest_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+        "mtime_utc": "2026-10-15T13:17:25.398765+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_00N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            -10.0,
+            120.0,
+            0.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 199956397,
+      "manifest_size_bytes": 199956397,
+      "actual_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "manifest_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 199956397,
+        "manifest_size_bytes": 199956397,
+        "actual_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+        "manifest_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+        "mtime_utc": "2026-10-15T13:19:38.828239+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_100E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            100.0,
+            0.0,
+            110.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    },
+    {
+      "relative_path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "directory": "data/raster/hansen/official",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "is_official_suffix": true,
+      "actual_size_bytes": 276154773,
+      "manifest_size_bytes": 276154773,
+      "actual_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "manifest_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "local_integrity_status": "PASS",
+      "metadata_status": "PASS",
+      "full_read_status": "PASS",
+      "source_authenticity_status": "UNVERIFIED",
+      "overall_status": "PASS",
+      "evidence": {
+        "actual_size_bytes": 276154773,
+        "manifest_size_bytes": 276154773,
+        "actual_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+        "manifest_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+        "mtime_utc": "2026-10-15T13:20:38.347236+00:00",
+        "matched_manifest": "data/raster/hansen/official/manifest_10N_110E_official.json",
+        "manifest_version": "2.0",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "local_integrity_notes": "Ukuran byte dan hash SHA-256 cocok persis dengan manifest lokal",
+        "metadata_notes": "Dimensi 40000x40000, CRS EPSG:4326, resolusi 0.00025\u00b0 sesuai spesifikasi resmi UMD",
+        "full_read_notes": "Seluruh blok terbaca tuntas tanpa galat I/O. Domain valid: treecover2000 in [0..100]%",
+        "source_authenticity_notes": "Penyedia dataset primer (UMD / Google Earth Engine) tidak mempublikasikan berkas checksum SHA-256 resmi pihak ketiga (source_checksum_published: False).; Meskipun Content-Length HTTP cocok dan berkas terbaca sempurna oleh GDAL, bukti kriptografis independen dari sumber primer belum tersedia.",
+        "raster_structure": {
+          "width": 40000,
+          "height": 40000,
+          "crs": "EPSG:4326",
+          "bounds": [
+            110.0,
+            0.0,
+            120.0,
+            10.0
+          ],
+          "dtype": "uint8",
+          "val_min": 0,
+          "val_max": 100
+        }
+      }
+    }
+  ],
+  "grid_and_edge_alignment": [
+    {
+      "type": "intra_tile_layer_alignment",
+      "tile_id": "00N_100E",
+      "status": "PASS",
+      "details": "3 layer (datamask, lossyear, treecover2000) memiliki dimensi, bounds, dan CRS identik: True"
+    },
+    {
+      "type": "intra_tile_layer_alignment",
+      "tile_id": "00N_110E",
+      "status": "PASS",
+      "details": "3 layer (datamask, lossyear, treecover2000) memiliki dimensi, bounds, dan CRS identik: True"
+    },
+    {
+      "type": "intra_tile_layer_alignment",
+      "tile_id": "10N_100E",
+      "status": "PASS",
+      "details": "3 layer (datamask, lossyear, treecover2000) memiliki dimensi, bounds, dan CRS identik: True"
+    },
+    {
+      "type": "intra_tile_layer_alignment",
+      "tile_id": "10N_110E",
+      "status": "PASS",
+      "details": "3 layer (datamask, lossyear, treecover2000) memiliki dimensi, bounds, dan CRS identik: True"
+    },
+    {
+      "type": "equator_edge_alignment",
+      "pair": "00N_100E (top) vs 10N_100E (bottom)",
+      "boundary_latitude": 0.0,
+      "south_top": 0.0,
+      "north_bottom": 0.0,
+      "status": "PASS",
+      "details": "Batas khatulistiwa bertemu persis pada garis lintang 0.0\u00b0: True"
+    },
+    {
+      "type": "equator_edge_alignment",
+      "pair": "00N_110E (top) vs 10N_110E (bottom)",
+      "boundary_latitude": 0.0,
+      "south_top": 0.0,
+      "north_bottom": 0.0,
+      "status": "PASS",
+      "details": "Batas khatulistiwa bertemu persis pada garis lintang 0.0\u00b0: True"
+    },
+    {
+      "type": "meridian_edge_alignment",
+      "pair": "00N_100E (right) vs 00N_110E (left)",
+      "boundary_longitude": 110.0,
+      "west_right": 110.0,
+      "east_left": 110.0,
+      "status": "PASS",
+      "details": "Batas meridian bujur bertemu persis pada garis 110.0\u00b0: True"
+    },
+    {
+      "type": "meridian_edge_alignment",
+      "pair": "10N_100E (right) vs 10N_110E (left)",
+      "boundary_longitude": 110.0,
+      "west_right": 110.0,
+      "east_left": 110.0,
+      "status": "PASS",
+      "details": "Batas meridian bujur bertemu persis pada garis 110.0\u00b0: True"
+    }
+  ],
+  "duplicate_files_detected": [
+    {
+      "description": "Salinan identik berkas penuh 00N_100E di backup_subset_palangka_raya",
+      "files": [
+        "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+        "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif"
+      ],
+      "sha256": "cd1d1cf909233d4cc7d97645f782c5be0e527f311c1d8820cf8c4091a134bfb5",
+      "notes": "Ukuran byte dan hash SHA-256 identik (duplikat penuh bit-for-bit)."
+    },
+    {
+      "description": "Salinan identik lossyear 00N_100E di backup_subset_palangka_raya",
+      "files": [
+        "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+        "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif"
+      ],
+      "sha256": "4a676e1df62215eeaa917cf70eec1656041eeae9e735165972ec93be8e4fc225",
+      "notes": "Ukuran byte dan hash SHA-256 identik (duplikat penuh bit-for-bit)."
+    },
+    {
+      "description": "Salinan identik treecover2000 00N_100E di backup_subset_palangka_raya",
+      "files": [
+        "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+        "data/raster/hansen/official/backup_subset_palangka_raya/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif"
+      ],
+      "sha256": "513e7116a37ae3f89a94155554622f9850c059881fc03cbe4989635fa8d7e002",
+      "notes": "Ukuran byte dan hash SHA-256 identik (duplikat penuh bit-for-bit)."
+    }
+  ],
+  "ambiguous_and_mismatched_files": [
+    {
+      "description": "Berkas sintetis/demo di direktori root data/raster/hansen/ tanpa suffix _official",
+      "files": [
+        "data/raster/hansen/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "data/raster/hansen/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "data/raster/hansen/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif"
+      ],
+      "anomaly": "Berkas berdimensi 300x300 piksel (~2.3 - 2.6 KB) berada di direktori yang sama dengan manifest v1.0 yang mencatat berkas 2000x2400 piksel (54 KB, 393 KB, 1.6 MB) dengan penamaan _official.tif.",
+      "assessment": "Mismatch historis: Berkas di root hansen/ adalah subset demo awal, sedangkan manifest di direktori tersebut merupakan manifest v1.0 untuk subset Palangka Raya yang sebenarnya tersimpan di backup_subset_palangka_raya/."
+    }
+  ],
+  "evidence_still_needed": [
+    "Checksum SHA-256 resmi pihak ketiga yang dipublikasikan oleh University of Maryland (UMD) / Google Earth Engine untuk membuktikan autentisitas primer secara kriptografis.",
+    "Penyelarasan atau pembersihan manifest legacy v1.0 di data/raster/hansen/ agar tidak merujuk berkas _official.tif yang tidak ada di direktori tersebut.",
+    "Penambahan hash SHA-256 pada manifest v1.0 di backup_subset_palangka_raya/ jika subset historis tersebut ingin diverifikasi secara formal."
+  ],
+  "recommendations": [
+    "1. Mempertahankan 12 berkas raster resmi di data/raster/hansen/official/ sebagai himpunan data primer kanonikal karena lulus 100% verifikasi integritas lokal, struktur metadata 40000x40000, keterbacaan tuntas, dan keselarasan kisi antar-tile.",
+    "2. Mendokumentasikan secara transparan bahwa status source_authenticity_status tetap UNVERIFIED karena UMD tidak mempublikasikan SHA256SUMS resmi, bukan karena file dicurigai rusak.",
+    "3. Mempertahankan pemisahan tegas berkas di data/raster/hansen/ sebagai demo sintetis dan backup_subset_palangka_raya/ sebagai arsip historis tanpa membiarkannya mencemari pipeline resmi.",
+    "4. Memastikan kode produksi tetap mempertahankan status demonstration dan data_verified: false untuk mematuhi integritas ilmiah."
+  ]
+}

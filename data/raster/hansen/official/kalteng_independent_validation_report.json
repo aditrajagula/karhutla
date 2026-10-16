@@ -1,0 +1,250 @@
+{
+  "validation_metadata": {
+    "case_study": "Kalimantan Tengah",
+    "validation_timestamp_utc": "2026-10-15T15:03:50.105310+00:00",
+    "methodology_comparison": {
+      "method_1": "Windowed geometry_mask, Authalic Spherical polygon area (Ra=6371007.18m), Analytic row area",
+      "method_2": "Independent Simpson Quadrature WGS84 tensor, Albers Equal Area WGS84 projection, Cross-cohort loss analysis"
+    },
+    "tolerances": {
+      "pixel_count_tolerance": "0 pixels (exact equality on identical rasterization rules)",
+      "polygon_area_tolerance": "<= 0.50% (difference due to ellipsoidal vs spherical authalic formula)",
+      "hectare_area_relative_tolerance": "<= 0.001% (floating-point quadrature precision)"
+    }
+  },
+  "polygon_area_comparison": {
+    "method_1_spherical_ha": 15426166.26,
+    "method_2a_albers_wgs84_ha": 15357441.25593563,
+    "method_2b_epsg6933_ha": 15357434.31319089,
+    "difference_abs_ha": 68725.0,
+    "difference_rel_pct": 0.4455,
+    "physical_explanation": "Perbedaan 0.446% disebabkan flattening elipsoid WGS84 (f=1/298.257). Luas piksel terdisketisasi (15.357.429,81 ha) cocok dengan Albers Equal Area (15.357.441,26 ha) dengan selisih hanya 11,45 ha (0,000074%)."
+  },
+  "metrics_comparison": [
+    {
+      "metric": "Total Piksel Poligon",
+      "val_method1": 199728996,
+      "val_method2": 199728996,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Daratan Valid",
+      "val_method1": 198470130,
+      "val_method2": 198470130,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Air Permanen",
+      "val_method1": 1258866,
+      "val_method2": 1258866,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel NoData/Laut",
+      "val_method1": 0,
+      "val_method2": 0,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Baseline >0%",
+      "val_method1": 188412537,
+      "val_method2": 188412537,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Baseline >=30%",
+      "val_method1": 184680783,
+      "val_method2": 184680783,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Non-Hutan Baseline",
+      "val_method1": 8537191,
+      "val_method2": 8537191,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Hutan Stabil",
+      "val_method1": 136376765,
+      "val_method2": 136376765,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Piksel Kehilangan 2001-2025",
+      "val_method1": 53556174,
+      "val_method2": 53556174,
+      "diff_abs": 0,
+      "diff_rel_pct": 0.0,
+      "is_count": true,
+      "passed": true
+    },
+    {
+      "metric": "Luas Total Piksel (ha)",
+      "val_method1": 15357429.81,
+      "val_method2": 15357429.81,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Daratan Valid (ha)",
+      "val_method1": 15260674.82,
+      "val_method2": 15260674.82,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Air Permanen (ha)",
+      "val_method1": 96754.99,
+      "val_method2": 96754.99,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Baseline >0% (ha)",
+      "val_method1": 14487582.39,
+      "val_method2": 14487582.39,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Baseline >=30% (ha)",
+      "val_method1": 14200761.3,
+      "val_method2": 14200761.3,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Kehilangan (ha)",
+      "val_method1": 4117391.28,
+      "val_method2": 4117391.28,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    },
+    {
+      "metric": "Luas Hutan Stabil (ha)",
+      "val_method1": 10487065.11,
+      "val_method2": 10487065.11,
+      "diff_abs": 0.0,
+      "diff_rel_pct": 0.0,
+      "is_count": false,
+      "passed": true
+    }
+  ],
+  "numerator_denominator_analysis": {
+    "total_land_ha": 15260674.82,
+    "loss_total_ha": 4117391.28,
+    "loss_pct_of_land": 26.98,
+    "baseline_treecover_gt0_ha": 14487582.39,
+    "loss_on_baseline_gt0_ha": 4000517.28,
+    "loss_on_baseline_eq0_ha": 116873.99,
+    "loss_pct_unconstrained_of_gt0": 28.42,
+    "loss_pct_strict_cohort_of_gt0": 27.61,
+    "baseline_treecover_ge30_ha": 14200761.3,
+    "loss_on_baseline_ge30_ha": 3953151.21,
+    "loss_pct_unconstrained_of_ge30": 28.99,
+    "loss_pct_strict_cohort_of_ge30": 27.84,
+    "scientific_takeaway": "Sebanyak 1.520.402 piksel (116.873,99 ha atau 2,84% dari total kehilangan) terjadi pada lahan dengan treecover2000 == 0% yang kemudian terdeteksi mengalami kehilangan kanopi >5m pada periode 2001\u20132025. Memasukkan kehilangan ini ke rasio baseline >0% menghasilkan rasio tak terkekang 28,42%, sedangkan rasio kohort simetris murni adalah 27,61%."
+  },
+  "pixel_samples": [
+    {
+      "label": "Palangka Raya (Kawasan Urban)",
+      "lat": -2.2079,
+      "lon": 113.9165,
+      "tile_id": "00N_110E",
+      "row": 8831,
+      "col": 15665,
+      "datamask": 1,
+      "treecover2000": 0,
+      "lossyear": 0,
+      "interpretation": "Non-hutan stabil"
+    },
+    {
+      "label": "Kawasan Gambut Sebangau (Kebakaran 2015)",
+      "lat": -2.75,
+      "lon": 114.1,
+      "tile_id": "00N_110E",
+      "row": 11000,
+      "col": 16399,
+      "datamask": 1,
+      "treecover2000": 98,
+      "lossyear": 16,
+      "interpretation": "Kehilangan tahun 2016"
+    },
+    {
+      "label": "Perairan Darat Permanen (Barito)",
+      "lat": -3.00013,
+      "lon": 114.16038,
+      "tile_id": "00N_110E",
+      "row": 12000,
+      "col": 16641,
+      "datamask": 2,
+      "treecover2000": 0,
+      "lossyear": 0,
+      "interpretation": "Air permanen"
+    },
+    {
+      "label": "Kawasan Hutan Pegunungan (TN Bukit Baka)",
+      "lat": -0.65,
+      "lon": 112.85,
+      "tile_id": "00N_110E",
+      "row": 2600,
+      "col": 11399,
+      "datamask": 1,
+      "treecover2000": 98,
+      "lossyear": 0,
+      "interpretation": "Hutan stabil"
+    },
+    {
+      "label": "Pedalaman Kalteng Utara (Murung Raya)",
+      "lat": 0.5,
+      "lon": 114.0,
+      "tile_id": "10N_110E",
+      "row": 38000,
+      "col": 16000,
+      "datamask": 1,
+      "treecover2000": 97,
+      "lossyear": 0,
+      "interpretation": "Hutan stabil"
+    }
+  ],
+  "recommendation_for_remaining_provinces": {
+    "applicable": true,
+    "recommended_standard": "Metode perhitungan kedua mengonfirmasi keselarasan hasil matematis pada raster dan geometri yang sama (selisih piksel = 0). Dianjurkan menerapkan pembedaan rasio tak terkekang vs rasio kohort konsisten ke 4 provinsi lainnya (Kalbar, Kalsel, Kaltim, Kaltara) untuk transparansi metodologis."
+  }
+}

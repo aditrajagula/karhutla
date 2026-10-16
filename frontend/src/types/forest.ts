@@ -33,3 +33,30 @@ export interface ForestLossSummary {
   annual_kalimantan_ha: Record<string, number>;
   provincial_data: ProvincialLossData[];
 }
+
+/**
+ * Hasil klasifikasi tutupan hutan GLAD Forest Extent 2020 tingkat koordinat.
+ */
+export type ForestClassification = 'FOREST' | 'NON_FOREST' | 'UNKNOWN';
+
+export interface ForestExtentPointResult {
+  status: ForestClassification;
+  classification: ForestClassification;
+  raw_pixel_value: number | null;
+  latitude: number;
+  longitude: number;
+  tile_id?: string | null;
+  pixel_row?: number | null;
+  pixel_col?: number | null;
+  raster_available: boolean;
+  raster_file?: string | null;
+  crs?: string | null;
+  dataset: string;
+  layer: string;
+  data_period: string;
+  resolution_m: number;
+  definition: string;
+  scientific_caveat: string;
+  error_message?: string | null;
+  reason?: string | null;
+}

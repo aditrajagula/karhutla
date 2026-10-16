@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Hotspot } from '../../types/hotspot';
+import { FlameIcon, CloseIcon } from '../common/SvgIcons';
 
 interface HotspotDetailModalProps {
   hotspot: Hotspot | null;
@@ -32,16 +33,20 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
     >
       <div className="modal-card">
         <div className="modal-header">
-          <h3 id="detail-title" className="modal-title">
-            Detail Deteksi Anomali Termal
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FlameIcon size={18} color="#CC6F00" />
+            <h3 id="detail-title" className="modal-title">
+              Detail Deteksi Anomali Termal
+            </h3>
+          </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup detail modal"
             className="modal-close-btn"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 

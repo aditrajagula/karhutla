@@ -1,0 +1,4629 @@
+{
+  "audit_metadata": {
+    "title": "Stage 3: Verifikasi Sumber dan Validitas Isi Raster Hansen GFC-2025-v1.13",
+    "project": "FireGuard",
+    "phase": "Tahap 3 - Verifikasi Sumber Ilmiah & Autentisitas Isi Piksel",
+    "script_version": "3.0.0",
+    "audit_timestamp_utc": "2026-10-15T17:30:00.902433+00:00",
+    "mode": "READ_ONLY",
+    "production_compliance": {
+      "production_code_modified": false,
+      "manifest_modified": false,
+      "raster_files_modified": false,
+      "data_status": "demonstration",
+      "data_verified": false
+    }
+  },
+  "official_reference_sources": {
+    "gee_catalog_url": "https://developers.google.com/earth-engine/datasets/catalog/UMD_hansen_global_forest_change_2025_v1_13",
+    "gee_catalog_status": "200_OK_VERIFIED",
+    "download_page_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/download.html",
+    "download_page_status": "200_OK_VERIFIED",
+    "gcs_bucket_base": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/",
+    "gcs_api_base": "https://storage.googleapis.com/storage/v1/b/earthenginepartners-hansen/o/",
+    "checksum_search_scope": {
+      "probed_candidates": [
+        {
+          "candidate_file": "checksums.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/checksums.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "SHA256SUMS",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/SHA256SUMS",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "MD5SUMS",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/MD5SUMS",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "sha256sum.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/sha256sum.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "sha256.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/sha256.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "hashes.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/hashes.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "manifest.json",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/manifest.json",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "metadata.json",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/metadata.json",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "README.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/README.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "files.txt",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/files.txt",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        },
+        {
+          "candidate_file": "download.html",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/download.html",
+          "http_status": 200,
+          "content_length": 71893,
+          "found": true
+        },
+        {
+          "candidate_file": "download_v1.0.html",
+          "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/download_v1.0.html",
+          "http_status": 404,
+          "content_length": 0,
+          "found": false
+        }
+      ],
+      "conclusion": "UMD tidak menyediakan berkas teks checksum mandiri (misal SHA256SUMS/MD5SUMS). Verifikasi kriptografis mengandalkan metadata objek native Google Cloud Storage (md5Hash, crc32c, etag)."
+    }
+  },
+  "canonical_raster_inventory_and_crypto": [
+    {
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+      "actual_size_bytes": 22153727,
+      "manifest_size_bytes": 22153727,
+      "gcs_size_bytes": 22153727,
+      "local_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "local_md5": "bc493680ed436eff1f3c2943abeb37b7",
+      "gcs_md5_hex": "bc493680ed436eff1f3c2943abeb37b7",
+      "gcs_crc32c_base64": "AzGpHQ==",
+      "gcs_etag": "CMno2bzhrJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:05:38.065Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+      "actual_size_bytes": 281247373,
+      "manifest_size_bytes": 281247373,
+      "gcs_size_bytes": 281247373,
+      "local_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "manifest_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "local_md5": "2cc062d716c582a4759e41e852c3a8f1",
+      "gcs_md5_hex": "2cc062d716c582a4759e41e852c3a8f1",
+      "gcs_crc32c_base64": "sIIZQw==",
+      "gcs_etag": "COjk9brhrJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:05:34.330Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+      "actual_size_bytes": 85664038,
+      "manifest_size_bytes": 85664038,
+      "gcs_size_bytes": 85664038,
+      "local_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "manifest_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "local_md5": "29417812d21b82d37c18e3d3165d61fc",
+      "gcs_md5_hex": "29417812d21b82d37c18e3d3165d61fc",
+      "gcs_crc32c_base64": "/7jd2A==",
+      "gcs_etag": "CPrG0PmCpZMDEAE=",
+      "gcs_time_created": "2026-03-16T18:14:06.310Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": -10.0,
+          "right": 110.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "actual_size_bytes": 23697919,
+      "manifest_size_bytes": 23697919,
+      "gcs_size_bytes": 23697919,
+      "local_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "manifest_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "local_md5": "b68e42f98e02aae04b24b333bb5508c3",
+      "gcs_md5_hex": "b68e42f98e02aae04b24b333bb5508c3",
+      "gcs_crc32c_base64": "KRyWhg==",
+      "gcs_etag": "CLjB6sPhrJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:05:53.020Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": -10.0,
+          "right": 120.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "actual_size_bytes": 319865459,
+      "manifest_size_bytes": 319865459,
+      "gcs_size_bytes": 319865459,
+      "local_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "manifest_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "local_md5": "3996f44d9435cb59b9c90ddb5d468cf8",
+      "gcs_md5_hex": "3996f44d9435cb59b9c90ddb5d468cf8",
+      "gcs_crc32c_base64": "wEdE3A==",
+      "gcs_etag": "CL/SgsLhrJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:05:49.224Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": -10.0,
+          "right": 120.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "actual_size_bytes": 79708678,
+      "manifest_size_bytes": 79708678,
+      "gcs_size_bytes": 79708678,
+      "local_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "manifest_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "local_md5": "c5c2a29a15f1a8ec495ba4098ac76c01",
+      "gcs_md5_hex": "c5c2a29a15f1a8ec495ba4098ac76c01",
+      "gcs_crc32c_base64": "n0qHWQ==",
+      "gcs_etag": "CJri8fuCpZMDEAE=",
+      "gcs_time_created": "2026-03-16T18:14:11.048Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": -10.0,
+          "right": 120.0,
+          "top": 0.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+      "actual_size_bytes": 24939799,
+      "manifest_size_bytes": 24939799,
+      "gcs_size_bytes": 24939799,
+      "local_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "manifest_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "local_md5": "0f08426d13276800188becaf426f4d83",
+      "gcs_md5_hex": "0f08426d13276800188becaf426f4d83",
+      "gcs_crc32c_base64": "zpnFug==",
+      "gcs_etag": "CNitwr7irJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:10:10.310Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": 0.0,
+          "right": 110.0,
+          "top": 10.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+      "actual_size_bytes": 199956397,
+      "manifest_size_bytes": 199956397,
+      "gcs_size_bytes": 199956397,
+      "local_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "manifest_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "local_md5": "a5d52b8c9eba57274a8c0ca54c74f551",
+      "gcs_md5_hex": "a5d52b8c9eba57274a8c0ca54c74f551",
+      "gcs_crc32c_base64": "4Rg/Fg==",
+      "gcs_etag": "CIiS0LzirJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:10:06.342Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": 0.0,
+          "right": 110.0,
+          "top": 10.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+      "actual_size_bytes": 72209693,
+      "manifest_size_bytes": 72209693,
+      "gcs_size_bytes": 72209693,
+      "local_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "manifest_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "local_md5": "ea66a23174c7b83836f0c52bd4a93ab1",
+      "gcs_md5_hex": "ea66a23174c7b83836f0c52bd4a93ab1",
+      "gcs_crc32c_base64": "LnSyVg==",
+      "gcs_etag": "CMagspWDpZMDEAE=",
+      "gcs_time_created": "2026-03-16T18:15:04.533Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 100.0,
+          "bottom": 0.0,
+          "right": 110.0,
+          "top": 10.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+      "actual_size_bytes": 25120555,
+      "manifest_size_bytes": 25120555,
+      "gcs_size_bytes": 25120555,
+      "local_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "manifest_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "local_md5": "f48e260a5e8b1d8d41e83dcf4cbc4d6b",
+      "gcs_md5_hex": "f48e260a5e8b1d8d41e83dcf4cbc4d6b",
+      "gcs_crc32c_base64": "PGu0Yw==",
+      "gcs_etag": "CLqC5cXirJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:10:25.559Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": 0.0,
+          "right": 120.0,
+          "top": 10.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+      "actual_size_bytes": 276154773,
+      "manifest_size_bytes": 276154773,
+      "gcs_size_bytes": 276154773,
+      "local_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "manifest_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "local_md5": "548305333d31c1f082b4e7d2150577e4",
+      "gcs_md5_hex": "548305333d31c1f082b4e7d2150577e4",
+      "gcs_crc32c_base64": "7CDA5w==",
+      "gcs_etag": "CM/+/cPirJMDEAE=",
+      "gcs_time_created": "2026-03-19T20:10:21.776Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": 0.0,
+          "right": 120.0,
+          "top": 10.0
+        }
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "local_filepath": "C:\\Data-Karhutla\\data\\raster\\hansen\\official\\Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+      "remote_gcs_object": "GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+      "actual_size_bytes": 81574427,
+      "manifest_size_bytes": 81574427,
+      "gcs_size_bytes": 81574427,
+      "local_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "manifest_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "local_md5": "71f1d65a9fa5b89b13195b444880e0f7",
+      "gcs_md5_hex": "71f1d65a9fa5b89b13195b444880e0f7",
+      "gcs_crc32c_base64": "MLQhHA==",
+      "gcs_etag": "CIam7ZeDpZMDEAE=",
+      "gcs_time_created": "2026-03-16T18:15:09.699Z",
+      "size_matches_manifest": true,
+      "sha256_matches_manifest": true,
+      "size_matches_remote_gcs": true,
+      "md5_matches_remote_gcs": true,
+      "raster_metadata": {
+        "driver": "GTiff",
+        "dtype": "uint8",
+        "nodata": null,
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "crs": "EPSG:4326",
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0
+        ],
+        "block_shape": [
+          1,
+          40000
+        ],
+        "compress": "lzw",
+        "bounds": {
+          "left": 110.0,
+          "bottom": 0.0,
+          "right": 120.0,
+          "top": 10.0
+        }
+      }
+    }
+  ],
+  "product_identity_verification": [
+    {
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (NoData/laut), 1 (daratan terpetakan), 2 (badan air permanen)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0-100 (persentase tutupan kanopi pohon >5m)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (tidak ada kehilangan), 1-25 (tahun kehilangan 2001-2025)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (NoData/laut), 1 (daratan terpetakan), 2 (badan air permanen)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0-100 (persentase tutupan kanopi pohon >5m)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (tidak ada kehilangan), 1-25 (tahun kehilangan 2001-2025)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (NoData/laut), 1 (daratan terpetakan), 2 (badan air permanen)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0-100 (persentase tutupan kanopi pohon >5m)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (tidak ada kehilangan), 1-25 (tahun kehilangan 2001-2025)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (NoData/laut), 1 (daratan terpetakan), 2 (badan air permanen)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0-100 (persentase tutupan kanopi pohon >5m)",
+      "overall_identity_status": "PASS"
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "dimensions_verified": true,
+      "dtype_verified": true,
+      "crs_verified": true,
+      "resolution_verified": true,
+      "compression_verified": true,
+      "spatial_bounds_verified": true,
+      "layer_definition_reference": "Nilai sah: 0 (tidak ada kehilangan), 1-25 (tahun kehilangan 2001-2025)",
+      "overall_identity_status": "PASS"
+    }
+  ],
+  "pixel_content_validation": {
+    "methodology": "Direct comparative sampling via GDAL /vsicurl/ HTTP Range against official UMD GCS GeoTIFFs without resampling or reprojection.",
+    "total_pixels_compared": 567,
+    "total_pixels_matched": 567,
+    "total_pixels_mismatched": 0,
+    "match_percentage": 100.0,
+    "epistemological_qualification": "Pencocokan sampel piksel deterministik terstrata membuktikan keidentikan isi pada area sampel yang diuji. Keidentikan byte-for-byte untuk seluruh isi berkas (100% piksel) dibuktikan secara kriptografis melalui kecocokan MD5 hash terhadap server Google Cloud Storage.",
+    "sample_records": [
+      {
+        "tile_id": "00N_100E",
+        "layer": "datamask",
+        "description": "Laut / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "datamask",
+        "description": "Daratan Non-Hutan Baseline 2000 (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.05,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "datamask",
+        "description": "Daratan Non-Hutan Kalbar Selatan (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Menengah Kalbar (tc~59%)",
+        "geographic_coordinates": {
+          "lat": -1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 4000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat dengan Loss 2019 (ly=19)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "treecover2000",
+        "description": "Laut / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "treecover2000",
+        "description": "Daratan Non-Hutan Baseline 2000 (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.05,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            32
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            32
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "treecover2000",
+        "description": "Daratan Non-Hutan Kalbar Selatan (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Menengah Kalbar (tc~59%)",
+        "geographic_coordinates": {
+          "lat": -1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 4000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 59,
+        "remote_center_value": 59,
+        "local_window_values": [
+          [
+            0,
+            59,
+            59
+          ],
+          [
+            0,
+            59,
+            59
+          ],
+          [
+            44,
+            92,
+            92
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            59,
+            59
+          ],
+          [
+            0,
+            59,
+            59
+          ],
+          [
+            44,
+            92,
+            92
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat dengan Loss 2019 (ly=19)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 98,
+        "remote_center_value": 98,
+        "local_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            97,
+            97,
+            98
+          ]
+        ],
+        "remote_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            97,
+            97,
+            98
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "lossyear",
+        "description": "Laut / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "lossyear",
+        "description": "Daratan Non-Hutan Baseline 2000 (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.05,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "lossyear",
+        "description": "Daratan Non-Hutan Kalbar Selatan (datamask=1, tc=0)",
+        "geographic_coordinates": {
+          "lat": -5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Menengah Kalbar (tc~59%)",
+        "geographic_coordinates": {
+          "lat": -1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 4000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_100E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat dengan Loss 2019 (ly=19)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 19,
+        "remote_center_value": 19,
+        "local_window_values": [
+          [
+            19,
+            19,
+            19
+          ],
+          [
+            19,
+            19,
+            19
+          ],
+          [
+            19,
+            19,
+            19
+          ]
+        ],
+        "remote_window_values": [
+          [
+            19,
+            19,
+            19
+          ],
+          [
+            19,
+            19,
+            19
+          ],
+          [
+            19,
+            19,
+            19
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Badan Air Permanen Laut Jawa (datamask=2)",
+        "geographic_coordinates": {
+          "lat": -3.5,
+          "lon": 111.0
+        },
+        "pixel_index": {
+          "row": 14000,
+          "col": 4000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 2,
+        "remote_center_value": 2,
+        "local_window_values": [
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "remote_window_values": [
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Daratan Non-Hutan Baseline Kalteng (tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Hutan Primer Lebat Kalteng (tc=97%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -2.0,
+          "lon": 114.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 16000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -1.5,
+          "lon": 113.5
+        },
+        "pixel_index": {
+          "row": 6000,
+          "col": 14000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Kalsel dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -3.0,
+          "lon": 115.0
+        },
+        "pixel_index": {
+          "row": 12000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Selatan Jawa/Bali (tc=93%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 112.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Badan Air Permanen Laut Jawa (datamask=2)",
+        "geographic_coordinates": {
+          "lat": -3.5,
+          "lon": 111.0
+        },
+        "pixel_index": {
+          "row": 14000,
+          "col": 4000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Daratan Non-Hutan Baseline Kalteng (tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Primer Lebat Kalteng (tc=97%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -2.0,
+          "lon": 114.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 16000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 97,
+        "remote_center_value": 97,
+        "local_window_values": [
+          [
+            97,
+            97,
+            98
+          ],
+          [
+            97,
+            97,
+            98
+          ],
+          [
+            97,
+            97,
+            97
+          ]
+        ],
+        "remote_window_values": [
+          [
+            97,
+            97,
+            98
+          ],
+          [
+            97,
+            97,
+            98
+          ],
+          [
+            97,
+            97,
+            97
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -1.5,
+          "lon": 113.5
+        },
+        "pixel_index": {
+          "row": 6000,
+          "col": 14000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 95,
+        "remote_center_value": 95,
+        "local_window_values": [
+          [
+            95,
+            95,
+            95
+          ],
+          [
+            95,
+            95,
+            95
+          ],
+          [
+            95,
+            95,
+            97
+          ]
+        ],
+        "remote_window_values": [
+          [
+            95,
+            95,
+            95
+          ],
+          [
+            95,
+            95,
+            95
+          ],
+          [
+            95,
+            95,
+            97
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Kalsel dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -3.0,
+          "lon": 115.0
+        },
+        "pixel_index": {
+          "row": 12000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 85,
+        "remote_center_value": 85,
+        "local_window_values": [
+          [
+            85,
+            85,
+            83
+          ],
+          [
+            85,
+            85,
+            83
+          ],
+          [
+            89,
+            89,
+            87
+          ]
+        ],
+        "remote_window_values": [
+          [
+            85,
+            85,
+            83
+          ],
+          [
+            85,
+            85,
+            83
+          ],
+          [
+            89,
+            89,
+            87
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Selatan Jawa/Bali (tc=93%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 112.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 93,
+        "remote_center_value": 93,
+        "local_window_values": [
+          [
+            93,
+            93,
+            77
+          ],
+          [
+            93,
+            93,
+            77
+          ],
+          [
+            49,
+            49,
+            68
+          ]
+        ],
+        "remote_window_values": [
+          [
+            93,
+            93,
+            77
+          ],
+          [
+            93,
+            93,
+            77
+          ],
+          [
+            49,
+            49,
+            68
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Badan Air Permanen Laut Jawa (datamask=2)",
+        "geographic_coordinates": {
+          "lat": -3.5,
+          "lon": 111.0
+        },
+        "pixel_index": {
+          "row": 14000,
+          "col": 4000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Daratan Non-Hutan Baseline Kalteng (tc=0)",
+        "geographic_coordinates": {
+          "lat": -0.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 2000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Primer Lebat Kalteng (tc=97%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -2.0,
+          "lon": 114.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 16000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -1.5,
+          "lon": 113.5
+        },
+        "pixel_index": {
+          "row": 6000,
+          "col": 14000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 9,
+        "remote_center_value": 9,
+        "local_window_values": [
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ]
+        ],
+        "remote_window_values": [
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Kalsel dengan Loss 2009 (ly=9)",
+        "geographic_coordinates": {
+          "lat": -3.0,
+          "lon": 115.0
+        },
+        "pixel_index": {
+          "row": 12000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 9,
+        "remote_center_value": 9,
+        "local_window_values": [
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            0,
+            0,
+            9
+          ]
+        ],
+        "remote_window_values": [
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            9,
+            9,
+            9
+          ],
+          [
+            0,
+            0,
+            9
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "00N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Selatan Jawa/Bali (tc=93%, ly=0)",
+        "geographic_coordinates": {
+          "lat": -8.0,
+          "lon": 112.0
+        },
+        "pixel_index": {
+          "row": 32000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "datamask",
+        "description": "Laut Natuna / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "datamask",
+        "description": "Laut Cina Selatan Utara (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 102.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=83%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat Pesisir Kalbar (tc=89%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.2,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 39200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "treecover2000",
+        "description": "Laut Natuna / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "treecover2000",
+        "description": "Laut Cina Selatan Utara (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 102.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=83%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 83,
+        "remote_center_value": 83,
+        "local_window_values": [
+          [
+            83,
+            83,
+            87
+          ],
+          [
+            83,
+            83,
+            87
+          ],
+          [
+            89,
+            89,
+            89
+          ]
+        ],
+        "remote_window_values": [
+          [
+            83,
+            83,
+            87
+          ],
+          [
+            83,
+            83,
+            87
+          ],
+          [
+            89,
+            89,
+            89
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 98,
+        "remote_center_value": 98,
+        "local_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            97,
+            97
+          ]
+        ],
+        "remote_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            97,
+            97
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat Pesisir Kalbar (tc=89%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.2,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 39200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 89,
+        "remote_center_value": 89,
+        "local_window_values": [
+          [
+            89,
+            89,
+            82
+          ],
+          [
+            89,
+            89,
+            82
+          ],
+          [
+            89,
+            89,
+            89
+          ]
+        ],
+        "remote_window_values": [
+          [
+            89,
+            89,
+            82
+          ],
+          [
+            89,
+            89,
+            82
+          ],
+          [
+            89,
+            89,
+            89
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "lossyear",
+        "description": "Laut Natuna / Area Luar Batas (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 5.0,
+          "lon": 105.0
+        },
+        "pixel_index": {
+          "row": 20000,
+          "col": 20000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "lossyear",
+        "description": "Laut Cina Selatan Utara (datamask=0)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 102.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 8000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=83%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 109.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 38000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat Kalbar Utara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 109.8
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 39199
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_100E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat Pesisir Kalbar (tc=89%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 0.2,
+          "lon": 109.2
+        },
+        "pixel_index": {
+          "row": 39200,
+          "col": 36800
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "datamask",
+        "description": "Perairan Laut Sulu / Sulawesi (datamask=2)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 118.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 32000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 2,
+        "remote_center_value": 2,
+        "local_window_values": [
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "remote_window_values": [
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ],
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "datamask",
+        "description": "Daratan Non-Hutan Kaltim Utara (tc=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 117.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 30000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat Kaltim (tc=95%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 116.0
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 24000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat Kaltara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 2.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 30000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "datamask",
+        "description": "Hutan Kanopi Lebat dengan Loss 2018 (ly=18)",
+        "geographic_coordinates": {
+          "lat": 3.5,
+          "lon": 116.5
+        },
+        "pixel_index": {
+          "row": 26000,
+          "col": 26000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 1,
+        "remote_center_value": 1,
+        "local_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "treecover2000",
+        "description": "Perairan Laut Sulu / Sulawesi (datamask=2)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 118.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 32000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "treecover2000",
+        "description": "Daratan Non-Hutan Kaltim Utara (tc=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 117.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 30000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            85
+          ],
+          [
+            0,
+            0,
+            85
+          ],
+          [
+            78,
+            78,
+            85
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            85
+          ],
+          [
+            0,
+            0,
+            85
+          ],
+          [
+            78,
+            78,
+            85
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat Kaltim (tc=95%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 116.0
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 24000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 95,
+        "remote_center_value": 95,
+        "local_window_values": [
+          [
+            95,
+            95,
+            98
+          ],
+          [
+            95,
+            95,
+            98
+          ],
+          [
+            98,
+            98,
+            95
+          ]
+        ],
+        "remote_window_values": [
+          [
+            95,
+            95,
+            98
+          ],
+          [
+            95,
+            95,
+            98
+          ],
+          [
+            98,
+            98,
+            95
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat Kaltara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 2.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 30000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 98,
+        "remote_center_value": 98,
+        "local_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ]
+        ],
+        "remote_window_values": [
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ],
+          [
+            98,
+            98,
+            98
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "treecover2000",
+        "description": "Hutan Kanopi Lebat dengan Loss 2018 (ly=18)",
+        "geographic_coordinates": {
+          "lat": 3.5,
+          "lon": 116.5
+        },
+        "pixel_index": {
+          "row": 26000,
+          "col": 26000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 83,
+        "remote_center_value": 83,
+        "local_window_values": [
+          [
+            83,
+            83,
+            85
+          ],
+          [
+            83,
+            83,
+            85
+          ],
+          [
+            85,
+            85,
+            90
+          ]
+        ],
+        "remote_window_values": [
+          [
+            83,
+            83,
+            85
+          ],
+          [
+            83,
+            83,
+            85
+          ],
+          [
+            85,
+            85,
+            90
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "lossyear",
+        "description": "Perairan Laut Sulu / Sulawesi (datamask=2)",
+        "geographic_coordinates": {
+          "lat": 8.0,
+          "lon": 118.0
+        },
+        "pixel_index": {
+          "row": 8000,
+          "col": 32000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "lossyear",
+        "description": "Daratan Non-Hutan Kaltim Utara (tc=0)",
+        "geographic_coordinates": {
+          "lat": 0.5,
+          "lon": 117.5
+        },
+        "pixel_index": {
+          "row": 38000,
+          "col": 30000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat Kaltim (tc=95%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 1.0,
+          "lon": 116.0
+        },
+        "pixel_index": {
+          "row": 36000,
+          "col": 24000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat Kaltara (tc=98%, ly=0)",
+        "geographic_coordinates": {
+          "lat": 2.5,
+          "lon": 117.0
+        },
+        "pixel_index": {
+          "row": 30000,
+          "col": 28000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 0,
+        "remote_center_value": 0,
+        "local_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "remote_window_values": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "status": "PASS"
+      },
+      {
+        "tile_id": "10N_110E",
+        "layer": "lossyear",
+        "description": "Hutan Kanopi Lebat dengan Loss 2018 (ly=18)",
+        "geographic_coordinates": {
+          "lat": 3.5,
+          "lon": 116.5
+        },
+        "pixel_index": {
+          "row": 26000,
+          "col": 26000
+        },
+        "window_shape": [
+          3,
+          3
+        ],
+        "pixels_in_window": 9,
+        "local_center_value": 18,
+        "remote_center_value": 18,
+        "local_window_values": [
+          [
+            18,
+            18,
+            18
+          ],
+          [
+            18,
+            18,
+            18
+          ],
+          [
+            18,
+            18,
+            18
+          ]
+        ],
+        "remote_window_values": [
+          [
+            18,
+            18,
+            18
+          ],
+          [
+            18,
+            18,
+            18
+          ],
+          [
+            18,
+            18,
+            18
+          ]
+        ],
+        "window_array_equal": true,
+        "retrieval_method": "rasterio_vsicurl_http_range",
+        "remote_source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+        "status": "PASS"
+      }
+    ]
+  },
+  "scientific_semantic_validation": [
+    {
+      "finding_id": "SEMANTIC-01",
+      "component": "backend/app/evidence_service.py",
+      "line_number": 229,
+      "severity": "LOW_ATTRIBUTION_DISCREPANCY",
+      "code_snippet": "\"satellite_sources\": \"Landsat / Sentinel / UMD\"",
+      "evaluation": "Pernyataan 'Landsat / Sentinel / UMD' secara ilmiah tidak tepat. Dataset Hansen GFC v1.13 secara eksklusif menggunakan instrumen optis Landsat (Landsat 5 TM, Landsat 7 ETM+, Landsat 8 OLI, Landsat 9 OLI-2) dan BUKAN satelit Sentinel (ESA). Sentinel-2 digunakan pada produk lain seperti GLAD Alert mingguan, namun bukan pada GFC tahunan v1.13.",
+      "status": "FINDING_DOCUMENTED_READONLY"
+    },
+    {
+      "finding_id": "SEMANTIC-02",
+      "component": "backend/app/hansen_tile_reader.py",
+      "line_numbers": [
+        921,
+        922,
+        958,
+        959,
+        988,
+        989
+      ],
+      "severity": "MODERATE_STATUS_DISCREPANCY",
+      "code_snippet": "data_status=\"raster_verified\", data_verified=True",
+      "evaluation": "Objek HansenPixelResult menandai status individual sebagai 'raster_verified' dan data_verified=True ketika piksel berhasil dibaca dari raster lokal. Secara metodologis, penetapan 'verified' pada level titik individual harus dipahami sebagai verifikasi pembacaan raster lokal, bukan verifikasi autentisitas ilmiah independen terhadap pihak ketiga. Status global repositori tetap dipertahankan demonstration / unverified.",
+      "status": "FINDING_DOCUMENTED_READONLY"
+    },
+    {
+      "finding_id": "SEMANTIC-03",
+      "component": "backend/app/evidence_service.py",
+      "line_numbers": [
+        220,
+        221
+      ],
+      "severity": "LOW_TERMINOLOGY_CAUTION",
+      "code_snippet": "\"riwayat perubahan tutupan pohon terkonfirmasi\"",
+      "evaluation": "Penggunaan kata 'terkonfirmasi' dapat menimbulkan ambiguitas bagi pengguna jika ditafsirkan sebagai verifikasi faktual di lapangan. Namun, kode ini telah diimbangi oleh limitations_caveat yang sangat tegas pada baris 233-237 dan 289 yang menyatakan bahwa kehilangan kanopi TIDAK membuktikan kebakaran hutan maupun penebangan liar tanpa bukti lapangan.",
+      "status": "FINDING_DOCUMENTED_READONLY"
+    },
+    {
+      "finding_id": "SEMANTIC-04",
+      "component": "backend/app/forest_change_service.py & hansen_tile_reader.py",
+      "line_numbers": [
+        7,
+        8,
+        9,
+        10,
+        78,
+        79,
+        80
+      ],
+      "severity": "COMPLIANT_BEST_PRACTICE",
+      "code_snippet": "Perubahan tutupan pohon adalah indikator biofisik hilangnya kanopi pohon > 5 meter dan tidak secara otomatis membuktikan pembukaan lahan ilegal atau kebakaran...",
+      "evaluation": "Peringatan ilmiah (scientific caveats) telah diintegrasikan dengan sangat baik pada layanan backend, mencegah klaim keliru bahwa kehilangan tutupan kanopi setara dengan kebakaran atau kejahatan kehutanan.",
+      "status": "COMPLIANT"
+    }
+  ],
+  "status_of_claims": {
+    "claim_1_product_identity_and_metadata": {
+      "status": "PASS",
+      "description": "Dimensi (40000x40000), CRS (WGS84 EPSG:4326), resolusi (0.00025 deg), Affine transform, dan tipe uint8 pada seluruh 12 berkas kanonikal terkonfirmasi identik dengan dokumentasi resmi UMD GFC-2025-v1.13."
+    },
+    "claim_2_local_manifest_sha256_consistency": {
+      "status": "PASS",
+      "description": "Seluruh 12 berkas raster kanonikal memiliki SHA-256 yang cocok 100% dengan manifest resmi v2.0 proyek."
+    },
+    "claim_3_remote_content_length_match": {
+      "status": "PASS",
+      "description": "Ukuran byte aktual dari seluruh 12 berkas lokal cocok sempurna (1.492.292.838 byte) dengan Content-Length HTTP HEAD dari server Google Cloud Storage UMD."
+    },
+    "claim_4_cryptographic_gcs_md5_byte_identity": {
+      "status": "PASS",
+      "description": "Nilai MD5 digest lokal dari seluruh 12 berkas GeoTIFF cocok 100% dengan metadata resmi md5Hash yang dipublikasikan oleh API Google Cloud Storage (earthenginepartners-hansen). Ini membuktikan kesamaan byte-for-byte terhadap berkas yang didistribusikan server rujukan."
+    },
+    "claim_5_deterministic_pixel_samples_match": {
+      "status": "PASS",
+      "description": "Pembandingan isi piksel langsung terhadap sumber remote via GDAL /vsicurl/ pada 567 piksel terstrata (mencakup laut, badan air permanen, non-hutan, hutan primer, dan titik kehilangan pohon) menghasilkan kecocokan 100.0%."
+    },
+    "claim_6_independent_external_checksum_file": {
+      "status": "UNVERIFIED",
+      "description": "Pemeriksaan terhadap 12 kandidat nama berkas checksum publik di bucket root/subdirectory UMD menghasilkan HTTP 404. UMD tidak menerbitkan berkas hash teks mandiri (seperti SHA256SUMS atau PGP detached signature); pembuktian kriptografis bersandar pada metadata native Google Cloud Storage (md5Hash & crc32c)."
+    },
+    "claim_7_full_19_billion_pixels_exhaustive_rasterio_read": {
+      "status": "NOT_APPLICABLE",
+      "description": "Pembandingan piksel individual penuh pada seluruh 19,2 miliar piksel tidak dilakukan melalui streaming jaringan karena batasan operasional non-duplikasi unduhan dan efisiensi. Integritas penuh seluruh berkas telah dijamin oleh kecocokan MD5 digest tingkat berkas (Claim 4)."
+    }
+  },
+  "final_conclusion": {
+    "is_audit_complete": true,
+    "is_product_identity_confirmed": true,
+    "is_pixel_content_compared_directly": true,
+    "pixel_comparison_coverage": "Stratified deterministic coordinate sampling across all 4 tiles and 3 layers, complemented by full-file cryptographic GCS MD5 verification",
+    "mismatch_detected": false,
+    "unresolved_scientific_claims": [
+      "Atribusi satelit pada backend/app/evidence_service.py:229 menyebut 'Landsat / Sentinel / UMD' (seharusnya hanya Landsat).",
+      "Label individual 'data_verified: True' pada HansenPixelResult di backend/app/hansen_tile_reader.py dapat menimbulkan salah tafsir jika tidak dikontekstualisasikan terhadap status proyek 'demonstration'."
+    ],
+    "recommendations": [
+      "Koreksi teks atribusi di evidence_service.py dari 'Landsat / Sentinel / UMD' menjadi 'Landsat (USGS/NASA) / UMD' pada pembaruan kode mendatang (di luar audit read-only ini).",
+      "Pertahankan data_status = 'demonstration' dan data_verified = false pada dokumentasi resmi proyek.",
+      "Dokumentasikan bahwa UMD GCS md5Hash adalah acuan kriptografis resmi karena ketiadaan berkas teks SHA256SUMS eksternal."
+    ],
+    "verdict_summary": "Audit Ilmiah Tahap 3 berhasil memverifikasi dengan bukti kuat dan dapat direproduksi bahwa: (1) Identitas produk 12 raster kanonikal sepenuhnya sesuai dengan spesifikasi resmi UMD Hansen GFC-2025-v1.13; (2) Seluruh 12 berkas lokal identik secara byte-for-byte dengan objek di Google Cloud Storage UMD berdasarkan pencocokan MD5 digest dan ukuran berkas; (3) Pembandingan isi piksel langsung secara remote via /vsicurl/ menghasilkan 100.0% kecocokan pada seluruh titik observasi; (4) Tidak ditemukan mismatch data. Dua temuan semantik minor pada kode FireGuard telah dicatat tanpa mengubah kode produksi; (5) Status operasional sistem tetap dipertahankan pada 'demonstration' dan 'unverified'."
+  }
+}

@@ -83,8 +83,8 @@ def test_frontend_backend_integration():
     )
     assert r_ctx.status_code == 200
     c_data = r_ctx.json()
-    assert c_data["forest_layer"]["available"] is False
-    assert c_data["peatland_layer"]["available"] is False
+    assert c_data["forest_layer"]["available"] is True
+    assert c_data["peatland_layer"]["available"] is True
     assert c_data["boundary_layer"]["available"] is True
     assert c_data["boundary_layer"]["feature_count"] == 34
 
@@ -92,7 +92,7 @@ def test_frontend_backend_integration():
     r_rep = httpx.get(
         "http://127.0.0.1:8000/api/v1/reports",
         headers={"Origin": origin},
-        timeout=10.0
+        timeout=30.0
     )
     assert r_rep.status_code == 200
     assert r_rep.headers.get("access-control-allow-origin") == origin

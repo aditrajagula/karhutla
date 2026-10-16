@@ -1,0 +1,462 @@
+{
+  "audit_metadata": {
+    "title": "Tahap 2B: Rekonsiliasi Final Bukti Integritas Hansen GFC-2025-v1.13",
+    "project": "FireGuard",
+    "phase": "Tahap 2B - Rekonsiliasi Bukti dan Keterbatasan Epistemologis",
+    "audit_timestamp_utc": "2026-10-15T17:13:05.395856+00:00",
+    "mode": "READ_ONLY",
+    "canonical_files_count": 12,
+    "production_compliance": {
+      "production_code_modified": false,
+      "data_status": "demonstration",
+      "data_verified": false
+    }
+  },
+  "totals_summary": {
+    "grand_total_actual_bytes": 1492292838,
+    "grand_total_manifest_bytes": 1492292838,
+    "grand_total_remote_cl_bytes": 1492292838,
+    "tile_totals_bytes": {
+      "00N_100E": 389065138,
+      "00N_110E": 423272056,
+      "10N_100E": 297105889,
+      "10N_110E": 382849755
+    },
+    "layer_totals_bytes": {
+      "datamask": 95912000,
+      "treecover2000": 1077224002,
+      "lossyear": 319156836
+    }
+  },
+  "canonical_files_reconciliation": [
+    {
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+      "actual_size_bytes": 22153727,
+      "manifest_size_bytes": 22153727,
+      "remote_content_length_bytes": 22153727,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "manifest_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 34.17,
+        "shannon_entropy_bits": 1.573
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"bc493680ed436eff1f3c2943abeb37b7\"",
+        "last_modified": "Thu, 19 Mar 2026 20:05:38 GMT",
+        "x_goog_hash": "crc32c=AzGpHQ=="
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+      "actual_size_bytes": 281247373,
+      "manifest_size_bytes": 281247373,
+      "remote_content_length_bytes": 281247373,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "manifest_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 76.28,
+        "shannon_entropy_bits": 1.976
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"2cc062d716c582a4759e41e852c3a8f1\"",
+        "last_modified": "Thu, 19 Mar 2026 20:05:34 GMT",
+        "x_goog_hash": "crc32c=sIIZQw=="
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+      "actual_size_bytes": 85664038,
+      "manifest_size_bytes": 85664038,
+      "remote_content_length_bytes": 85664038,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "manifest_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 90.27,
+        "shannon_entropy_bits": 0.903
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"29417812d21b82d37c18e3d3165d61fc\"",
+        "last_modified": "Mon, 16 Mar 2026 18:14:06 GMT",
+        "x_goog_hash": "crc32c=/7jd2A=="
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+      "actual_size_bytes": 23697919,
+      "manifest_size_bytes": 23697919,
+      "remote_content_length_bytes": 23697919,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "manifest_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 16.92,
+        "shannon_entropy_bits": 1.486
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"b68e42f98e02aae04b24b333bb5508c3\"",
+        "last_modified": "Thu, 19 Mar 2026 20:05:53 GMT",
+        "x_goog_hash": "crc32c=KRyWhg=="
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+      "actual_size_bytes": 319865459,
+      "manifest_size_bytes": 319865459,
+      "remote_content_length_bytes": 319865459,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "manifest_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 63.66,
+        "shannon_entropy_bits": 2.741
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"3996f44d9435cb59b9c90ddb5d468cf8\"",
+        "last_modified": "Thu, 19 Mar 2026 20:05:49 GMT",
+        "x_goog_hash": "crc32c=wEdE3A=="
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+      "actual_size_bytes": 79708678,
+      "manifest_size_bytes": 79708678,
+      "remote_content_length_bytes": 79708678,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "manifest_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 91.28,
+        "shannon_entropy_bits": 0.82
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"c5c2a29a15f1a8ec495ba4098ac76c01\"",
+        "last_modified": "Mon, 16 Mar 2026 18:14:11 GMT",
+        "x_goog_hash": "crc32c=n0qHWQ=="
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+      "actual_size_bytes": 24939799,
+      "manifest_size_bytes": 24939799,
+      "remote_content_length_bytes": 24939799,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "manifest_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 55.69,
+        "shannon_entropy_bits": 1.433
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"0f08426d13276800188becaf426f4d83\"",
+        "last_modified": "Thu, 19 Mar 2026 20:10:10 GMT",
+        "x_goog_hash": "crc32c=zpnFug=="
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+      "actual_size_bytes": 199956397,
+      "manifest_size_bytes": 199956397,
+      "remote_content_length_bytes": 199956397,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "manifest_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 84.02,
+        "shannon_entropy_bits": 1.373
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"a5d52b8c9eba57274a8c0ca54c74f551\"",
+        "last_modified": "Thu, 19 Mar 2026 20:10:06 GMT",
+        "x_goog_hash": "crc32c=4Rg/Fg=="
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+      "actual_size_bytes": 72209693,
+      "manifest_size_bytes": 72209693,
+      "remote_content_length_bytes": 72209693,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "manifest_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 93.03,
+        "shannon_entropy_bits": 0.684
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"ea66a23174c7b83836f0c52bd4a93ab1\"",
+        "last_modified": "Mon, 16 Mar 2026 18:15:04 GMT",
+        "x_goog_hash": "crc32c=LnSyVg=="
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+      "actual_size_bytes": 25120555,
+      "manifest_size_bytes": 25120555,
+      "remote_content_length_bytes": 25120555,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "manifest_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 46.67,
+        "shannon_entropy_bits": 1.523
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"f48e260a5e8b1d8d41e83dcf4cbc4d6b\"",
+        "last_modified": "Thu, 19 Mar 2026 20:10:25 GMT",
+        "x_goog_hash": "crc32c=PGu0Yw=="
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+      "actual_size_bytes": 276154773,
+      "manifest_size_bytes": 276154773,
+      "remote_content_length_bytes": 276154773,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "manifest_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 70.83,
+        "shannon_entropy_bits": 1.846
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"548305333d31c1f082b4e7d2150577e4\"",
+        "last_modified": "Thu, 19 Mar 2026 20:10:21 GMT",
+        "x_goog_hash": "crc32c=7CDA5w=="
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+      "actual_size_bytes": 81574427,
+      "manifest_size_bytes": 81574427,
+      "remote_content_length_bytes": 81574427,
+      "size_matches_manifest": true,
+      "size_matches_remote_cl": true,
+      "actual_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "manifest_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+      "sha256_matches_manifest": true,
+      "independent_checksum_available": false,
+      "compression_metadata": {
+        "compress": "lzw",
+        "predictor": null,
+        "block_shape": [
+          1,
+          40000
+        ],
+        "zero_pixel_pct": 94.21,
+        "shannon_entropy_bits": 0.584
+      },
+      "http_headers": {
+        "status": 200,
+        "etag": "\"71f1d65a9fa5b89b13195b444880e0f7\"",
+        "last_modified": "Mon, 16 Mar 2026 18:15:09 GMT",
+        "x_goog_hash": "crc32c=MLQhHA=="
+      }
+    }
+  ],
+  "historical_size_reconciliation": {
+    "verified_ground_truth_actual_bytes": 1492292838,
+    "verified_manifest_total_bytes": 1492292838,
+    "verified_remote_content_length_total_bytes": 1492292838,
+    "narrative_quoted_bytes_previous_response": 1492802873,
+    "discrepancy_bytes": 510035,
+    "discrepancy_formula": "1,492,802,873 - 1,492,292,838 = 510,035",
+    "discrepancy_source_analysis": {
+      "is_file_on_disk": false,
+      "is_combination_of_files": false,
+      "classification": "NARRATIVE_ARITHMETIC_TRANSCRIPTION_TYPO",
+      "proof": "Pemeriksaan menyeluruh terhadap seluruh berkas di repositori (termasuk folder backup dan demo) membuktikan tidak ada berkas maupun kombinasi berkas yang bernilai 510.035 byte. Laporan resmi JSON Tahap 1 (hansen_integrity_inventory_report.json) dan Laporan Tahap 2 (hansen_source_provenance_audit_report.json), serta ke-4 berkas manifest v2.0 seluruhnya mencatat angka yang konsisten sempurna yaitu 1.492.292.838 byte. Angka 1.492.802.873 byte semata-mata muncul sebagai kekeliruan ketik kalkulasi mental pada teks narasi ringkasan asisten di Bagian 2 percakapan sebelumnya.",
+      "status": "RESOLVED"
+    }
+  },
+  "lzw_compression_entropy_evaluation": {
+    "claim": "Variasi ukuran berkas raster kanonikal disebabkan oleh perbedaan entropi data dan kompresi LZW.",
+    "verified_factual_evidence": [
+      "Seluruh 12 berkas GeoTIFF kanonikal terkonfirmasi menggunakan kompresi LZW lossless (COMPRESSION=LZW).",
+      "Seluruh berkas menggunakan pembagian blok strip per-baris scanline (BLOCK_SHAPE=[1, 40000]) tanpa predictor horizontal (PREDICTOR=None).",
+      "Pada layer treecover2000, persentase piksel nol dan entropi Shannon berkorelasi kuat dan monotonik dengan ukuran berkas terkompresi: 10N_100E (84.0% nol, entropi 1.373 bit) berukuran 199.9 MB; 10N_110E (70.8% nol, entropi 1.846 bit) berukuran 276.2 MB; 00N_100E (76.3% nol, entropi 1.976 bit) berukuran 281.2 MB; 00N_110E (63.7% nol, entropi 2.741 bit) berukuran 319.9 MB."
+    ],
+    "epistemological_qualification": [
+      "Meskipun korelasi entropi terbukti kuat pada layer tutupan kanopi (treecover2000), pada layer lossyear ditemukan bahwa ukuran berkas 10N_110E (81.6 MB) lebih besar daripada 10N_100E (72.2 MB) meskipun 10N_110E memiliki persentase piksel nol lebih tinggi (94.2% vs 93.0%) dan entropi global lebih rendah (0.584 vs 0.684 bit).",
+      "Hal ini membuktikan bahwa efisiensi kompresi LZW strip per-scanline juga sangat dipengaruhi oleh klastering spasial lokal (run-length per-baris) dan bukan hanya frekuensi statistik global."
+    ],
+    "verdict_on_claim": "SUPPORTED_WITH_QUALIFICATIONS",
+    "scientific_summary": "Klaim kompresi LZW terbukti sebagai fakta teknis (seluruh berkas bertipe LZW). Penjelasan bahwa perbedaan ukuran disebabkan oleh heterogenitas data/entropi didukung oleh bukti empiris kuat pada treecover2000, namun harus dikualifikasikan bahwa dispersi spasial dan run-length per-baris turut berperan pada layer diskret seperti lossyear."
+  },
+  "status_of_claims": {
+    "claim_1_local_sha256_matches_manifest": {
+      "status": "PASS",
+      "description": "Seluruh 12 berkas kanonikal memiliki SHA-256 yang cocok 100% dengan manifest lokal proyek."
+    },
+    "claim_2_actual_size_matches_remote_content_length": {
+      "status": "PASS",
+      "description": "Seluruh 12 berkas kanonikal memiliki ukuran byte aktual yang cocok 100% dengan Content-Length HTTP HEAD dari server UMD GCS."
+    },
+    "claim_3_independent_source_authenticity": {
+      "status": "UNVERIFIED",
+      "description": "Tidak ada berkas checksum publik (SHA256SUMS/MD5SUMS) dari UMD. Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen."
+    },
+    "claim_4_historical_510035_bytes_discrepancy": {
+      "status": "RESOLVED",
+      "description": "Berasal dari kekeliruan pengetikan narasi di respons asisten sebelumnya (1.492.802.873 vs 1.492.292.838). Ground truth pada filesystem, manifest, dan kedua laporan JSON adalah 1.492.292.838 byte."
+    },
+    "claim_5_lzw_entropy_variance": {
+      "status": "SUPPORTED_WITH_QUALIFICATIONS",
+      "description": "Kompresi LZW terbukti secara teknis. Korelasi entropi terbukti pada treecover2000 dan dikualifikasikan oleh efek klastering spasial run-length pada lossyear."
+    }
+  },
+  "final_conclusion": {
+    "is_reconciliation_complete": true,
+    "has_unresolved_findings": false,
+    "unresolved_count": 0,
+    "summary_verdict": "Rekonsiliasi final Tahap 2B selesai penuh tanpa ada temuan UNRESOLVED. Ground truth total ukuran 12 berkas kanonikal terkonfirmasi pasti sebesar 1.492.292.838 byte (cocok 100% pada disk, manifest, dan remote Content-Length). Selisih 510.035 byte terbukti bersumber dari kekeliruan narasi pengetikan asisten pada giliran sebelumnya dan kini telah diselesaikan. Klaim LZW terbukti secara teknis dan dikualifikasikan secara epistemologis. Status autentisitas sumber independen tetap UNVERIFIED sesuai batasan metodologis, dan status produksi tetap demonstration / unverified."
+  }
+}

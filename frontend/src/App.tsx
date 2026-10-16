@@ -14,15 +14,13 @@ import { ReportDetailModal } from './components/reports/ReportDetailModal';
 import { ReportList } from './components/reports/ReportList';
 import { ForestLossModal } from './components/forest/ForestLossModal';
 import { NearbyFireRiskModal } from './components/prediction/NearbyFireRiskModal';
-import { LoadingSpinner } from './components/common/LoadingSpinner';
-import { EmptyState } from './components/common/EmptyState';
 import { ErrorBanner } from './components/common/ErrorBanner';
+import { useTheme } from './hooks/useTheme';
 import './App.css';
+import './MapPage.css';
 
 export function App() {
-  const [isDark, setIsDark] = useState<boolean>(() => {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [isDark, toggleTheme] = useTheme();
 
   const [mode, setMode] = useState<DataSourceMode>('live');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -244,14 +242,13 @@ export function App() {
   };
 
   return (
-    <div className={`app-root ${isDark ? 'theme-dark' : 'theme-light'}`}>
-      {/* Top Bar Header */}
+    <div className={`app-root mp-root ${isDark ? 'theme-dark mp-root--dark' : 'theme-light'}`}>
       <StatusBar
         mode={mode}
         lastSyncUtc={systemStatus?.lastSyncUtc || null}
         onToggleMode={handleToggleMode}
         isDark={isDark}
-        onToggleTheme={() => setIsDark((prev) => !prev)}
+        onToggleTheme={toggleTheme}
         totalCount={hotspots.length}
         reportsCount={reports.length}
         onOpenReportModal={() => {
@@ -263,84 +260,63 @@ export function App() {
         isLocatingNearby={isLocatingNearby}
       />
 
-      {/* Main Container: Map-first Full Viewport Layout */}
-      <main className="main-viewport">
-        {/* Sidebar Kontrol (Desktop) & Collapsible Drawer (Mobile) */}
-        <aside className={`sidebar-container ${isMobilePanelOpen ? 'mobile-open' : ''}`}>
-          <div className="sidebar-inner">
-            {/* Banner Error / Notifikasi Fallback */}
+      <main className="mp-main">
+        <aside className={`mp-sidebar ${isMobilePanelOpen ? 'is-open' : ''}`}>
+          <div className="mp-sidebar__inner">
             {errorMessage && (
-              <div className="sidebar-section">
-                <ErrorBanner
-                  message={errorMessage}
-                  onRetry={() => {
-                    setMode('live');
-                    setReloadTrigger((n) => n + 1);
-                  }}
-                  onSwitchToSnapshot={() => {
-                    setMode('snapshot');
-                    setReloadTrigger((n) => n + 1);
-                  }}
-                />
-              </div>
+              <ErrorBanner
+                message={errorMessage}
+                onRetry={() => {
+                  setMode('live');
+                  setReloadTrigger((n) => n + 1);
+                }}
+                onSwitchToSnapshot={() => {
+                  setMode('snapshot');
+                  setReloadTrigger((n) => n + 1);
+                }}
+              />
             )}
 
-            {/* Tab Navigasi Antara Satelit & Laporan Warga */}
-            <div className="sidebar-section">
-              <div className="sidebar-tabs">
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === 'satelit' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('satelit')}
-                >
-                  <span>🔥</span>
-                  <span>Satelit FIRMS ({hotspots.length})</span>
-                </button>
-                <button
-                  type="button"
-                  className={`tab-btn ${activeTab === 'laporan' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('laporan')}
-                >
-                  <span>📢</span>
-                  <span>Laporan Warga ({reports.length})</span>
-                </button>
-              </div>
+            <div className="mp-tabs" role="tablist" aria-label="Sumber data">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'satelit'}
+                className={`mp-tabs__item ${activeTab === 'satelit' ? 'is-active' : ''}`}
+                onClick={() => setActiveTab('satelit')}
+              >
+                Deteksi Satelit ({hotspots.length})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'laporan'}
+                className={`mp-tabs__item ${activeTab === 'laporan' ? 'is-active' : ''}`}
+                onClick={() => setActiveTab('laporan')}
+              >
+                Laporan Warga ({reports.length})
+              </button>
             </div>
 
             {activeTab === 'satelit' ? (
               <>
-                {/* Panel Filter Observasi Satelit */}
-                <div className="sidebar-section">
-                  <FilterPanel
-                    filters={filters}
-                    onFilterChange={(newFilters) => setFilters(newFilters)}
-                    onReset={handleResetFilters}
-                    totalFiltered={hotspots.length}
-                  />
-                </div>
+                <FilterPanel
+                  filters={filters}
+                  onFilterChange={(newFilters) => setFilters(newFilters)}
+                  onReset={handleResetFilters}
+                  totalFiltered={hotspots.length}
+                />
 
-                {/* List Deteksi Satelit */}
-                <div className="sidebar-section list-section">
-                  {isLoading ? (
-                    <LoadingSpinner label="Mengambil deteksi satelit FIRMS untuk wilayah terpilih..." />
-                  ) : hotspots.length === 0 ? (
-                    <EmptyState
-                      message="Tidak ada anomali termal terdeteksi oleh satelit VIIRS pada rentang waktu terpilih di wilayah Indonesia."
-                      actionLabel="Perluas Rentang ke 7 Hari"
-                      onAction={() => setFilters((f) => ({ ...f, dayRange: 7, startDate: '', endDate: '' }))}
-                    />
-                  ) : (
-                    <DetectionList
-                      hotspots={hotspots}
-                      onSelectHotspot={(h) => setSelectedHotspot(h)}
-                      selectedId={selectedHotspot?.id}
-                    />
-                  )}
-                </div>
+                <DetectionList
+                  hotspots={hotspots}
+                  isLoading={isLoading}
+                  onSelectHotspot={(h) => setSelectedHotspot(h)}
+                  selectedId={selectedHotspot?.id}
+                  onExpandRange={() => setFilters((f) => ({ ...f, dayRange: 4, startDate: '', endDate: '' }))}
+                />
               </>
             ) : (
-              /* Panel Laporan Partisipasi Warga */
-              <div className="sidebar-section list-section" style={{ flex: 1 }}>
+              <div className="mp-reports">
                 <ReportList
                   reports={reports}
                   onSelectReport={(r) => setSelectedReport(r)}
@@ -353,28 +329,25 @@ export function App() {
               </div>
             )}
 
-            {/* Disclaimer Faktual */}
-            <div className="sidebar-footer">
+            <footer className="mp-sidebar__footer">
               <p>
-                Sistem FireGuard memadukan sensor termal satelit NASA FIRMS dan pelaporan partisipatif warga.
+                Sistem JagaBorneo memadukan sensor termal satelit NASA FIRMS dan pelaporan partisipatif warga.
                 Laporan masyarakat bertindak sebagai informasi awal dan diverifikasi bertahap.
               </p>
-            </div>
+            </footer>
           </div>
         </aside>
 
-        {/* Tombol Toggle Drawer untuk Mobile */}
         <button
           type="button"
-          className="mobile-drawer-toggle"
+          className="mp-drawer-toggle"
           onClick={() => setIsMobilePanelOpen((prev) => !prev)}
           aria-label={isMobilePanelOpen ? 'Tutup panel kontrol' : 'Buka panel kontrol'}
         >
           {isMobilePanelOpen ? 'Tutup Panel' : `Kontrol & Deteksi (${hotspots.length + reports.length})`}
         </button>
 
-        {/* Map Canvas Kanvas Peta Interaktif */}
-        <section className="map-section" aria-label="Peta Interaktif Hotspot Indonesia">
+        <section className="mp-map-section" aria-label="Peta Interaktif Hotspot Indonesia">
           <MapContainer
             hotspots={hotspots}
             selectedHotspot={selectedHotspot}

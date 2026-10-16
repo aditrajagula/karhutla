@@ -73,6 +73,10 @@ WEATHER_API_BASE_URL = os.getenv(
 )
 WEATHER_REQUEST_TIMEOUT_SECONDS = float(os.getenv("WEATHER_REQUEST_TIMEOUT_SECONDS", "5.0"))
 
+# GLAD Forest Extent 2020 Configurations
+GLAD_FOREST_DIR = BASE_DIR / os.getenv("GLAD_FOREST_DIR", "data/raster/forest")
+GLAD_FOREST_DIR.mkdir(parents=True, exist_ok=True)
+
 # Predictive Fire Risk ML Model Configurations
 PREDICTIVE_MODEL_PATH = BASE_DIR / os.getenv("PREDICTIVE_MODEL_PATH", "data/model_regresi_logistik.joblib")
 PREDICTIVE_SCALER_PATH = BASE_DIR / os.getenv("PREDICTIVE_SCALER_PATH", "data/scaler_regresi_logistik.joblib")

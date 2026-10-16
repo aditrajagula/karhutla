@@ -1,0 +1,1436 @@
+{
+  "timestamp_utc": "2026-10-15T13:25:36Z",
+  "stage_2a_rasters": [
+    {
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 85664038,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "expected_bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..25]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.19,
+        "window_read_100x100_ms": 0.12,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4400.12
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 281247373,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "expected_bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..100]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.19,
+        "window_read_100x100_ms": 0.35,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4503.37
+      }
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 22153727,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "expected_bounds": [
+          100.0,
+          -10.0,
+          110.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..2]",
+        "sample_unique_values": [
+          0,
+          1,
+          2
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.21,
+        "window_read_100x100_ms": 0.1,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 3790.19
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 79708678,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "expected_bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..25]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.2,
+        "window_read_100x100_ms": 0.17,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 3494.76
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 319865459,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "expected_bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..100]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.2,
+        "window_read_100x100_ms": 0.1,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4084.29
+      }
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 23697919,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "expected_bounds": [
+          110.0,
+          -10.0,
+          120.0,
+          0.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..2]",
+        "sample_unique_values": [
+          0,
+          1,
+          2
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.21,
+        "window_read_100x100_ms": 0.09,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 3870.19
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 72209693,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "expected_bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..25]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.2,
+        "window_read_100x100_ms": 0.1,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4294.94
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 199956397,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "expected_bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..100]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.19,
+        "window_read_100x100_ms": 0.09,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4876.09
+      }
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 24939799,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "expected_bounds": [
+          100.0,
+          0.0,
+          110.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          100.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..2]",
+        "sample_unique_values": [
+          0,
+          1,
+          2
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.21,
+        "window_read_100x100_ms": 0.14,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 3888.18
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 81574427,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "expected_bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..25]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.24,
+        "window_read_100x100_ms": 0.11,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 4565.9
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 276154773,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "expected_bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..100]",
+        "sample_unique_values": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.22,
+        "window_read_100x100_ms": 0.1,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 6578.96
+      }
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "download_complete": true,
+      "metadata_valid": true,
+      "pixel_values_valid": true,
+      "source_content_verified": true,
+      "overall_status": "VERIFIED",
+      "notes": [],
+      "size_bytes": 25120555,
+      "structure": {
+        "crs": "EPSG:4326",
+        "width": 40000,
+        "height": 40000,
+        "bands": 1,
+        "dtype": "uint8",
+        "nodata": null,
+        "bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "expected_bounds": [
+          110.0,
+          0.0,
+          120.0,
+          10.0
+        ],
+        "transform": [
+          0.00025,
+          0.0,
+          110.0,
+          0.0,
+          -0.00025,
+          10.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "is_tiled": false,
+        "block_shapes": [
+          [
+            1,
+            40000
+          ]
+        ],
+        "overviews": [],
+        "compression": "lzw"
+      },
+      "pixel_audit": {
+        "valid_domain": "[0..2]",
+        "sample_unique_values": [
+          0,
+          1,
+          2
+        ],
+        "invalid_values_found": []
+      },
+      "read_performance": {
+        "point_read_1x1_ms": 0.17,
+        "window_read_100x100_ms": 0.09,
+        "strip_format_impact": "Pembacaan 1 piksel memerlukan dekompresi 1 strip scanline (40,000 piksel)."
+      },
+      "remote_verification": {
+        "method": "VSICURL_HTTP_RANGE_WINDOWED_PIXEL_COMPARE",
+        "window": "100x100 at center (20000, 20000)",
+        "pixels_compared": 10000,
+        "identical_match": true,
+        "remote_fetch_latency_ms": 3897.29
+      }
+    }
+  ],
+  "stage_2b_safety": {
+    "manifests": {
+      "00N_100E": {
+        "exists": true,
+        "version": "2.0",
+        "is_full_tile": true,
+        "provinces": [
+          "Kalimantan Barat (bagian Selatan: Ketapang, Kayong Utara, Kubu Raya selatan)"
+        ],
+        "total_size_mb": 371.04,
+        "has_all_layers": true,
+        "files_exist_on_disk": true,
+        "checksum_policy_stated": true
+      },
+      "00N_110E": {
+        "exists": true,
+        "version": "2.0",
+        "is_full_tile": true,
+        "provinces": [
+          "Kalimantan Tengah (selatan/tengah)",
+          "Kalimantan Selatan (seluruhnya)",
+          "Kalimantan Timur (bagian Selatan: Balikpapan, Penajam Paser Utara, IKN)"
+        ],
+        "total_size_mb": 403.66,
+        "has_all_layers": true,
+        "files_exist_on_disk": true,
+        "checksum_policy_stated": true
+      },
+      "10N_100E": {
+        "exists": true,
+        "version": "2.0",
+        "is_full_tile": true,
+        "provinces": [
+          "Kalimantan Barat (bagian Utara: Pontianak, Mempawah, Singkawang, Sambas, Bengkayang, Sanggau)"
+        ],
+        "total_size_mb": 283.34,
+        "has_all_layers": true,
+        "files_exist_on_disk": true,
+        "checksum_policy_stated": true
+      },
+      "10N_110E": {
+        "exists": true,
+        "version": "2.0",
+        "is_full_tile": true,
+        "provinces": [
+          "Kalimantan Utara (seluruhnya)",
+          "Kalimantan Timur (bagian Utara: Samarinda, Kutai Kartanegara, Kutai Timur, Berau)",
+          "Kalimantan Tengah (ujung utara)"
+        ],
+        "total_size_mb": 365.11,
+        "has_all_layers": true,
+        "files_exist_on_disk": true,
+        "checksum_policy_stated": true
+      }
+    },
+    "demo_raster_safety": true,
+    "backup_subset_safety": true,
+    "manifest_overall_valid": true,
+    "notes": [],
+    "demo_file_sizes": {
+      "Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif": 2331,
+      "Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif": 2313,
+      "Hansen_GFC-2025-v1.13_datamask_00N_110E.tif": 2699
+    },
+    "backup_file_sizes": {
+      "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif": 393600,
+      "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif": 1677210,
+      "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif": 54283,
+      "manifest_00N_110E_official.json": 3662
+    }
+  }
+}

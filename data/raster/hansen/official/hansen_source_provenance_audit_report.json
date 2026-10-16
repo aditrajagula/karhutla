@@ -1,0 +1,736 @@
+{
+  "audit_metadata": {
+    "title": "Audit Sumber dan Provenance 12 Raster Kanonikal Hansen GFC-2025-v1.13",
+    "project": "FireGuard",
+    "phase": "Tahap 2 - Verifikasi Sumber dan Provenance",
+    "audit_timestamp_utc": "2026-10-15T16:59:08.987769+00:00",
+    "mode": "READ_ONLY",
+    "canonical_rasters_audited_count": 12,
+    "production_compliance": {
+      "production_code_modified": false,
+      "data_status": "demonstration",
+      "data_verified": false,
+      "scientific_disclaimer_preserved": true
+    }
+  },
+  "remote_checksum_publication_audit": {
+    "published_checksum_found": false,
+    "endpoint_checked": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/",
+    "candidate_probes": {
+      "checksums.txt": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/checksums.txt",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "sha256sums.txt": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/sha256sums.txt",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "SHA256SUMS": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/SHA256SUMS",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "MD5SUMS": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/MD5SUMS",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "metadata.txt": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/metadata.txt",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "manifest.json": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/manifest.json",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      },
+      "index.html": {
+        "url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/index.html",
+        "status": 404,
+        "reachable": false,
+        "error": "HTTPError 404: Not Found"
+      }
+    },
+    "conclusion": "Server Google Cloud Storage UMD Hansen GFC v1.13 tidak mempublikasikan berkas indeks checksum independen (SHA256SUMS/MD5SUMS). Semua probe menghasilkan HTTP 404 Not Found."
+  },
+  "canonical_rasters_provenance_audit": [
+    {
+      "tile_id": "00N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif",
+          "actual_size_bytes": 22153727,
+          "actual_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+          "mtime_utc": "2026-10-15T13:13:45.918146+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.219003+00:00",
+          "recorded_size_bytes": 22153727,
+          "recorded_sha256": "cd1d1cf909233d4cad81a4736b21e5f6a2b74e10d0433eef2ab402ec5f8dff68",
+          "download_duration_seconds": 0.06,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 22153727,
+          "content_length_matches_actual": true,
+          "etag": "\"bc493680ed436eff1f3c2943abeb37b7\"",
+          "last_modified": "Thu, 19 Mar 2026 20:05:38 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=AzGpHQ==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif",
+          "actual_size_bytes": 281247373,
+          "actual_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+          "mtime_utc": "2026-10-15T13:16:26.576805+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.219003+00:00",
+          "recorded_size_bytes": 281247373,
+          "recorded_sha256": "513e7116a37ae3f8b51b11839625b17519730a8dd7b6df9347f4305cb5821d69",
+          "download_duration_seconds": 0.7,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 281247373,
+          "content_length_matches_actual": true,
+          "etag": "\"2cc062d716c582a4759e41e852c3a8f1\"",
+          "last_modified": "Thu, 19 Mar 2026 20:05:34 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=sIIZQw==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "00N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif",
+          "actual_size_bytes": 85664038,
+          "actual_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+          "mtime_utc": "2026-10-15T13:15:45.663373+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.219003+00:00",
+          "recorded_size_bytes": 85664038,
+          "recorded_sha256": "4a676e1df62215ee7ec22f68d7ff610eac1ffcacbe091dcb398c49748759ca9c",
+          "download_duration_seconds": 0.28,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 85664038,
+          "content_length_matches_actual": true,
+          "etag": "\"29417812d21b82d37c18e3d3165d61fc\"",
+          "last_modified": "Mon, 16 Mar 2026 18:14:06 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=/7jd2A==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif",
+          "actual_size_bytes": 23697919,
+          "actual_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+          "mtime_utc": "2026-10-15T13:18:57.806767+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.223991+00:00",
+          "recorded_size_bytes": 23697919,
+          "recorded_sha256": "5ea01dfbfb9b41a30ca701c504cbf54b0e393040073fabf9f070f903d4c5feaa",
+          "download_duration_seconds": 3.45,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_00N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 23697919,
+          "content_length_matches_actual": true,
+          "etag": "\"b68e42f98e02aae04b24b333bb5508c3\"",
+          "last_modified": "Thu, 19 Mar 2026 20:05:53 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=KRyWhg==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif",
+          "actual_size_bytes": 319865459,
+          "actual_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+          "mtime_utc": "2026-10-15T13:17:25.398765+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.223991+00:00",
+          "recorded_size_bytes": 319865459,
+          "recorded_sha256": "617f8bae729b117ea62a97a526a9ee8d93c4e9637d389b537441db6e49b6de95",
+          "download_duration_seconds": 0.72,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 319865459,
+          "content_length_matches_actual": true,
+          "etag": "\"3996f44d9435cb59b9c90ddb5d468cf8\"",
+          "last_modified": "Thu, 19 Mar 2026 20:05:49 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=wEdE3A==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "00N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif",
+          "actual_size_bytes": 79708678,
+          "actual_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+          "mtime_utc": "2026-10-15T13:16:41.217440+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_00N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.223991+00:00",
+          "recorded_size_bytes": 79708678,
+          "recorded_sha256": "a07ce543bb79aae1a49c3282675cd522efde3e089fc39e265363dbf6aab5272a",
+          "download_duration_seconds": 0.19,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 79708678,
+          "content_length_matches_actual": true,
+          "etag": "\"c5c2a29a15f1a8ec495ba4098ac76c01\"",
+          "last_modified": "Mon, 16 Mar 2026 18:14:11 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=n0qHWQ==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_10N_100E_official.tif",
+          "actual_size_bytes": 24939799,
+          "actual_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+          "mtime_utc": "2026-10-15T13:19:45.371693+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.226409+00:00",
+          "recorded_size_bytes": 24939799,
+          "recorded_sha256": "fefd0cdfa029f1612536b6e2246185c73d832259488980e5fa5357ace994d4f6",
+          "download_duration_seconds": 6.26,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 24939799,
+          "content_length_matches_actual": true,
+          "etag": "\"0f08426d13276800188becaf426f4d83\"",
+          "last_modified": "Thu, 19 Mar 2026 20:10:10 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=zpnFug==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_10N_100E_official.tif",
+          "actual_size_bytes": 199956397,
+          "actual_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+          "mtime_utc": "2026-10-15T13:19:38.828239+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.226409+00:00",
+          "recorded_size_bytes": 199956397,
+          "recorded_sha256": "48646e738bb4e20bc05a8acb46e2f97b1d372866ea765c94d4bc5e4a49eb733c",
+          "download_duration_seconds": 30.76,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 199956397,
+          "content_length_matches_actual": true,
+          "etag": "\"a5d52b8c9eba57274a8c0ca54c74f551\"",
+          "last_modified": "Thu, 19 Mar 2026 20:10:06 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=4Rg/Fg==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_100E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_10N_100E_official.tif",
+          "actual_size_bytes": 72209693,
+          "actual_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+          "mtime_utc": "2026-10-15T13:19:08.269666+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_100E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.226409+00:00",
+          "recorded_size_bytes": 72209693,
+          "recorded_sha256": "cf448cb724c852c9e16542858d1fa52736612cd104b0060e1cd2724e9d23d420",
+          "download_duration_seconds": 10.52,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_100E.tif",
+          "http_status": 200,
+          "content_length_bytes": 72209693,
+          "content_length_matches_actual": true,
+          "etag": "\"ea66a23174c7b83836f0c52bd4a93ab1\"",
+          "last_modified": "Mon, 16 Mar 2026 18:15:04 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=LnSyVg==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "datamask",
+      "filename": "Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_datamask_10N_110E_official.tif",
+          "actual_size_bytes": 25120555,
+          "actual_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+          "mtime_utc": "2026-10-15T13:20:44.151725+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.228060+00:00",
+          "recorded_size_bytes": 25120555,
+          "recorded_sha256": "ddcc15a997bb199054eaa02954cba37af97eb4467d7550c6a5d3ed3f1ad72c7e",
+          "download_duration_seconds": 3.69,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_datamask_10N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 25120555,
+          "content_length_matches_actual": true,
+          "etag": "\"f48e260a5e8b1d8d41e83dcf4cbc4d6b\"",
+          "last_modified": "Thu, 19 Mar 2026 20:10:25 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=PGu0Yw==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "treecover2000",
+      "filename": "Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_treecover2000_10N_110E_official.tif",
+          "actual_size_bytes": 276154773,
+          "actual_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+          "mtime_utc": "2026-10-15T13:20:38.347236+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.228060+00:00",
+          "recorded_size_bytes": 276154773,
+          "recorded_sha256": "c4299e7af54b3429e17e9fe4b638b4cf4afe315128d6dda720b826c7d3b6d923",
+          "download_duration_seconds": 38.5,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_treecover2000_10N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 276154773,
+          "content_length_matches_actual": true,
+          "etag": "\"548305333d31c1f082b4e7d2150577e4\"",
+          "last_modified": "Thu, 19 Mar 2026 20:10:21 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=7CDA5w==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    },
+    {
+      "tile_id": "10N_110E",
+      "layer": "lossyear",
+      "filename": "Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+      "local_integrity_status": "PASS",
+      "source_url_status": "PASS",
+      "dataset_version_status": "PASS",
+      "independent_checksum_status": "UNVERIFIED",
+      "provenance_status": "UNVERIFIED",
+      "evidence": {
+        "local_file": {
+          "path": "data/raster/hansen/official/Hansen_GFC-2025-v1.13_lossyear_10N_110E_official.tif",
+          "actual_size_bytes": 81574427,
+          "actual_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+          "mtime_utc": "2026-10-15T13:20:01.866958+00:00"
+        },
+        "local_manifest": {
+          "manifest_path": "data/raster/hansen/official/manifest_10N_110E_official.json",
+          "manifest_version": "2.0",
+          "dataset_version": "GFC-2025-v1.13",
+          "ingested_at_utc": "2026-10-15T13:20:44.228060+00:00",
+          "recorded_size_bytes": 81574427,
+          "recorded_sha256": "22f6c29d332095a5e2ae92ac39451c3fd8d0431b20f0328baff3fb4c1b7a4a2b",
+          "download_duration_seconds": 16.57,
+          "source_declared": "UNIVERSITY_OF_MARYLAND_GOOGLE_EARTH_ENGINE",
+          "source_checksum_published": false
+        },
+        "remote_http_head": {
+          "remote_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_10N_110E.tif",
+          "http_status": 200,
+          "content_length_bytes": 81574427,
+          "content_length_matches_actual": true,
+          "etag": "\"71f1d65a9fa5b89b13195b444880e0f7\"",
+          "last_modified": "Mon, 16 Mar 2026 18:15:09 GMT",
+          "server": "UploadServer",
+          "x_goog_hash": "crc32c=MLQhHA==",
+          "supports_range": true,
+          "probe_timestamp_utc": "2026-10-15T16:59:08.987769+00:00"
+        },
+        "limitations": [
+          "Kecocokan HTTP Content-Length membuktikan transmisi byte lengkap, tetapi bukan merupakan tanda tangan kriptografis dari penyusun dataset (UMD).",
+          "ETag GCS (\"...\") adalah hash internal Google Cloud Storage, bukan SHA-256 berkas.",
+          "Header x-goog-hash hanya memuat CRC32c komposit dan tidak mempublikasikan SHA-256 resmi.",
+          "Autentisitas byte-for-byte dari sumber primer tidak dapat dibuktikan secara independen tanpa berkas checksum resmi UMD."
+        ]
+      },
+      "required_followup": "Pertahankan klasifikasi UNVERIFIED untuk autentisitas sumber independen. Data layak digunakan untuk studi dan pengujian internal karena integritas biner lokal dan keselarasan ukuran byte dengan server UMD telah diverifikasi 100%."
+    }
+  ],
+  "historical_size_anomalies_investigation": [
+    {
+      "anomaly_id": "ANOMALY_01_ROOT_DEMO_FILES",
+      "tile_id": "00N_110E",
+      "location": "data/raster/hansen/",
+      "observed_files": [
+        "Hansen_GFC-2025-v1.13_datamask_00N_110E.tif (2,699 B)",
+        "Hansen_GFC-2025-v1.13_lossyear_00N_110E.tif (2,331 B)",
+        "Hansen_GFC-2025-v1.13_treecover2000_00N_110E.tif (2,313 B)"
+      ],
+      "comparison_reference": "data/raster/hansen/manifest_00N_110E_official.json (mencatat ukuran 54 KB, 393 KB, 1.67 MB)",
+      "classification": "SUBSET_CROP_DEMO_MISMATCH",
+      "evidence": [
+        "Pemeriksaan Rasterio menunjukkan berkas di root berdimensi 300x300 piksel dengan bounding box [113.8, -2.175, 113.875, -2.1].",
+        "Ukuran berkas (~2.3 - 2.7 KB) merupakan subset mikro sintetis/demo lokal untuk pengujian unit backend.",
+        "Manifest di direktori tersebut merupakan artefak legacy versi 1.0 yang tertinggal saat subset Palangka Raya dipindahkan ke backup."
+      ],
+      "impact_on_canonical_data": "Nol. Pipeline produksi resmi menggunakan HANSEN_OFFICIAL_DIR dan mengabaikan direktori root saat use_official aktif."
+    },
+    {
+      "anomaly_id": "ANOMALY_02_PALANGKA_RAYA_BACKUP_SUBSET",
+      "tile_id": "00N_110E",
+      "location": "data/raster/hansen/official/backup_subset_palangka_raya/",
+      "observed_files": [
+        "Hansen_GFC-2025-v1.13_datamask_00N_110E_official.tif (54,283 B)",
+        "Hansen_GFC-2025-v1.13_lossyear_00N_110E_official.tif (393,600 B)",
+        "Hansen_GFC-2025-v1.13_treecover2000_00N_110E_official.tif (1,677,210 B)"
+      ],
+      "comparison_reference": "Canonical full tile di official/ (23.7 MB, 79.7 MB, 319.8 MB)",
+      "classification": "REGIONAL_SUBSET_CROP",
+      "evidence": [
+        "Pemeriksaan Rasterio membuktikan dimensi berkas adalah 2000x2400 piksel dengan bounding box [113.60, -2.50, 114.20, -2.00] (Palangka Raya).",
+        "Manifest v1.0 di direktori backup secara eksplisit menyatakan is_clipped: true.",
+        "Perbedaan ukuran dengan tile kanonikal resmi disebabkan pemotongan spasial (cropped subset) pada fase awal proyek sebelum pengunduhan tile penuh."
+      ],
+      "impact_on_canonical_data": "Nol. Berkas tersimpan di direktori cadangan terpisah dan tidak digunakan untuk agregasi provinsi."
+    },
+    {
+      "anomaly_id": "ANOMALY_03_BACKUP_00N_100E_DUPLICATION",
+      "tile_id": "00N_100E",
+      "location": "data/raster/hansen/official/backup_subset_palangka_raya/",
+      "observed_files": [
+        "Hansen_GFC-2025-v1.13_datamask_00N_100E_official.tif (22,153,727 B)",
+        "Hansen_GFC-2025-v1.13_lossyear_00N_100E_official.tif (85,664,038 B)",
+        "Hansen_GFC-2025-v1.13_treecover2000_00N_100E_official.tif (281,247,373 B)"
+      ],
+      "comparison_reference": "Canonical full tile di official/",
+      "classification": "IDENTICAL_FILE_DUPLICATION",
+      "evidence": [
+        "Ukuran byte identik persis dengan berkas kanonikal di official/.",
+        "Hash SHA-256 identik persis (cd1d1cf9..., 4a676e1d..., 513e7116...).",
+        "Manifest di backup hanya mencantumkan datamask (partial v2.0 manifest)."
+      ],
+      "impact_on_canonical_data": "Nol. Berkas adalah salinan cadangan redundan yang identik bit-for-bit."
+    },
+    {
+      "anomaly_id": "ANOMALY_04_INTER_TILE_SIZE_VARIANCE",
+      "tile_id": "ALL_CANONICAL_TILES",
+      "location": "data/raster/hansen/official/",
+      "observed_files": [
+        "Treecover2000: 10N_100E (199.9 MB) vs 00N_110E (319.8 MB)",
+        "Datamask: 00N_100E (22.1 MB) vs 10N_110E (25.1 MB)",
+        "Lossyear: 10N_100E (72.2 MB) vs 00N_100E (85.6 MB)"
+      ],
+      "comparison_reference": "Seluruhnya berdimensi sama: 40,000 x 40,000 piksel (1.6 miliar piksel)",
+      "classification": "LZW_COMPRESSION_ENTROPY_DIFFERENCE",
+      "evidence": [
+        "Pemeriksaan header GeoTIFF membuktikan semua tile menggunakan kompresi LZW lossless (COMPRESSION=LZW).",
+        "Tile 10N_100E mencakup perairan Laut Natuna yang luas dengan nilai seragam (0) sehingga rasio kompresi LZW sangat tinggi (199.9 MB).",
+        "Tile 00N_110E mencakup daratan luas dengan variasi tutupan pohon heterogen sehingga entropi data lebih tinggi (319.8 MB).",
+        "Ukuran byte seluruh 12 berkas lokal cocok 100% dengan Content-Length pada server primer UMD GCS."
+      ],
+      "impact_on_canonical_data": "Nol. Merupakan perilaku kompresi raster standar yang diharapkan."
+    }
+  ],
+  "summary_findings": {
+    "total_canonical_files": 12,
+    "local_integrity_pass_count": 12,
+    "source_url_pass_count": 12,
+    "dataset_version_pass_count": 12,
+    "independent_checksum_unverified_count": 12,
+    "provenance_unverified_count": 12
+  },
+  "verdict_and_recommendations": {
+    "verdict": "DATA_ELIGIBLE_FOR_INTERNAL_ANALYSIS_WITH_EXPLICIT_LIMITATIONS",
+    "justification": "Seluruh 12 berkas raster kanonikal di data/raster/hansen/official/ lulus 100% pada verifikasi integritas lokal (ukuran byte dan SHA-256 cocok dengan manifest proyek), verifikasi URL sumber primer (HTTP 200, Content-Length cocok 100%), dan konsistensi versi dataset (GFC-2025-v1.13). Namun, karena University of Maryland / Google Earth Engine tidak mempublikasikan checksum SHA-256 resmi pihak ketiga, status autentisitas sumber independen secara jujur diklasifikasikan sebagai UNVERIFIED.",
+    "operational_recommendations": [
+      "1. Data 12 raster kanonikal resmi layak digunakan untuk analisis statistik internal, audit zonal, dan visualisasi spasial FireGuard.",
+      "2. Status data_status: 'demonstration' dan data_verified: false WAJIB dipertahankan pada kode produksi backend dan endpoint API.",
+      "3. Keterbatasan ketiadaan checksum independen primer wajib dicantumkan dalam dokumentasi ilmiah dan laporan teknis proyek.",
+      "4. Tidak perlu melakukan pengunduhan ulang karena seluruh berkas lokal telah terbukti identik ukuran bytenya dengan server UMD."
+    ]
+  }
+}

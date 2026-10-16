@@ -9,17 +9,21 @@ import logging
 import math
 import uuid
 from datetime import datetime, timezone, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
 from starlette.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from shapely.geometry import mapping, shape
 
 from .config import (
     BOUNDARIES_PATH,
     FIRMS_DEFAULT_SOURCE,
     FIRMS_MAP_KEY,
+    GLAD_FOREST_DIR,
     SNAPSHOTS_DIR,
     UPLOADS_DIR,
 )
@@ -34,8 +38,20 @@ from .forest_change_service import (
     HANSEN_ANNUAL_LOSS_HA,
 )
 from .evidence_service import assess_report_evidence, parse_iso_utc
+from .glad_forest_reader import (
+    lookup_forest_extent,
+    check_glad_forest_layer_availability,
+    KALIMANTAN_GLAD_TILES,
+)
 
 logger = logging.getLogger(__name__)
+PEATLAND_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_big_official.geojson")
+PEATLAND_DISPLAY_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_display.geojson")
+CLASSIFIED_HOTSPOTS_GEOJSON_PATH = Path(__file__).with_name("hotspots_kalimantan_final.geojson")
+FIRMS_MANIFEST_PATH = Path(__file__).with_name("firms_manifest.json")
+FOREST_OVERLAY_PNG_PATH = GLAD_FOREST_DIR / "kalimantan" / "kalteng_forest_overlay.png"
+FOREST_SUBSET_TIF_PATH = GLAD_FOREST_DIR / "kalimantan" / "GLAD_Forest_extent_2020_00N_110E_kalteng_demo.tif"
+PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES = 0.0001
 
 app = FastAPI(
     title="Pantau Hotspot, Jaga Hutan dan Gambut API",
@@ -314,16 +330,33 @@ def get_context_layers() -> ContextLayersResponse:
     Melaporkan ketersediaan layer kontekstual secara transparan.
     Tidak mengarang data kawasan hutan atau gambut jika belum tersedia dari sumber resmi.
     """
+    glad_available, installed_tiles, details = check_glad_forest_layer_availability()
+    kalimantan_installed = [t for t in installed_tiles if t in KALIMANTAN_GLAD_TILES]
+    if len(kalimantan_installed) > 0:
+        has_subset = any(details.get(t, {}).get("is_subset", False) for t in kalimantan_installed)
+        subset_note = " (cakupan parsial: 4 subset zona sampel demo terpasang)" if has_subset else ""
+        status_msg = f"Layer raster tutupan hutan GLAD 2020 aktif ({len(kalimantan_installed)}/4 kuadran dengan subset sampel terpasang: {', '.join(kalimantan_installed)}{subset_note})."
+    elif len(installed_tiles) > 0:
+        status_msg = f"Raster GLAD 2020 terdeteksi ({', '.join(installed_tiles)}), namun 4 tile khusus Kalimantan (00N_100E, 00N_110E, 10N_100E, 10N_110E) belum tersedia di data/raster/forest/."
+    else:
+        status_msg = "Dataset raster GLAD Forest Extent 2020 belum tersedia di direktori lokal data/raster/forest/."
+
     return ContextLayersResponse(
         forest_layer=ContextLayerItem(
-            available=False,
-            source="Kementerian Lingkungan Hidup dan Kehutanan (KLHK)",
-            status_message="Dataset resmi kawasan hutan belum tersedia dari panitia/instansi."
+            available=glad_available,
+            source="GLAD Global Land Cover and Land Use Change 2000–2020 (Forest extent 2020, UMD)",
+            status_message=status_msg,
+            feature_count=len(kalimantan_installed) if glad_available else len(installed_tiles)
         ),
         peatland_layer=ContextLayerItem(
-            available=False,
-            source="Badan Restorasi Gambut dan Mangrove (BRGM)",
-            status_message="Dataset resmi kesatuan hidrologis gambut belum tersedia dari panitia/instansi."
+            available=PEATLAND_GEOJSON_PATH.is_file(),
+            source="GeoJSON lokal peat_kalimantan_big_official.geojson",
+            status_message=(
+                "Layer poligon gambut Kalimantan tersedia untuk ditampilkan. "
+                "Tahun, lisensi, dan provenance dataset belum tercatat pada manifest."
+                if PEATLAND_GEOJSON_PATH.is_file()
+                else "Dataset poligon gambut Kalimantan belum tersedia pada server."
+            )
         ),
         boundary_layer=ContextLayerItem(
             available=True,
@@ -331,6 +364,359 @@ def get_context_layers() -> ContextLayersResponse:
             status_message="Geometri batas wilayah daratan Indonesia aktif untuk filter spasial.",
             feature_count=len(pipeline_instance.spatial_filter.geometries)
         )
+    )
+
+
+@lru_cache(maxsize=1)
+def _peatland_display_geojson_bytes() -> bytes:
+    """Prepare a lighter display-only copy; source geometry remains unchanged."""
+    if PEATLAND_DISPLAY_GEOJSON_PATH.is_file():
+        return PEATLAND_DISPLAY_GEOJSON_PATH.read_bytes()
+
+    if not PEATLAND_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON gambut belum tersedia.")
+
+    with PEATLAND_GEOJSON_PATH.open(encoding="utf-8") as source_file:
+        collection = json.load(source_file)
+    if collection.get("type") != "FeatureCollection" or not isinstance(
+        collection.get("features"), list
+    ):
+        raise HTTPException(status_code=500, detail="Format GeoJSON gambut tidak valid.")
+
+    for feature in collection["features"]:
+        geometry = shape(feature["geometry"])
+        if geometry.is_empty or not geometry.is_valid:
+            raise HTTPException(
+                status_code=500,
+                detail="GeoJSON gambut memiliki geometri kosong atau tidak valid.",
+            )
+        display_geometry = geometry.simplify(
+            PEATLAND_DISPLAY_SIMPLIFICATION_DEGREES,
+            preserve_topology=True,
+        )
+        feature["geometry"] = mapping(display_geometry)
+
+    return json.dumps(collection, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
+
+@app.get("/api/v1/map-data/peatland", summary="GeoJSON layer poligon gambut Kalimantan")
+def get_peatland_map_data() -> Response:
+    return Response(
+        content=_peatland_display_geojson_bytes(),
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/v1/map-data/classified-hotspots", summary="GeoJSON hotspot FIRMS dengan klasifikasi gambut")
+def get_classified_hotspots_map_data() -> FileResponse:
+    if not CLASSIFIED_HOTSPOTS_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON hotspot terklasifikasi belum tersedia.")
+    return FileResponse(
+        CLASSIFIED_HOTSPOTS_GEOJSON_PATH,
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+@app.get("/api/v1/map-data/firms-manifest", summary="Metadata dataset hotspot FIRMS peta Kalimantan")
+def get_firms_map_manifest() -> FileResponse:
+    if not FIRMS_MANIFEST_PATH.is_file():
+        raise HTTPException(status_code=503, detail="Manifest dataset FIRMS belum tersedia.")
+    return FileResponse(
+        FIRMS_MANIFEST_PATH,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+KALIMANTAN_FOREST_TILE_CONFIGS = {
+    "00N_100E": {
+        "tile_id": "00N_100E",
+        "region": "Zona Sampel Kalbar Selatan (Ketapang & Delta Pawan)",
+        "province": "Kalimantan Barat",
+        "is_full_tile": False,
+        "coverage_type": "subset_sample",
+        "official_tile_bounds": {"west": 100.0, "east": 110.0, "south": -10.0, "north": 0.0},
+        "sample_area_sq_deg": 0.25,
+        "tif_file": "GLAD_Forest_extent_2020_00N_100E_ketapang_demo.tif",
+        "overlay_file": "ketapang_forest_overlay.png",
+        "bounds": {"west": 109.50, "east": 110.00, "south": -2.00, "north": -1.50},
+        "leaflet_bounds": [[-2.00, 109.50], [-1.50, 110.00]],
+        "resolution_meters": 30.0,
+        "resolution_degrees": 0.00025,
+        "width_pixels": 2000,
+        "height_pixels": 2000,
+        "pixel_statistics": {
+            "forest_pixels": 80391,
+            "non_forest_pixels": 3919609,
+            "nodata_pixels": 0,
+            "forest_percentage": 2.01,
+        },
+    },
+    "00N_110E": {
+        "tile_id": "00N_110E",
+        "region": "Zona Sampel Kalteng & Kalsel (Palangka Raya, Pulang Pisau, Sebangau)",
+        "province": "Kalimantan Tengah",
+        "is_full_tile": False,
+        "coverage_type": "subset_sample",
+        "official_tile_bounds": {"west": 110.0, "east": 120.0, "south": -10.0, "north": 0.0},
+        "sample_area_sq_deg": 0.72,
+        "tif_file": "GLAD_Forest_extent_2020_00N_110E_kalteng_demo.tif",
+        "overlay_file": "kalteng_forest_overlay.png",
+        "bounds": {"west": 113.50, "east": 114.40, "south": -2.60, "north": -1.80},
+        "leaflet_bounds": [[-2.60, 113.50], [-1.80, 114.40]],
+        "resolution_meters": 30.0,
+        "resolution_degrees": 0.00025,
+        "width_pixels": 3600,
+        "height_pixels": 3200,
+        "pixel_statistics": {
+            "forest_pixels": 8445845,
+            "non_forest_pixels": 3074155,
+            "nodata_pixels": 0,
+            "forest_percentage": 73.31,
+        },
+    },
+    "10N_100E": {
+        "tile_id": "10N_100E",
+        "region": "Zona Sampel Kalbar Utara (Pontianak, Mempawah, Kubu Raya)",
+        "province": "Kalimantan Barat",
+        "is_full_tile": False,
+        "coverage_type": "subset_sample",
+        "official_tile_bounds": {"west": 100.0, "east": 110.0, "south": 0.0, "north": 10.0},
+        "sample_area_sq_deg": 0.25,
+        "tif_file": "GLAD_Forest_extent_2020_10N_100E_kalbar_demo.tif",
+        "overlay_file": "kalbar_forest_overlay.png",
+        "bounds": {"west": 109.10, "east": 109.60, "south": 0.00, "north": 0.50},
+        "leaflet_bounds": [[0.00, 109.10], [0.50, 109.60]],
+        "resolution_meters": 30.0,
+        "resolution_degrees": 0.00025,
+        "width_pixels": 2000,
+        "height_pixels": 2000,
+        "pixel_statistics": {
+            "forest_pixels": 2749613,
+            "non_forest_pixels": 1250387,
+            "nodata_pixels": 0,
+            "forest_percentage": 68.74,
+        },
+    },
+    "10N_110E": {
+        "tile_id": "10N_110E",
+        "region": "Zona Sampel Kaltim (Samarinda, Delta Mahakam, Kutai Kartanegara)",
+        "province": "Kalimantan Timur",
+        "is_full_tile": False,
+        "coverage_type": "subset_sample",
+        "official_tile_bounds": {"west": 110.0, "east": 120.0, "south": 0.0, "north": 10.0},
+        "sample_area_sq_deg": 0.36,
+        "tif_file": "GLAD_Forest_extent_2020_10N_110E_kaltim_demo.tif",
+        "overlay_file": "kaltim_forest_overlay.png",
+        "bounds": {"west": 116.80, "east": 117.40, "south": 0.00, "north": 0.60},
+        "leaflet_bounds": [[0.00, 116.80], [0.60, 117.40]],
+        "resolution_meters": 30.0,
+        "resolution_degrees": 0.00025,
+        "width_pixels": 2400,
+        "height_pixels": 2400,
+        "pixel_statistics": {
+            "forest_pixels": 4108899,
+            "non_forest_pixels": 1651101,
+            "nodata_pixels": 0,
+            "forest_percentage": 71.34,
+        },
+    },
+}
+
+FOREST_LEGEND = [
+    {"label": "Hutan Kanopi >= 5m (GLAD 2020)", "color": "#10B981", "value": 1},
+    {"label": "Bukan Hutan (GLAD 2020)", "color": "#94A3B8", "value": 0},
+]
+
+FOREST_CAVEAT = (
+    "Klasifikasi tutupan pohon GLAD 2020 merepresentasikan kondisi biofisik kanopi tahun 2020 "
+    "(tinggi >= 5m, FAO FRA baseline), bukan kondisi real-time terkini. "
+    "PERINGATAN CAKUPAN: Data aktif merupakan 4 subset sampel demo regional (~1.33 deg² daratan / "
+    "~3.05% luas daratan Kalimantan). 96.95% area pulau lainnya belum diunduh (berstatus UNKNOWN). "
+    "Persentase tutupan 60.86% adalah persentase sampel dalam 4 jendela observasi tersebut, "
+    "bukan statistik seluruh Pulau Kalimantan."
+)
+
+
+@app.get("/api/v1/map-data/forest-extent/tiles", summary="Daftar seluruh tile segmentasi tutupan hutan Kalimantan")
+def get_forest_extent_tiles() -> Dict[str, Any]:
+    """
+    Mengembalikan daftar tile GLAD Forest Extent 2020 yang mencakup zona sampel Pulau Kalimantan,
+    beserta status ketersediaan, batas geospasial Leaflet, ukuran berkas, dan URL overlay PNG.
+    Mendukung deteksi otomatis jika tile penuh telah diunduh di data/raster/forest/tiles_full/.
+    """
+    kalimantan_dir = GLAD_FOREST_DIR / "kalimantan"
+    tiles_full_dir = GLAD_FOREST_DIR / "tiles_full"
+    tile_list = []
+    total_forest_pixels = 0
+    total_non_forest_pixels = 0
+
+    for tile_id, cfg in KALIMANTAN_FOREST_TILE_CONFIGS.items():
+        full_tif_p = tiles_full_dir / f"{tile_id}.tif"
+        if full_tif_p.is_file():
+            tif_p = full_tif_p
+            is_full = True
+        else:
+            tif_p = kalimantan_dir / cfg["tif_file"]
+            is_full = False
+
+        png_p = kalimantan_dir / cfg["overlay_file"]
+        is_avail = tif_p.is_file() and png_p.is_file()
+
+        item = dict(cfg)
+        item["available"] = is_avail
+        item["is_full_tile"] = is_full
+        item["coverage_type"] = "full_tile" if is_full else "subset_sample"
+        item["tif_size_bytes"] = tif_p.stat().st_size if tif_p.is_file() else 0
+        item["overlay_size_bytes"] = png_p.stat().st_size if png_p.is_file() else 0
+        item["overlay_url"] = f"/api/v1/map-data/forest-extent/tiles/{tile_id}/overlay"
+        item["meta_url"] = f"/api/v1/map-data/forest-extent/tiles/{tile_id}/meta"
+
+        stats = cfg.get("pixel_statistics", {})
+        total_forest_pixels += stats.get("forest_pixels", 0)
+        total_non_forest_pixels += stats.get("non_forest_pixels", 0)
+        tile_list.append(item)
+
+    total_valid = total_forest_pixels + total_non_forest_pixels
+    overall_forest_pct = round((total_forest_pixels / total_valid) * 100, 2) if total_valid > 0 else 0
+
+    all_full = len(tile_list) == 4 and all(t.get("is_full_tile", False) for t in tile_list if t["available"])
+    coverage_status = "FULL" if all_full else "PARTIAL"
+    scope_desc = (
+        "Cakupan Penuh (4 Tile Resmi GLAD 2020 Pulau Kalimantan)"
+        if all_full else
+        "Cakupan Parsial (4 Zona Sampel Regional Kalimantan: Ketapang, Palangka Raya, Pontianak, Samarinda)"
+    )
+    coverage_pct_land = 100.0 if all_full else 3.05
+
+    return {
+        "dataset": "GLAD Global Land Cover and Land Use Change 2000–2020",
+        "layer": "Forest extent 2020",
+        "period": "2020",
+        "scope": scope_desc,
+        "coverage_status": coverage_status,
+        "is_full_coverage": all_full,
+        "coverage_percentage_of_kalimantan": coverage_pct_land,
+        "total_quadrants": len(KALIMANTAN_FOREST_TILE_CONFIGS),
+        "available_quadrants": sum(1 for t in tile_list if t["available"]),
+        "all_quadrants_available": all(t["available"] for t in tile_list),
+        "total_forest_pixels": total_forest_pixels,
+        "total_non_forest_pixels": total_non_forest_pixels,
+        "sample_forest_percentage": overall_forest_pct,
+        "overall_forest_percentage": overall_forest_pct,
+        "legend": FOREST_LEGEND,
+        "caveat": FOREST_CAVEAT,
+        "tiles": tile_list,
+    }
+
+
+@app.get("/api/v1/map-data/forest-extent/tiles/{tile_id}/meta", summary="Metadata spesifik per-tile tutupan hutan")
+def get_forest_extent_tile_meta(tile_id: str) -> Dict[str, Any]:
+    if tile_id not in KALIMANTAN_FOREST_TILE_CONFIGS:
+        raise HTTPException(status_code=404, detail=f"Tile ID '{tile_id}' tidak dikenal untuk Pulau Kalimantan.")
+
+    cfg = KALIMANTAN_FOREST_TILE_CONFIGS[tile_id]
+    kalimantan_dir = GLAD_FOREST_DIR / "kalimantan"
+    tif_p = kalimantan_dir / cfg["tif_file"]
+    png_p = kalimantan_dir / cfg["overlay_file"]
+    is_avail = tif_p.is_file() and png_p.is_file()
+
+    res = dict(cfg)
+    res["available"] = is_avail
+    res["dataset"] = "GLAD Global Land Cover and Land Use Change 2000–2020"
+    res["layer"] = "Forest extent 2020"
+    res["period"] = "2020"
+    res["tif_size_bytes"] = tif_p.stat().st_size if tif_p.is_file() else 0
+    res["overlay_size_bytes"] = png_p.stat().st_size if png_p.is_file() else 0
+    res["overlay_url"] = f"/api/v1/map-data/forest-extent/tiles/{tile_id}/overlay"
+    res["legend"] = FOREST_LEGEND
+    res["caveat"] = FOREST_CAVEAT
+    return res
+
+
+@app.get("/api/v1/map-data/forest-extent/tiles/{tile_id}/overlay", summary="Citra PNG overlay per-tile tutupan hutan")
+def get_forest_extent_tile_overlay(tile_id: str) -> FileResponse:
+    if tile_id not in KALIMANTAN_FOREST_TILE_CONFIGS:
+        raise HTTPException(status_code=404, detail=f"Tile ID '{tile_id}' tidak dikenal untuk Pulau Kalimantan.")
+
+    cfg = KALIMANTAN_FOREST_TILE_CONFIGS[tile_id]
+    overlay_path = GLAD_FOREST_DIR / "kalimantan" / cfg["overlay_file"]
+    if not overlay_path.is_file():
+        raise HTTPException(status_code=503, detail=f"Citra overlay untuk tile '{tile_id}' belum tersedia.")
+
+    return FileResponse(
+        overlay_path,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/v1/map-data/forest-extent/meta", summary="Metadata raster segmentasi tutupan hutan GLAD 2020 Kalimantan")
+def get_forest_extent_map_meta() -> Dict[str, Any]:
+    """
+    Mengembalikan metadata geospasial, bounds, statistik piksel, dan legenda
+    untuk layer segmentasi tutupan hutan GLAD 2020 (kompatibel ke belakang).
+    """
+    available = FOREST_OVERLAY_PNG_PATH.is_file() and FOREST_SUBSET_TIF_PATH.is_file()
+    file_size_bytes = FOREST_OVERLAY_PNG_PATH.stat().st_size if FOREST_OVERLAY_PNG_PATH.is_file() else 0
+    geotiff_size_bytes = FOREST_SUBSET_TIF_PATH.stat().st_size if FOREST_SUBSET_TIF_PATH.is_file() else 0
+
+    return {
+        "available": available,
+        "dataset": "GLAD Global Land Cover and Land Use Change 2000–2020",
+        "layer": "Forest extent 2020",
+        "period": "2020",
+        "tile_id": "00N_110E",
+        "region": "Kalimantan Tengah (Palangka Raya & Sekitarnya)",
+        "bounds": {
+            "west": 113.50,
+            "east": 114.40,
+            "south": -2.60,
+            "north": -1.80
+        },
+        "leaflet_bounds": [
+            [-2.60, 113.50],
+            [-1.80, 114.40]
+        ],
+        "resolution_degrees": 0.00025,
+        "resolution_meters": 30.0,
+        "width_pixels": 3600,
+        "height_pixels": 3200,
+        "crs": "EPSG:4326",
+        "overlay_format": "PNG (RGBA 4-band)",
+        "overlay_file_size_bytes": file_size_bytes,
+        "geotiff_file_size_bytes": geotiff_size_bytes,
+        "overlay_url": "/api/v1/map-data/forest-extent/overlay",
+        "pixel_statistics": {
+            "forest_pixels": 8445845,
+            "non_forest_pixels": 3074155,
+            "nodata_pixels": 0,
+            "forest_percentage": 73.31
+        },
+        "total_quadrants": 4,
+        "all_quadrants_available": True,
+        "legend": FOREST_LEGEND,
+        "caveat": FOREST_CAVEAT
+    }
+
+
+@app.get("/api/v1/map-data/forest-extent/overlay", summary="Citra PNG overlay segmentasi tutupan hutan GLAD 2020")
+def get_forest_extent_overlay() -> FileResponse:
+    """
+    Mengirimkan citra web-ready PNG 4-band RGBA transparan untuk visualisasi cepat
+    lapisan tutupan hutan GLAD 2020 pada peta interaktif (kompatibilitas ke belakang).
+    """
+    if not FOREST_OVERLAY_PNG_PATH.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail="Berkas overlay tutupan hutan belum dibuat di data/raster/forest/kalimantan/."
+        )
+    return FileResponse(
+        FOREST_OVERLAY_PNG_PATH,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 
@@ -846,6 +1232,18 @@ def predict_fire_risk_endpoint(
     from .prediction_service import get_prediction_service
     service = get_prediction_service()
     return service.predict_fire_risk(lat=latitude, lon=longitude, province=province)
+
+
+@app.get("/api/v1/forest-extent/point", summary="Klasifikasi tutupan hutan GLAD 2020 titik koordinat")
+def get_forest_extent_point_endpoint(
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude"),
+) -> Dict[str, Any]:
+    """
+    Lookup klasifikasi tutupan hutan berbasis raster lokal GLAD Forest Extent 2020.
+    Mengembalikan FOREST (1), NON_FOREST (0), atau UNKNOWN (NoData / di luar cakupan).
+    """
+    return lookup_forest_extent(lat=latitude, lon=longitude).to_dict()
 
 
 

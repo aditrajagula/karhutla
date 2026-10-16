@@ -65,6 +65,11 @@ def assess_report_evidence(
     Melakukan penilaian bukti ilmiah terhadap laporan warga berdasarkan kategori laporan.
     """
     category = report.get("category", "")
+    category = {
+        "asap_kebakaran": "kebakaran",
+        "deforestasi": "pembukaan_lahan",
+        "alih_fungsi_bekas_karhutla": "perubahan_tutupan",
+    }.get(category, category)
     lat = float(report.get("latitude", 0.0))
     lon = float(report.get("longitude", 0.0))
     observed_at_str = report.get("observed_at_utc", "")

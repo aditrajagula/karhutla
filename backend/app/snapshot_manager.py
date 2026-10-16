@@ -68,6 +68,12 @@ def save_team_snapshot(
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest.model_dump(), f, indent=2)
 
+    # Rotasi otomatis: simpan maksimal 5 snapshot terakhir agar disk server tidak penuh
+    for old_manifest in sorted(snapshots_dir.glob("manifest_*.json"), reverse=True)[5:]:
+        old_tag = old_manifest.stem.replace("manifest_", "")
+        (snapshots_dir / f"snapshot_team_{old_tag}.csv").unlink(missing_ok=True)
+        old_manifest.unlink(missing_ok=True)
+
     return manifest
 
 

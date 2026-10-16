@@ -1,34 +1,37 @@
 # Pantau Hotspot, Jaga Hutan dan Gambut
-**Proyek Hackathon JOINTS 2026 — Subtema: Sustainability**
+**Proyek Hackathon JOINTS 2026 (Subtema: Sustainability)**
 
-Backend REST API (FastAPI) dan pipeline data processing anomali termal satelit (hotspot) NASA FIRMS VIIRS dengan validasi geospasial batas Indonesia dan manajemen snapshot mandiri tim.
+Backend REST API (FastAPI) dan pipeline data processing anomali termal satelit (hotspot) NASA FIRMS VIIRS dengan validasi geospasial batas Indonesia, pelaporan warga berbasis bukti, analisis tutupan pohon Hansen GFC v1.13, estimasi kerentanan karhutla berbasis cuaca Open-Meteo, serta scheduler auto-refresh snapshot mandiri.
 
 ---
 
 ## 1. Ringkasan & Ruang Lingkup
 
-Sesuai ketentuan [PRD.md](file:///c:/Data-Karhutla/PRD.md):
+Sesuai ketentuan [PRD.md](file:///c:/Users/jutt/Documents/Coding/Practice/repos/karhutla/PRD.md):
 * **Fokus Inti:** Mengambil data anomali termal aktif dari NASA FIRMS API (sensor VIIRS NOAA-20/21), memvalidasi koordinat dan waktu observasi UTC, membuang duplikasi, memotong titik hanya di dalam daratan Indonesia (*Point-in-Polygon*), serta menyajikan data melalui REST API berstandar GeoJSON (RFC 7946) lengkap dengan audit provenance.
-* **Batas Integritas Ilmiah:** Titik deteksi satelit adalah anomali termal, **bukan bukti tunggal kebakaran pasti**. Sistem ini **tidak menggunakan model Machine Learning untuk prediksi kebakaran**, dan tidak mengklaim deteksi sebagai bukti deforestasi tanpa dataset perubahan tutupan lahan.
+* **Auto-Refresh Scheduler & Rotasi Snapshot:** Server FastAPI menjalankan background scheduler (`asyncio` pada `lifespan`) setiap 30 menit (`FIRMS_REFRESH_INTERVAL_SECONDS=1800`) untuk menarik data terbaru dari NASA FIRMS secara otomatis dan menyimpan maksimal 5 snapshot terakhir di disk.
+* **Estimasi Kerentanan Lingkungan & Cuaca Real-Time:** Mengintegrasikan parameter meteorologi *real-time* dan riwayat curah hujan 90 hari dari **Open-Meteo API** (tanpa API key, dilengkapi fallback klimatologi Kalimantan) dengan tutupan kanopi **Hansen GFC v1.13** menggunakan model Regresi Logistik (`model_regresi_logistik.joblib`) sebagai indikator konteks kerentanan lingkungan.
+* **Batas Integritas Ilmiah:** Titik deteksi satelit adalah anomali termal, **bukan bukti tunggal kebakaran pasti**, dan estimasi risiko lingkungan disajikan terpisah dari verifikasi faktual laporan lapangan.
 
 ---
 
 ## 2. Penyesuaian Kondisi Dataset (Tanpa Dataset Panitia)
 
 1. **Tidak Ada Snapshot Resmi Panitia:** Seluruh snapshot lokal yang disimpan oleh pipeline dilabeli sebagai `"TEAM_LOCAL_CAPTURE"` (hasil penarikan mandiri tim), bukan data benchmark resmi panitia.
-2. **Penyimpanan Snapshot Otomatis:** Ketika panggilan ke NASA FIRMS API berhasil, data mentah otomatis disimpan di `data/snapshots/` dengan hash integritas **SHA-256** dan file `manifest_*.json`.
-3. **Penanganan Saat Kunci Kosong / API Gagal:**
-   * Jika snapshot tim lokal tersedia: Sistem beralih otomatis ke snapshot terbaru (`"FALLBACK_LOCAL_SNAPSHOT"`).
+2. **Penyimpanan & Rotasi Snapshot Otomatis:** Ketika panggilan ke NASA FIRMS API berhasil (baik melalui scheduler berkala maupun request live), data mentah otomatis disimpan di `data/snapshots/` dengan hash integritas **SHA-256** dan file `manifest_*.json`. Sistem otomatis mempertahankan **5 snapshot terbaru** dan menghapus snapshot lama agar ruang disk server tetap aman saat di-deploy.
+3. **Penanganan Saat Kunci Kosong / API Gagal / Rate Limit:**
+   * Kuota NASA FIRMS (`5.000 transaksi / 10 menit`) di-reset otomatis setiap 10 menit.
+   * Jika snapshot tim lokal tersedia saat API offline atau limit tercapai: Sistem beralih otomatis ke snapshot terbaru (`"FALLBACK_LOCAL_SNAPSHOT"`).
    * Jika belum ada snapshot: Sistem mengembalikan status jelas `"NO_DATA_AVAILABLE"` tanpa mengalami crash.
-4. **Batas Geografis Terverifikasi:** Menggunakan geometri administratif 34 provinsi Indonesia (EPSG:4326) yang divalidasi topologinya dengan Shapely 2.x STRtree. Dokumentasi sumber dicatat di [data/boundaries/SOURCES.md](file:///c:/Data-Karhutla/data/boundaries/SOURCES.md).
-5. **Layer Hutan dan Gambut (Opsional):** Dilaporkan transparan sebagai *belum tersedia* melalui endpoint `GET /api/v1/context-layers`.
+4. **Batas Geografis Terverifikasi:** Menggunakan geometri administratif 34 provinsi Indonesia (EPSG:4326) yang divalidasi topologinya dengan Shapely 2.x STRtree. Dokumentasi sumber dicatat di [data/boundaries/SOURCES.md](file:///c:/Users/jutt/Documents/Coding/Practice/repos/karhutla/data/boundaries/SOURCES.md).
+5. **Layer Hutan dan Gambut (Opsional):** Dilaporkan transparan melalui endpoint `GET /api/v1/context-layers`, dilengkapi evaluasi raster kehilangan tutupan pohon Kalimantan (Hansen GFC 2025 v1.13) pada `/api/v1/forest-loss/*`.
 
 ---
 
 ## 3. Struktur Direktori Proyek
 
 ```text
-c:/Data-Karhutla/
+karhutla/
 ├── PRD.md                             # Dokumen kebutuhan resmi proyek
 ├── DESIGN.md                          # Dokumen arsitektur & desain
 ├── docker-compose.yml                 # Layanan PostGIS kontainer
@@ -43,37 +46,32 @@ c:/Data-Karhutla/
 │   ├── requirements.txt               # Dependensi pustaka Python backend
 │   ├── app/                           # Modul aplikasi FastAPI
 │   │   ├── __init__.py
-│   │   ├── main.py                    # FastAPI App & Endpoints REST
+│   │   ├── main.py                    # FastAPI App, Lifespan Auto-Refresh Scheduler, & Endpoints REST
 │   │   ├── config.py                  # Konfigurasi path & environment
 │   │   ├── models.py                  # Model Pydantic (HotspotRecord, Provenance)
 │   │   ├── validation.py              # Validasi lat/lon, parse UTC, strict null handling
 │   │   ├── cleaner.py                 # Deduplikasi & audit alasan penolakan
 │   │   ├── spatial_filter.py          # Point-in-Polygon dengan Shapely STRtree
-│   │   ├── snapshot_manager.py        # Simpan capture tim & verifikasi SHA-256
-│   │   ├── firms_client.py            # Klien NASA FIRMS (chunking <= 5 hari)
-│   │   └── pipeline.py                # Orkestrator end-to-end
-│   └── tests/                         # Suite pengujian unit & integrasi
-│       ├── __init__.py
-│       ├── conftest.py                # Fixtures sintetis berlabel TEST ONLY
-│       ├── test_api_endpoints.py      # Uji endpoint FastAPI (sukses, fallback, 422)
-│       ├── test_audit_pipeline_independent.py # Audit pipeline independen
-│       ├── test_cleaner.py            # Uji deduplikasi
-│       ├── test_firms_integration.py  # Uji integrasi NASA FIRMS API
-│       ├── test_frontend_integration_live.py # Uji integrasi frontend-backend
-│       ├── test_hotspots.py           # Uji endpoint hotspot & format payload
-│       ├── test_pipeline.py           # Uji alur pipeline utuh & fallback
-│       ├── test_snapshot_manager.py   # Uji snapshot mandiri tim & SHA-256
-│       ├── test_spatial_filter.py     # Uji titik dalam/luar Indonesia
-│       └── test_validation.py         # Uji koordinat, timestamp, missing values
+│   │   ├── snapshot_manager.py        # Simpan capture tim, rotasi 5 file, & verifikasi SHA-256
+│   │   ├── firms_client.py            # Klien NASA FIRMS (chunking <= 5 hari dengan start_date akurat)
+│   │   ├── pipeline.py                # Orkestrator end-to-end hotspot
+│   │   ├── weather_client.py          # Klien cuaca real-time Open-Meteo & fallback klimatologi
+│   │   ├── prediction_service.py      # Inferensi Regresi Logistik kerentanan karhutla
+│   │   ├── forest_change_service.py   # Analisis kehilangan tutupan pohon Hansen GFC v1.13
+│   │   ├── hansen_raster_provider.py  # Pembaca GeoTIFF lokal/remote dengan dual-tier cache
+│   │   ├── reports_storage.py         # Repositori SQLite laporan masyarakat
+│   │   └── evidence_service.py        # Penilaian bukti silang laporan warga vs satelit
+│   └── tests/                         # Suite pengujian unit & integrasi (188 tests)
 ├── frontend/                          # Dashboard Antarmuka Web (React + Vite + TypeScript)
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── index.html
-│   └── src/                           # Komponen peta, status bar, detail modal, services
-└── data/                              # Dataset spasial dan penyimpanan snapshot
+│   └── src/                           # Komponen peta, status bar, laporan warga, prediksi GPS, services
+└── data/                              # Dataset spasial, model ML, dan penyimpanan snapshot
     ├── boundaries/
     │   ├── indonesia_provinces.geojson# Batas administratif 34 provinsi daratan Indonesia
     │   └── SOURCES.md                 # Dokumentasi sumber & verifikasi batas
+    ├── raster/hansen/                 # Tile GeoTIFF lokal & subset resmi Hansen GFC v1.13
     ├── snapshots/
     │   └── README.md                  # Kebijakan snapshot mandiri & manifest SHA-256
     └── context_layers/
@@ -82,9 +80,7 @@ c:/Data-Karhutla/
 
 ---
 
-## 4. Panduan Setup & Menjalankan Aplikasi (Windows PowerShell)
-
-Pastikan berada pada direktori utama `C:\Data-Karhutla`:
+## 4. Panduan Setup, Scheduler, & Deployment
 
 ### A. Siapkan Virtual Environment & Pasang Dependensi
 ```powershell
@@ -98,9 +94,10 @@ Salin template konfigurasi jika belum ada:
 ```powershell
 Copy-Item .env.example .env
 ```
-Pastikan `FIRMS_MAP_KEY` terisi di `.env`:
+Pastikan `FIRMS_MAP_KEY` terisi di `.env` (opsional: atur interval auto-refresh dalam detik, default `1800` = 30 menit):
 ```env
 FIRMS_MAP_KEY=d4208fc31485aff61dda184dc5f1a4c8
+FIRMS_REFRESH_INTERVAL_SECONDS=1800
 ```
 
 ### C. Inisialisasi & Manajemen Database (SQLite)
@@ -124,11 +121,11 @@ Aplikasi menggunakan database SQLite tertanam (*embedded*) melalui SQLAlchemy OR
    Remove-Item data\citizen_reports.db -ErrorAction SilentlyContinue
    ```
 
-### D. Jalankan Server FastAPI Backend
+### D. Jalankan Server FastAPI Backend (Auto-Refresh Aktif Otomatis)
 ```powershell
 .\.venv\Scripts\uvicorn backend.app.main:app --reload --port 8000
 ```
-Server aktif di:
+Begitu server berjalan, task background `_firms_auto_refresh_loop` otomatis menyegarkan data NASA FIRMS setiap 30 menit tanpa memerlukan setup cron job OS tambahan.
 * **Base URL:** `http://localhost:8000`
 * **Dokumentasi Interaktif (Swagger UI):** `http://localhost:8000/docs`
 * **Health Check:** `http://localhost:8000/health`
@@ -141,6 +138,10 @@ npm install
 npm run dev
 ```
 Dashboard aktif di: `http://localhost:5173`
+
+### F. Catatan Deployment (Render Free Tier / Cloud)
+1. Tambahkan `FIRMS_MAP_KEY` pada menu **Environment Variables** di dashboard Render (karena file `.env` tidak di-commit ke Git).
+2. Jika menggunakan **Render Free Tier** (yang otomatis *sleep* setelah 15 menit tanpa trafik), Anda dapat mendaftarkan URL `https://<nama-app>.onrender.com/health` ke layanan ping gratis seperti **UptimeRobot** atau **cron-job.org** setiap **14 menit** agar container tetap terjaga 24/7 tanpa memotong kuota NASA FIRMS.
 
 ---
 
@@ -255,11 +256,24 @@ Melaporkan ketersediaan layer konteks kawasan hutan dan gambut tanpa mengarang d
 }
 ```
 
+### 4. `GET /api/v1/reports` & `POST /api/v1/reports`
+Mengambil dan menyimpan laporan indikasi kejadian dari masyarakat (`kebakaran`, `pembukaan_lahan`, `perubahan_tutupan`) dengan:
+* Validasi batas daratan wilayah Indonesia (*Point-in-Polygon*).
+* Deteksi kandidat duplikasi otomatis (radius 5 km & 24 jam).
+* Penilaian bukti silang otomatis terhadap hotspot NASA FIRMS dan riwayat kehilangan tutupan pohon (`SUPPORTING_INDICATION`, `NO_MATCH_FOUND`, `INSUFFICIENT_DATA`, `NOT_ASSESSED`).
+* Perlindungan privasi pelapor (`reporter_contact` disembunyikan dan koordinat publik dibulatkan ke 3 desimal / ~110 m).
+
+### 5. `GET /api/v1/forest-loss/summary` & `GET /api/v1/forest-loss/point`
+Mengevaluasi statistik agregat provinsi dan pembacaan piksel GeoTIFF perubahan tutupan pohon Kalimantan (2000 s.d. 2025) berdasarkan dataset ilmiah UMD Hansen Global Forest Change v1.13.
+
+### 6. `GET /api/v1/predict/fire-risk`
+Memprediksi probabilitas kerentanan kebakaran hutan/lahan pada titik koordinat (`latitude`, `longitude`) menggunakan model Regresi Logistik yang menggabungkan cuaca *real-time* + akumulasi curah hujan 90 hari dari **Open-Meteo API** (`OPEN_METEO_API` atau fallback otomatis `CLIMATOLOGY_FALLBACK`) serta tutupan kanopi Hansen GFC v1.13.
+
 ---
 
 ## 6. Menjalankan Pengujian (Testing)
 
-### A. Eksekusi Seluruh Suite Backend (113 Tests)
+### A. Eksekusi Seluruh Suite Backend (188 Tests)
 Jalankan seluruh test suite otomatis:
 ```powershell
 .\.venv\Scripts\pytest -v
@@ -271,24 +285,25 @@ powershell -ExecutionPolicy Bypass -File .\run_tests.ps1
 
 ### B. Eksekusi Berdasarkan Modul
 ```powershell
-# 1. Modul Inti FIRMS & Geospasial 34 Provinsi (50 tests)
+# 1. Modul Inti FIRMS & Geospasial 34 Provinsi
 powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 core
 
-# 2. Modul Raster Hansen GFC & Analisis Kalimantan (43 tests)
+# 2. Modul Raster Hansen GFC & Analisis Kalimantan
 powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 raster
 
-# 3. Modul Laporan Bukti Warga & Proteksi Privasi (20 tests)
+# 3. Modul Laporan Bukti Warga & Proteksi Privasi
 powershell -ExecutionPolicy Bypass -File .\run_tests.ps1 citizen
 ```
 
 ### C. Pembuatan Tile Lokal untuk Demo (<5 ms Latency)
-Untuk demonstrasi offline tanpa ketergantungan internet dan tanpa latensi remote 9 detik:
+Untuk demonstrasi offline tanpa ketergantungan internet dan tanpa latensi remote:
 ```powershell
 .\.venv\Scripts\python.exe scripts/generate_kalimantan_demo_tiles.py
 ```
 
 ### D. Hasil Pengujian Aktual
-* **113 tests passed (100% lulus)** mencakup 15 file pengujian:
-  1. **Modul Inti FIRMS & Geospasial Nasional (50 tests):** Unit validator (`test_validation.py`), deduplikasi 5 desimal (`test_cleaner.py`), STRtree Point-in-Polygon 34 provinsi daratan Indonesia (`test_spatial_filter.py`), snapshot integritas SHA-256 (`test_snapshot_manager.py`), integrasi NASA FIRMS API live (`test_firms_integration.py`), orkestrasi pipeline (`test_pipeline.py`), kontrak endpoint REST API & health (`test_api_endpoints.py`, `test_hotspots.py`), audit pipeline independen (`test_audit_pipeline_independent.py`), dan integrasi frontend live (`test_frontend_integration_live.py`).
-  2. **Modul Raster Hansen GFC & Kalimantan (43 tests):** Batas spasial 5 provinsi Kalimantan & eksklusi wilayah luar (`test_kalimantan_spatial.py`), pembacaan piksel GeoTIFF & isolasi status data demo (`test_hansen_raster_integration.py`), kalkulasi tutupan hutan (`test_forest_change.py`), verifikasi analitik transformasi koordinat GeoTIFF EPSG:4326, audit kewajaran baseline non-hutan perkotaan Palangka Raya, pembacaan paralel multi-layer (*ThreadPoolExecutor*), batas waktu tunggu ketat (*strict timeout* 3.0s), dan *dual-tier caching* memori grid 30m.
-  3. **Modul Laporan Bukti Warga & Privasi (20 tests):** Siklus hidup laporan warga, anti-duplikasi, & status verifikasi operator (`test_citizen_reports.py`), serta proteksi kontak pelapor, penyamaran koordinat publik (*privacy obfuscation*), dan penilaian bukti (*evidence assessment*) terpisah (`test_citizen_evidence_and_privacy.py`).
+* **188 tests terverifikasi** mencakup 17 file pengujian:
+  1. **Modul Inti FIRMS, Scheduler, & Geospasial Nasional:** Unit validator (`test_validation.py`), deduplikasi 5 desimal (`test_cleaner.py`), STRtree Point-in-Polygon 34 provinsi daratan Indonesia (`test_spatial_filter.py`), snapshot integritas SHA-256 & rotasi otomatis (`test_snapshot_manager.py`), integrasi NASA FIRMS API & akurasi chunking tanggal (`test_firms_integration.py`), orkestrasi pipeline (`test_pipeline.py`), kontrak endpoint REST API & health (`test_api_endpoints.py`, `test_hotspots.py`), audit pipeline independen (`test_audit_pipeline_independent.py`), dan integrasi frontend live (`test_frontend_integration_live.py`).
+  2. **Modul Raster Hansen GFC & Kalimantan:** Batas spasial 5 provinsi Kalimantan & eksklusi wilayah luar (`test_kalimantan_spatial.py`), pembacaan piksel GeoTIFF & isolasi status data demo (`test_hansen_raster_integration.py`), keamanan unduhan & multi-tile (`test_hansen_downloader_safety.py`, `test_hansen_multi_tile_resolution.py`), verifikasi resmi & agregasi zonal (`test_hansen_official_verification.py`, `test_hansen_zonal_and_coverage.py`), serta kalkulasi tutupan hutan (`test_forest_change.py`).
+  3. **Modul Laporan Bukti Warga, Privasi, & Prediksi Cuaca Open-Meteo:** Siklus hidup laporan warga, anti-duplikasi, & status verifikasi operator (`test_citizen_reports.py`), proteksi kontak pelapor & penilaian bukti (`test_citizen_evidence_and_privacy.py`), serta integrasi cuaca Open-Meteo, ketahanan fallback klimatologi, dan inferensi Regresi Logistik (`test_predictive_model.py`).
+

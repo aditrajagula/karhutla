@@ -532,6 +532,8 @@
 .mp-card__info {
   display: flex;
   flex-direction: column;
+  max-width: calc(100% - 125px);
+  min-width: 0;
 }
 
 .mp-card__row {
@@ -541,6 +543,9 @@
   font-size: 10px;
   line-height: 13px;
   letter-spacing: -0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mp-card__chips {
@@ -578,6 +583,197 @@
   border: 0.5px solid var(--mp-orange);
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* ---------- Hotspot Prediksi Model Harian ---------- */
+.mp-predictive-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.mp-predictive-banner {
+  border: 1px solid rgba(204, 111, 0, 0.4);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(204, 111, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.mp-predictive-banner__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.mp-predictive-banner__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mp-orange);
+}
+
+.mp-predictive-banner__badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(204, 111, 0, 0.16);
+  color: var(--mp-orange);
+  white-space: nowrap;
+}
+
+.mp-predictive-banner__desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--mp-orange);
+  opacity: 0.95;
+}
+
+.mp-predictive-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--mp-orange);
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.mp-predictive-scroll {
+  flex: 1;
+  min-height: 260px;
+  max-height: calc(100vh - 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 4px 6px 0;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.mp-predictive-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mp-predictive-scroll::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 6px;
+}
+
+.mp-predictive-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 6px;
+}
+
+.mp-pred-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: auto;
+  height: auto;
+  padding: 9px 11px;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 6px;
+  background: var(--mp-card);
+  color: var(--mp-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+  box-sizing: border-box;
+}
+
+.mp-pred-card:hover {
+  background: rgba(204, 111, 0, 0.06);
+}
+
+.mp-pred-card.is-selected {
+  background: rgba(204, 111, 0, 0.12);
+  border-color: var(--mp-orange);
+  box-shadow: 0 0 0 1px var(--mp-orange);
+}
+
+.mp-pred-card--tinggi {
+  border-left: 4px solid #EA580C;
+}
+
+.mp-pred-card--sedang {
+  border-left: 4px solid #D97706;
+}
+
+.mp-pred-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mp-pred-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--mp-orange);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.mp-pred-card__badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mp-pred-card__badge--tinggi {
+  background: rgba(234, 88, 12, 0.15);
+  color: #EA580C;
+}
+
+.mp-pred-card__badge--sedang {
+  background: rgba(217, 119, 6, 0.15);
+  color: #D97706;
+}
+
+.mp-pred-card__location {
+  font-size: 11px;
+  line-height: 1.3;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mp-pred-card__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(204, 111, 0, 0.2);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--mp-orange);
+}
+
+.mp-pred-card__metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .mp-sidebar__footer {

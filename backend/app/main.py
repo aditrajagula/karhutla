@@ -85,12 +85,26 @@ async def _firms_auto_refresh_loop() -> None:
         await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
 
 
+async def _prewarm_predictive_cache():
+    try:
+        from .prediction_service import get_prediction_service
+        service = get_prediction_service()
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, service.get_daily_predictive_hotspots)
+        logger.info("Pre-warm cache hotspot prediktif harian berhasil.")
+    except Exception as exc:
+        logger.warning("Pre-warm cache hotspot prediktif harian gagal: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     task = asyncio.create_task(_firms_auto_refresh_loop()) if REFRESH_INTERVAL_SECONDS > 0 else None
+    prewarm_task = asyncio.create_task(_prewarm_predictive_cache())
     yield
     if task:
         task.cancel()
+    if prewarm_task and not prewarm_task.done():
+        prewarm_task.cancel()
 
 
 app = FastAPI(
@@ -340,7 +354,7 @@ def get_hotspots(
     Mengambil data hotspot terverifikasi dalam format GeoJSON FeatureCollection (RFC 7946).
     Data telah divalidasi koordinatnya, dipotong sesuai poligon Indonesia, dan dideduplikasi.
     """
-    effective_days = days or day_range or 7
+    effective_days = min(days or day_range or 3, 3)
     effective_force_snapshot = force_snapshot or (mode == "snapshot")
 
     try:
@@ -356,6 +370,21 @@ def get_hotspots(
         ) from exc
 
     features = result.get("features", [])
+
+    # Filter ketat: hapus hotspot yang sudah lebih dari 3 hari dari tanggal acuan terbaru
+    if features:
+        all_dates = [f["properties"].get("acq_date") for f in features if f.get("properties", {}).get("acq_date")]
+        if all_dates:
+            max_date_str = max(all_dates)
+            try:
+                max_d = datetime.strptime(max_date_str, "%Y-%m-%d")
+                min_3days_str = (max_d - timedelta(days=2)).strftime("%Y-%m-%d")
+                features = [
+                    f for f in features
+                    if not f["properties"].get("acq_date") or f["properties"]["acq_date"] >= min_3days_str
+                ]
+            except Exception:
+                pass
 
     # Filter tanggal manual jika diberikan
     if start_date:
@@ -1543,6 +1572,17 @@ def predict_fire_risk_endpoint(
     from .prediction_service import get_prediction_service
     service = get_prediction_service()
     return service.predict_fire_risk(lat=latitude, lon=longitude, province=province)
+
+
+@app.get("/api/v1/predict/daily-hotspots", summary="Hotspot prediktif harian (Siklus 24 Jam) Kalimantan")
+def get_daily_predictive_hotspots_endpoint() -> Dict[str, Any]:
+    """
+    Mengambil data hotspot hasil estimasi model prediktif (output Sedang s.d. Tinggi)
+    untuk wilayah Kalimantan pada hari ini. Diperbarui setiap hari (siklus 24 jam).
+    """
+    from .prediction_service import get_prediction_service
+    service = get_prediction_service()
+    return service.get_daily_predictive_hotspots()
 
 
 @app.get("/api/v1/forest-extent/point", summary="Klasifikasi tutupan hutan GLAD 2020 titik koordinat")

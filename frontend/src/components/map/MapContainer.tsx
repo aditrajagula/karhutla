@@ -20,11 +20,15 @@ import zoomOutIcon from '../../assets/map/zoom-out.svg';
 import arrowDropdown from '../../assets/map/arrow-dropdown.svg';
 import hotspotIcon from '../../assets/map/hotspot.svg';
 import { PinIcon } from '../common/SvgIcons';
+import type { PredictiveHotspotFeature } from '../../types/prediction';
 
 interface MapContainerProps {
   hotspots: Hotspot[];
   selectedHotspot: Hotspot | null;
   onSelectHotspot: (hotspot: Hotspot) => void;
+  predictiveHotspots?: PredictiveHotspotFeature[];
+  selectedPredictiveHotspot?: PredictiveHotspotFeature | null;
+  onSelectPredictiveHotspot?: (item: PredictiveHotspotFeature) => void;
   reports?: CitizenReport[];
   selectedReport?: CitizenReport | null;
   onSelectReport?: (report: CitizenReport) => void;
@@ -196,6 +200,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   hotspots,
   selectedHotspot,
   onSelectHotspot,
+  predictiveHotspots = [],
+  selectedPredictiveHotspot = null,
+  onSelectPredictiveHotspot,
   reports = [],
   selectedReport = null,
   onSelectReport,
@@ -211,6 +218,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const hotspotsLayerRef = useRef<L.LayerGroup | null>(null);
+  const predictiveHotspotsLayerRef = useRef<L.LayerGroup | null>(null);
   const reportsLayerRef = useRef<L.LayerGroup | null>(null);
   const userLayerRef = useRef<L.LayerGroup | null>(null);
   const pickedLocationLayerRef = useRef<L.LayerGroup | null>(null);
@@ -226,6 +234,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [kalimantanGeoJson, setKalimantanGeoJson] = useState<any>(kalimantanGeoJsonFallback);
   const [userBasemap, setUserBasemap] = useState<BasemapType | null>(null);
   const [showHotspots, setShowHotspots] = useState<boolean>(true);
+  const [showPredictiveHotspots, setShowPredictiveHotspots] = useState<boolean>(true);
   const [showReports, setShowReports] = useState<boolean>(true);
   const [showKalimantanBoundaries] = useState<boolean>(true);
   const [showPeatland, setShowPeatland] = useState<boolean>(false);
@@ -276,6 +285,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     const hotspotsGroup = L.layerGroup().addTo(map);
     hotspotsLayerRef.current = hotspotsGroup;
+
+    const predictiveGroup = L.layerGroup().addTo(map);
+    predictiveHotspotsLayerRef.current = predictiveGroup;
 
     const reportsGroup = L.layerGroup().addTo(map);
     reportsLayerRef.current = reportsGroup;
@@ -816,6 +828,128 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     });
   }, [reports, selectedReport, onSelectReport, showReports]);
 
+  // Render Penanda Hotspot Prediksi Model (Harian: Sedang s.d. Tinggi)
+  useEffect(() => {
+    const layerGroup = predictiveHotspotsLayerRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!showPredictiveHotspots) return;
+
+    predictiveHotspots.forEach((p) => {
+      const props = p.properties;
+      const isSelected = selectedPredictiveHotspot?.id === props.id;
+      const isTinggi = props.risk_level === 'TINGGI';
+
+      // Warna bertema waspada/siaga yang kontras dan berbeda dari ikon api NASA FIRMS
+      const cautionColor = isTinggi ? '#EA580C' : '#D97706';
+      const borderColor = isTinggi ? '#7C2D12' : '#92400E';
+      const badgeBg = isTinggi ? '#FFEDD5' : '#FEF3C7';
+      const badgeText = isTinggi ? '#9A3412' : '#92400E';
+      const size = isSelected ? 24 : 18;
+
+      // 1. Lingkaran buffer zona waspada bergaris putus-putus (radius 15 km)
+      const bufferZone = L.circle([props.latitude, props.longitude], {
+        radius: 15000,
+        color: cautionColor,
+        weight: isSelected ? 2 : 1.2,
+        dashArray: '4, 4',
+        fillColor: cautionColor,
+        fillOpacity: isSelected ? 0.15 : 0.08,
+      });
+      bufferZone.addTo(layerGroup);
+
+      // 2. Diamond / Belah Ketupat Marker dengan simbol seru waspada
+      const diamondIcon = L.divIcon({
+        className: 'mp-predictive-diamond-icon',
+        html: `
+          <div style="position: relative; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center;">
+            <div style="
+              width: ${size}px;
+              height: ${size}px;
+              background: ${cautionColor};
+              border: ${isSelected ? '2.5px solid #FFFFFF' : `1.8px solid ${borderColor}`};
+              transform: rotate(45deg);
+              border-radius: 3px;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+              transition: transform 0.2s;
+            "></div>
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              font-family: ui-monospace, monospace, sans-serif;
+              font-size: ${isSelected ? '12px' : '10px'};
+              font-weight: 900;
+              color: #FFFFFF;
+              pointer-events: none;
+              line-height: 1;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            ">!</div>
+          </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+      const marker = L.marker([props.latitude, props.longitude], {
+        icon: diamondIcon,
+        zIndexOffset: isSelected ? 1000 : 500,
+      });
+
+      const weather = props.weather_summary || {};
+      const tempStr = weather.temperature_2m !== undefined ? `${weather.temperature_2m}°C` : '-';
+      const rhStr = weather.humidity_2m !== undefined ? `${weather.humidity_2m}%` : '-';
+      const windStr = weather.wind_speed_10m !== undefined ? `${weather.wind_speed_10m} m/s` : '-';
+      const rainStr = weather.precipitation_30d !== undefined ? `${weather.precipitation_30d} mm` : '-';
+
+      const popupHtml = `
+        <div style="font-family: inherit; font-size: 12px; line-height: 1.45; min-width: 230px;">
+          <div style="font-weight: 700; color: ${cautionColor}; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${cautionColor}" stroke-width="2.5"><polygon points="12,2 22,12 12,22 2,12"/></svg>
+              Hotspot Prediksi Model
+            </span>
+            <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${badgeBg}; color: ${badgeText}; font-weight: 700; border: 1px solid ${borderColor}44;">
+              ${props.caution_level} (${props.risk_percentage}%)
+            </span>
+          </div>
+          <div><b>Wilayah:</b> ${props.location_name}</div>
+          <div><b>Provinsi:</b> ${props.province}</div>
+          <div><b>Koordinat:</b> ${props.latitude.toFixed(4)}°, ${props.longitude.toFixed(4)}°</div>
+          <div><b>Periode Prediksi:</b> Harian (${props.prediction_date})</div>
+          <div><b>Masa Berlaku:</b> 24 Jam (Hari Ini)</div>
+          
+          <div style="margin-top: 5px; padding: 5px 6px; background: rgba(0,0,0,0.03); border-radius: 4px; border: 1px solid rgba(0,0,0,0.08); font-size: 11px;">
+            <div><b>Cuaca Terkini:</b> ${tempStr} | RH ${rhStr} | Angin ${windStr}</div>
+            <div><b>Akumulasi Hujan 30 Hari:</b> ${rainStr}</div>
+          </div>
+
+          <div style="margin-top: 6px; font-size: 10px; color: #9A3412; background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 4px; padding: 5px; line-height: 1.35;">
+            <b>Kesan Hati-hati:</b> Indikasi potensi kerawanan lingkungan berbasis model cuaca dan kanopi. <b>BUKAN</b> deteksi api fisik satelit NASA FIRMS. Prioritaskan patroli pemantauan lapangan.
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml);
+      marker.on('click', () => {
+        if (onSelectPredictiveHotspot) {
+          onSelectPredictiveHotspot(p);
+        }
+      });
+
+      marker.addTo(layerGroup);
+    });
+  }, [predictiveHotspots, selectedPredictiveHotspot, onSelectPredictiveHotspot, showPredictiveHotspots]);
+
+  // Efek fokus peta saat titik prediksi model dipilih
+  useEffect(() => {
+    if (!selectedPredictiveHotspot || !mapInstanceRef.current) return;
+    const { latitude, longitude } = selectedPredictiveHotspot.properties;
+    mapInstanceRef.current.flyTo([latitude, longitude], 10, { duration: 1.2 });
+  }, [selectedPredictiveHotspot]);
+
   // Efek layer lokasi pengguna GPS & Radius Buffer Risiko
   useEffect(() => {
     const layerGroup = userLayerRef.current;
@@ -1007,7 +1141,33 @@ export const MapContainer: React.FC<MapContainerProps> = ({
             {showHotspots && <CheckMark />}
           </span>
           <Icon src={hotspotIcon} size={14} />
-          <span>Hotspot</span>
+          <span>Hotspot (FIRMS)</span>
+        </button>
+
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={showPredictiveHotspots}
+          className="mp-toggle mp-toggle--predictive"
+          onClick={() => setShowPredictiveHotspots((v) => !v)}
+          title="Tampilkan Hotspot Prediksi Model Harian (Zona Kerawanan Sedang-Tinggi)"
+        >
+          <span className={`mp-checkbox ${showPredictiveHotspots ? 'is-checked' : ''}`} aria-hidden="true">
+            {showPredictiveHotspots && <CheckMark />}
+          </span>
+          <span
+            style={{
+              width: '10px',
+              height: '10px',
+              transform: 'rotate(45deg)',
+              background: '#F59E0B',
+              border: '1.2px solid #B45309',
+              borderRadius: '2px',
+              display: 'inline-block',
+              flexShrink: 0,
+            }}
+          />
+          <span>Hotspot Prediksi{predictiveHotspots.length > 0 ? ` (${predictiveHotspots.length})` : ''}</span>
         </button>
 
         <button
@@ -1143,6 +1303,23 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               }}
             />
             <span>Kawasan Hutan (Layer Resmi KLHK)</span>
+          </div>
+        )}
+        {showPredictiveHotspots && predictiveHotspots.length > 0 && (
+          <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#F59E0B' }}>
+            <span
+              style={{
+                width: '10px',
+                height: '10px',
+                transform: 'rotate(45deg)',
+                background: '#F59E0B',
+                border: '1.2px solid #B45309',
+                borderRadius: '2px',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span>Hotspot Prediksi Model (Waspada/Siaga Harian)</span>
           </div>
         )}
         {(peatlandStatus || forestStatus || layerError) && (

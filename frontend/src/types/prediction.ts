@@ -72,4 +72,47 @@ export interface FireRiskPrediction {
   };
 }
 
+export interface PredictiveHotspotFeature {
+  type: 'Feature';
+  id: string;
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number]; // [lon, lat]
+  };
+  properties: {
+    id: string;
+    location_name: string;
+    province: string;
+    latitude: number;
+    longitude: number;
+    risk_level: 'SEDANG' | 'TINGGI' | string;
+    risk_label: string;
+    risk_percentage: number;
+    risk_probability: number;
+    prediction_date: string;
+    validity_period: string;
+    caution_level: 'WASPADA' | 'SIAGA' | string;
+    weather_summary?: {
+      temperature_2m?: number;
+      humidity_2m?: number;
+      wind_speed_10m?: number;
+      precipitation_30d?: number;
+    };
+    primary_drivers?: PredictionDriver[];
+    caution_notice: string;
+    is_predictive: boolean;
+  };
+}
+
+export interface PredictiveHotspotsResponse {
+  type: 'FeatureCollection';
+  prediction_date: string;
+  validity: string;
+  update_cycle: string;
+  total_features: number;
+  model_type: string;
+  caution_statement: string;
+  features: PredictiveHotspotFeature[];
+}
+
 

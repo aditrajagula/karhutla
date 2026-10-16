@@ -60,6 +60,9 @@ class FireRiskPredictionService:
         self.weather_client = WeatherClient()
         self.model = None
         self.scaler = None
+        self._daily_cache: Dict[str, Dict[str, Any]] = {}
+        import threading
+        self._cache_lock = threading.Lock()
         self._load_artifacts()
 
     def _load_artifacts(self) -> None:
@@ -88,7 +91,8 @@ class FireRiskPredictionService:
         self,
         lat: float,
         lon: float,
-        province: Optional[str] = None
+        province: Optional[str] = None,
+        allow_imputed_canopy: bool = True
     ) -> Dict[str, Any]:
         """
         Melakukan inferensi probabilitas risiko kebakaran untuk koordinat tertentu.
@@ -196,34 +200,39 @@ class FireRiskPredictionService:
             except Exception as exc:
                 logger.debug("Info raster Hansen tidak dapat diakses untuk koordinat (%s, %s): %s", lat, lon, exc)
 
-        # Jika data kanopi pohon wajib tetap tidak tersedia, laporkan status INSUFFICIENT_DATA (bukan diasumsikan aman)
+        idx_f_prim = MODEL_FEATURE_NAMES.index("f_prim")
+        is_canopy_imputed = False
         if treecover is None:
-            return {
-                "status": "INSUFFICIENT_DATA",
-                "message": "Data wajib raster tutupan pohon (f_prim) tidak tersedia untuk koordinat ini (risiko tidak dapat dinilai).",
-                "coordinates": {"lat": lat, "lon": lon},
-                "province": detected_prov or "Kalimantan",
-                "risk_probability": None,
-                "risk_percentage": None,
-                "risk_level": "TIDAK_DAPAT_DINILAI",
-                "risk_label": "Data Tidak Memadai",
-                "risk_color": "GRAY",
-                "primary_drivers": [],
-                "data_quality": {
+            if not allow_imputed_canopy:
+                return {
                     "status": "INSUFFICIENT_DATA",
-                    "reliability": "NOT_ASSESSABLE",
-                    "reason": "Data wajib raster tutupan kanopi pohon (f_prim) tidak tersedia.",
-                    "missing_or_imputed_features": ["f_prim", "peatd", "loss_last_prim", "loss_last_sec"],
-                },
-                "model_metadata": {
-                    "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
-                    "features_count": len(MODEL_FEATURE_NAMES),
-                    "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
-                    "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
-                    "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
-                    "interpretability_notice": "Evaluasi risiko ditolak karena ketiadaan data kanopi wajib.",
+                    "message": "Data wajib raster tutupan pohon (f_prim) tidak tersedia untuk koordinat ini (risiko tidak dapat dinilai).",
+                    "coordinates": {"lat": lat, "lon": lon},
+                    "province": detected_prov or "Kalimantan",
+                    "risk_probability": None,
+                    "risk_percentage": None,
+                    "risk_level": "TIDAK_DAPAT_DINILAI",
+                    "risk_label": "Data Tidak Memadai",
+                    "risk_color": "GRAY",
+                    "primary_drivers": [],
+                    "data_quality": {
+                        "status": "INSUFFICIENT_DATA",
+                        "reliability": "NOT_ASSESSABLE",
+                        "reason": "Data wajib raster tutupan kanopi pohon (f_prim) tidak tersedia.",
+                        "missing_or_imputed_features": ["f_prim", "peatd", "loss_last_prim", "loss_last_sec"],
+                    },
+                    "model_metadata": {
+                        "model_type": "Logistic Regression Baseline (ERA5 2002–2018)",
+                        "features_count": len(MODEL_FEATURE_NAMES),
+                        "target_type": "Deteksi Anomali Radiasi Termal Satelit (FRP > 0) Resolusi ~25km, BUKAN konfirmasi kebakaran darat",
+                        "evaluation_status": "HISTORICAL_BENCHMARK_ONLY",
+                        "operational_readiness": "PROTOTIPE_EKSPERIMENTAL",
+                        "interpretability_notice": "Evaluasi risiko ditolak karena ketiadaan data kanopi wajib.",
+                    }
                 }
-            }
+            # Fallback imputasi rata-rata pelatihan ERA5 (~48.96%) jika pixel belum ter-download lokal
+            treecover = float(self.scaler.mean_[idx_f_prim]) * 100.0
+            is_canopy_imputed = True
 
         f_prim = round(treecover / 100.0, 4)
 
@@ -325,6 +334,7 @@ class FireRiskPredictionService:
                 "status": "PARTIAL",
                 "reliability": "LOW_EXPERIMENTAL",
                 "missing_or_imputed_features": [
+                    *(["f_prim (Imputasi Rata-rata Pelatihan ERA5)"] if is_canopy_imputed else []),
                     "peatd (Kedalaman Gambut)",
                     "loss_last_prim (Kehilangan Hutan Primer)",
                     "loss_last_sec (Kehilangan Hutan Sekunder)",
@@ -349,6 +359,162 @@ class FireRiskPredictionService:
                 )
             }
         }
+
+    def get_daily_predictive_hotspots(self) -> Dict[str, Any]:
+        """
+        Menghasilkan GeoJSON FeatureCollection titik hotspot prediktif harian (Siklus 24 Jam)
+        di seluruh wilayah 5 provinsi Kalimantan, difilter hanya untuk level risiko Sedang s.d. Tinggi.
+        Hasil di-cache berdasarkan tanggal kalender (YYYY-MM-DD). Data hari sebelumnya otomatis dibuang
+        dan diganti baru setiap hari kalender berganti.
+        """
+        import concurrent.futures
+        from datetime import datetime, timezone
+
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        with self._cache_lock:
+            cached = self._daily_cache.get(today_str)
+            if cached is not None:
+                return cached
+
+        # Jika belum ada di cache untuk hari ini, hitung secara paralel dengan kontrol burst
+        import time
+
+        def evaluate_point(pt: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            try:
+                time.sleep(0.06)  # Hindari rate limit burst Open-Meteo
+                res = self.predict_fire_risk(
+                    lat=pt["lat"],
+                    lon=pt["lon"],
+                    province=pt["province"],
+                    allow_imputed_canopy=True
+                )
+                if res.get("status") == "SUCCESS":
+                    level = res.get("risk_level", "RENDAH")
+                    # Sesuai permintaan pengguna: hanya tampilkan hasil output SEDANG s.d. TINGGI
+                    if level in ("SEDANG", "TINGGI"):
+                        return {
+                            "point": pt,
+                            "prediction": res
+                        }
+            except Exception as err:
+                logger.debug("Evaluasi prediksi untuk %s gagal: %s", pt.get("name"), err)
+            return None
+
+        evaluated_items = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_pt = {executor.submit(evaluate_point, pt): pt for pt in KALIMANTAN_MONITORING_POINTS}
+            for future in concurrent.futures.as_completed(future_to_pt):
+                result = future.result()
+                if result:
+                    evaluated_items.append(result)
+
+        # Urutkan berdasarkan persentase risiko tertinggi
+        evaluated_items.sort(key=lambda x: x["prediction"].get("risk_percentage", 0), reverse=True)
+
+        features = []
+        for item in evaluated_items:
+            pt = item["point"]
+            res = item["prediction"]
+            features.append({
+                "type": "Feature",
+                "id": f"pred_{pt['id']}_{today_str}",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [round(pt["lon"], 4), round(pt["lat"], 4)]
+                },
+                "properties": {
+                    "id": f"pred_{pt['id']}_{today_str}",
+                    "location_name": pt["name"],
+                    "province": pt["province"],
+                    "latitude": round(pt["lat"], 4),
+                    "longitude": round(pt["lon"], 4),
+                    "risk_level": res["risk_level"],
+                    "risk_label": res.get("risk_label", res["risk_level"]),
+                    "risk_percentage": res["risk_percentage"],
+                    "risk_probability": res["risk_probability"],
+                    "prediction_date": today_str,
+                    "validity_period": "Harian (Berlaku 24 Jam)",
+                    "caution_level": "Waspada" if res["risk_level"] == "SEDANG" else "Siaga",
+                    "weather_summary": {
+                        "temperature_2m": res.get("input_features", {}).get("t2m"),
+                        "humidity_2m": res.get("input_features", {}).get("h2m"),
+                        "wind_speed_10m": res.get("input_features", {}).get("w10"),
+                        "precipitation_30d": res.get("input_features", {}).get("tp"),
+                    },
+                    "primary_drivers": res.get("primary_drivers", []),
+                    "caution_notice": (
+                        "Indikasi waspada potensi kerawanan lingkungan harian berbasis model regresi logistik cuaca dan kanopi. "
+                        "BUKAN titik api fisik aktif yang teramati satelit NASA FIRMS. Prioritaskan patroli pencegahan."
+                    ),
+                    "is_predictive": True
+                }
+            })
+
+        response_payload = {
+            "type": "FeatureCollection",
+            "prediction_date": today_str,
+            "validity": "Harian (Siklus 24 Jam)",
+            "update_cycle": "Diperbarui Setiap Hari Baru (Hari Sebelumnya Dibuang Otomatis)",
+            "total_features": len(features),
+            "model_type": "Logistic Regression Baseline (ERA5 + Open-Meteo Harian)",
+            "caution_statement": (
+                "Data hotspot prediktif ini menyajikan zona kerawanan karhutla berbasis cuaca mikro dan tutupan lahan. "
+                "Data ini berbeda dari hotspot satelit empiris NASA FIRMS dan harus disikapi dengan kewaspadaan pencegahan dini."
+            ),
+            "features": features
+        }
+
+        with self._cache_lock:
+            # Buang cache hari-hari lama untuk menghemat memori
+            self._daily_cache.clear()
+            self._daily_cache[today_str] = response_payload
+
+        return response_payload
+
+
+KALIMANTAN_MONITORING_POINTS = [
+    # Kalimantan Tengah (Pusat gambut & rawan karhutla)
+    {"id": "kalteng_palangka_raya", "name": "Palangka Raya (Sebangau)", "province": "Kalimantan Tengah", "lat": -2.2161, "lon": 113.9140},
+    {"id": "kalteng_pulang_pisau", "name": "Pulang Pisau (Kahayan Hilir)", "province": "Kalimantan Tengah", "lat": -2.7500, "lon": 114.2500},
+    {"id": "kalteng_sampit", "name": "Sampit (Kotawaringin Timur)", "province": "Kalimantan Tengah", "lat": -2.5333, "lon": 112.9500},
+    {"id": "kalteng_kapuas", "name": "Kuala Kapuas (Kapuas Murung)", "province": "Kalimantan Tengah", "lat": -3.0090, "lon": 114.3850},
+    {"id": "kalteng_katingan", "name": "Kasongan (Katingan Hilir)", "province": "Kalimantan Tengah", "lat": -1.9000, "lon": 113.3800},
+    {"id": "kalteng_pangkalan_bun", "name": "Pangkalan Bun (Kumai)", "province": "Kalimantan Tengah", "lat": -2.6833, "lon": 111.6167},
+    {"id": "kalteng_sukamara", "name": "Sukamara (Pantai Jelai)", "province": "Kalimantan Tengah", "lat": -2.6280, "lon": 111.2370},
+
+    # Kalimantan Barat (Gambut pesisir & batas hutan)
+    {"id": "kalbar_pontianak", "name": "Pontianak (Siantan)", "province": "Kalimantan Barat", "lat": -0.0263, "lon": 109.3425},
+    {"id": "kalbar_kubu_raya", "name": "Kubu Raya (Rasau Jaya)", "province": "Kalimantan Barat", "lat": -0.1500, "lon": 109.4500},
+    {"id": "kalbar_ketapang", "name": "Ketapang (Matan Hilir Selatan)", "province": "Kalimantan Barat", "lat": -1.8500, "lon": 109.9800},
+    {"id": "kalbar_kendawangan", "name": "Kendawangan (Pesisir Selatan)", "province": "Kalimantan Barat", "lat": -2.5333, "lon": 110.2000},
+    {"id": "kalbar_sambas", "name": "Sambas (Paloh)", "province": "Kalimantan Barat", "lat": 1.3667, "lon": 109.3000},
+    {"id": "kalbar_mempawah", "name": "Mempawah (Sungai Pinyuh)", "province": "Kalimantan Barat", "lat": 0.3500, "lon": 108.9667},
+    {"id": "kalbar_sintang", "name": "Sintang (Sepauk)", "province": "Kalimantan Barat", "lat": 0.0700, "lon": 111.4980},
+    {"id": "kalbar_sanggau", "name": "Sanggau (Kapuas)", "province": "Kalimantan Barat", "lat": 0.1200, "lon": 110.5800},
+
+    # Kalimantan Selatan (Rawa gambut & savana kering)
+    {"id": "kalsel_banjarmasin", "name": "Banjarmasin (Banjarmasin Barat)", "province": "Kalimantan Selatan", "lat": -3.3167, "lon": 114.5901},
+    {"id": "kalsel_banjarbaru", "name": "Banjarbaru (Guntung Payung)", "province": "Kalimantan Selatan", "lat": -3.4500, "lon": 114.8300},
+    {"id": "kalsel_tanah_laut", "name": "Pelaihari (Bati-Bati)", "province": "Kalimantan Selatan", "lat": -3.8000, "lon": 114.7600},
+    {"id": "kalsel_barito_kuala", "name": "Marabahan (Alalak)", "province": "Kalimantan Selatan", "lat": -2.9800, "lon": 114.7700},
+    {"id": "kalsel_tapin", "name": "Rantau (Bakarangan)", "province": "Kalimantan Selatan", "lat": -2.9300, "lon": 115.1500},
+    {"id": "kalsel_hulu_sungai_selatan", "name": "Kandangan (Simpur)", "province": "Kalimantan Selatan", "lat": -2.7800, "lon": 115.2500},
+
+    # Kalimantan Timur
+    {"id": "kaltim_samarinda", "name": "Samarinda (Palaran)", "province": "Kalimantan Timur", "lat": -0.5016, "lon": 117.1537},
+    {"id": "kaltim_balikpapan", "name": "Balikpapan (Balikpapan Utara)", "province": "Kalimantan Timur", "lat": -1.2654, "lon": 116.8312},
+    {"id": "kaltim_kukar_tenggarong", "name": "Tenggarong (Muara Kaman)", "province": "Kalimantan Timur", "lat": -0.4100, "lon": 116.9800},
+    {"id": "kaltim_berau", "name": "Tanjung Redeb (Segah)", "province": "Kalimantan Timur", "lat": 2.1500, "lon": 117.4800},
+    {"id": "kaltim_paser", "name": "Tanah Grogot (Kuaro)", "province": "Kalimantan Timur", "lat": -1.9000, "lon": 116.2000},
+    {"id": "kaltim_kutai_timur", "name": "Sangatta (Bengalon)", "province": "Kalimantan Timur", "lat": 0.4800, "lon": 117.5500},
+
+    # Kalimantan Utara
+    {"id": "kaltara_tanjung_selor", "name": "Tanjung Selor (Tanjung Palas)", "province": "Kalimantan Utara", "lat": 2.8375, "lon": 117.3653},
+    {"id": "kaltara_tarakan", "name": "Tarakan (Tarakan Timur)", "province": "Kalimantan Utara", "lat": 3.3000, "lon": 117.6000},
+    {"id": "kaltara_malinau", "name": "Malinau (Mentarang)", "province": "Kalimantan Utara", "lat": 3.5800, "lon": 116.6300},
+    {"id": "kaltara_nunukan", "name": "Nunukan (Sebatik Barat)", "province": "Kalimantan Utara", "lat": 4.1300, "lon": 117.6500},
+]
 
 
 # Global singleton instance

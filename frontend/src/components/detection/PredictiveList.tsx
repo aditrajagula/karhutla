@@ -30,16 +30,11 @@ export const PredictiveList: React.FC<PredictiveListProps> = ({
   });
 
   return (
-    <>
-      {/* Panel Filter Tingkat Risiko Prediksi Model (Selaras dengan FilterPanel) */}
-      <div className="mp-filter">
-        <h2 className="mp-filter__title">Hotspot Prediksi Model</h2>
-
+    <div className="mp-predictive-pane">
+      <section className="mp-filter mp-prediction-filter" aria-label="Filter prediksi risiko">
+        <h2 className="mp-filter__title">Filter Prediksi Risiko</h2>
         <div className="mp-filter__group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="mp-label">Tingkat Kerawanan</span>
-            <span style={{ fontSize: '11px', color: '#64748B' }}>Siklus Harian</span>
-          </div>
+          <span className="mp-label">Tingkat Risiko</span>
           <div className="mp-days" role="group" aria-label="Filter tingkat risiko">
             <button
               type="button"
@@ -65,15 +60,14 @@ export const PredictiveList: React.FC<PredictiveListProps> = ({
           </div>
         </div>
 
-        <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.4, color: 'var(--mp-orange)', opacity: 0.9 }}>
-          Estimasi probabilitas kerawanan karhutla 24 jam berbasis cuaca mikro dan tutupan lahan. <b>Bukan</b> deteksi api fisik satelit NASA FIRMS.
+        <p className="mp-prediction-filter__note">
+          Estimasi risiko 24 jam; bukan deteksi api satelit.
         </p>
-      </div>
+      </section>
 
-      {/* Daftar Titik Pantau Waspada (Identik dengan format mp-list pada DetectionList) */}
       <section className="mp-list" aria-label="Daftar titik pantau waspada">
         <div className="mp-list__header">
-          <h2 className="mp-list__title">Daftar Titik Pantau Waspada</h2>
+          <h2 className="mp-list__title">Daftar Prediksi Risiko</h2>
           <span className="mp-list__count">
             {isLoading ? 'Memuat...' : `${filteredHotspots.length} wilayah`}
           </span>
@@ -122,7 +116,7 @@ export const PredictiveList: React.FC<PredictiveListProps> = ({
                       </span>
                       <span className="mp-card__row">
                         <Icon src={timeIcon} size={10} />
-                        {p.prediction_date} Harian
+                        {p.prediction_date} · Prediksi 24 jam
                       </span>
                     </span>
                     <span className="mp-card__chips">
@@ -135,13 +129,8 @@ export const PredictiveList: React.FC<PredictiveListProps> = ({
             )}
           </div>
         </div>
-        {!isLoading && filteredHotspots.length > 0 && (
-          <p className="mp-list__more">
-            Menampilkan {filteredHotspots.length} titik waspada hasil evaluasi model prediktif harian.
-          </p>
-        )}
       </section>
-    </>
+    </div>
   );
 };
 

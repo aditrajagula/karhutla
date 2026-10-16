@@ -115,6 +115,7 @@ class UserModel(Base):
 class ReportCategory(str, enum.Enum):
     ILLEGAL_LOGGING = "penebangan_liar"  # Penebangan liar / illegal logging
     LAND_CLEARING = "pembukaan_lahan"  # Indikasi pembukaan lahan berhutan
+    MINING = "penambangan"  # Aktivitas penambangan di kawasan hutan
     ENCROACHMENT = "perambahan_hutan"  # Perambahan kawasan hutan lindung / konservasi
     FIRE = "kebakaran"  # Kebakaran akibat pembukaan lahan / slash-and-burn
     FOREST_CHANGE = "perubahan_tutupan"  # Indikasi perubahan kondisi tutupan hutan

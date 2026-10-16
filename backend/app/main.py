@@ -1072,7 +1072,7 @@ def get_current_user_endpoint(authorization: Optional[str] = Header(None)) -> Di
 
 
 class CitizenReportCreate(BaseModel):
-    category: str = Field(..., description="Kategori: penebangan_liar, pembukaan_lahan, perambahan_hutan, kebakaran, perubahan_tutupan")
+    category: str = Field(..., description="Kategori: penebangan_liar, pembukaan_lahan, penambangan")
     latitude: float = Field(..., ge=-11.0, le=6.0, description="Latitude daratan Indonesia (-11.0 s.d. 6.0)")
     longitude: float = Field(..., ge=95.0, le=141.5, description="Longitude daratan Indonesia (95.0 s.d. 141.5)")
     observed_at_utc: str = Field(..., description="Waktu pengamatan standar ISO (UTC)")
@@ -1276,6 +1276,7 @@ def create_citizen_report(payload: CitizenReportCreate) -> Dict[str, Any]:
         "land_clearing": "pembukaan_lahan",
         "illegal_logging": "penebangan_liar",
         "pembalakan_liar": "penebangan_liar",
+        "pertambangan": "penambangan",
         "perambahan": "perambahan_hutan",
         "alih_fungsi_bekas_karhutla": "perubahan_tutupan",
     }.get(raw_cat, raw_cat)
@@ -1492,11 +1493,9 @@ def get_reports_meta() -> Dict[str, Any]:
     """Mengembalikan daftar nilai kategori, status, dan kategori penilaian bukti yang sah."""
     return {
         "categories": [
-            {"value": "penebangan_liar", "label": "Penebangan Liar / Pembalakan Ilegal (Illegal Logging)"},
-            {"value": "pembukaan_lahan", "label": "Pembukaan Lahan Hutan (Land Clearing)"},
-            {"value": "perambahan_hutan", "label": "Perambahan Kawasan Hutan Lindung/Konservasi"},
-            {"value": "kebakaran", "label": "Kebakaran Pembukaan Lahan (Slash-and-Burn)"},
-            {"value": "perubahan_tutupan", "label": "Perubahan Drastis Tutupan Kanopi Pohon"},
+            {"value": "penebangan_liar", "label": "Penebangan Liar"},
+            {"value": "pembukaan_lahan", "label": "Pembukaan Lahan"},
+            {"value": "penambangan", "label": "Penambangan"},
         ],
         "statuses": [
             {"value": "PENDING", "label": "Menunggu verifikasi"},

@@ -74,9 +74,9 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChang
             className="mp-field"
           >
             <option value="">Semua Tingkat Keyakinan</option>
-            <option value="high">Tinggi (High)</option>
-            <option value="nominal">Nominal</option>
-            <option value="low">Rendah (Low)</option>
+            <option value="high">Tinggi</option>
+            <option value="nominal">Sedang</option>
+            <option value="low">Rendah</option>
           </select>
           <Icon src={arrowDropdown} className="mp-select__arrow" />
         </div>

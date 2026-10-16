@@ -94,9 +94,9 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
             </span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Tingkat Keyakinan (Confidence):</span>
+            <span className="detail-label">Tingkat Keyakinan:</span>
             <span className={`detail-val capitalize conf-text-${hotspot.confidence}`}>
-              {hotspot.confidence}
+              {hotspot.confidence === 'high' ? 'Tinggi' : hotspot.confidence === 'nominal' ? 'Sedang' : 'Rendah'}
             </span>
           </div>
           <div className="detail-row">
@@ -108,7 +108,7 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
           <div className="detail-row">
             <span className="detail-label">Orbit / Waktu:</span>
             <span className="detail-val">
-              {hotspot.daynight === 'D' ? 'Siang Hari (Day)' : 'Malam Hari (Night)'}
+              {hotspot.daynight === 'D' ? 'Siang Hari' : 'Malam Hari'}
             </span>
           </div>
           <div className="detail-row">

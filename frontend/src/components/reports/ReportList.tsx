@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import type { CitizenReport, ReportCategory, EvidenceAssessmentLabel, ReportStatus } from '../../types/report';
 import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG, STATUS_LABELS } from '../../types/report';
+import arrowDropdown from '../../assets/map/arrow-dropdown.svg';
 import {
-  LeafIcon,
   FlameIcon,
   TractorIcon,
   TreeIcon,
@@ -18,7 +18,6 @@ interface ReportListProps {
   reports: CitizenReport[];
   onSelectReport: (report: CitizenReport) => void;
   selectedId?: string;
-  onOpenCreateModal?: () => void;
 }
 
 const STATUS_BADGE_COLORS: Record<ReportStatus, { bg: string; text: string; border: string }> = {
@@ -32,7 +31,6 @@ export const ReportList: React.FC<ReportListProps> = ({
   reports,
   onSelectReport,
   selectedId,
-  onOpenCreateModal,
 }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -49,96 +47,73 @@ export const ReportList: React.FC<ReportListProps> = ({
   });
 
   return (
-    <div className="detection-list-wrapper report-list-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header List Laporan */}
-      <div className="detection-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <span className="detection-list-title">Laporan Deforestasi Partisipatif</span>
-          <span className="detection-list-meta" style={{ marginLeft: '6px' }}>{filteredReports.length} laporan</span>
+    <div className="mp-reports">
+      <section className="mp-filter mp-report-filter" aria-label="Filter laporan deforestasi">
+        <div className="mp-report-filter__header">
+          <h2 className="mp-filter__title">Filter Laporan</h2>
         </div>
-        {onOpenCreateModal && (
-          <button
-            type="button"
-            onClick={onOpenCreateModal}
-            className="btn-action"
-            style={{
-              fontSize: '11px',
-              padding: '3px 8px',
-              minHeight: '28px',
-              background: 'var(--color-forest)',
-              color: '#fff',
-              fontWeight: 600,
-            }}
+        <div className="mp-report-filter__fields">
+        <div className="mp-select">
+          <select
+            aria-label="Filter Kategori"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="mp-field"
           >
-            + Lapor Deforestasi
-          </button>
-        )}
-      </div>
-
-      {/* Filter Toolbar Cepat */}
-      <div style={{ display: 'flex', gap: '6px', padding: '8px 10px', background: 'var(--color-bg-subtle)', borderBottom: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
-        <select
-          aria-label="Filter Kategori"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="filter-select"
-          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
-        >
           <option value="">Semua Kategori</option>
           <option value="penebangan_liar">Penebangan Liar</option>
           <option value="pembukaan_lahan">Pembukaan Lahan</option>
-          <option value="perambahan_hutan">Perambahan Hutan</option>
-          <option value="kebakaran">Kebakaran Pembukaan</option>
-          <option value="perubahan_tutupan">Kehilangan Kanopi</option>
-        </select>
+          <option value="penambangan">Penambangan</option>
+          </select>
+          <img src={arrowDropdown} className="mp-select__arrow" alt="" aria-hidden="true" />
+        </div>
 
-        <select
-          aria-label="Filter Status Verifikasi"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="filter-select"
-          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
-        >
+        <div className="mp-select">
+          <select
+            aria-label="Filter Status Verifikasi"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="mp-field"
+          >
           <option value="">Semua Status</option>
           <option value="PENDING">Menunggu Verifikasi</option>
           <option value="IN_REVIEW">Perlu Pemeriksaan</option>
           <option value="VERIFIED">Terverifikasi</option>
           <option value="REJECTED">Ditolak</option>
-        </select>
+          </select>
+          <img src={arrowDropdown} className="mp-select__arrow" alt="" aria-hidden="true" />
+        </div>
 
-        <select
-          aria-label="Filter Hasil Penilaian Bukti"
-          value={evidenceFilter}
-          onChange={(e) => setEvidenceFilter(e.target.value)}
-          className="filter-select"
-          style={{ fontSize: '11px', padding: '3px 6px', height: '30px', flex: 1, minWidth: '100px' }}
-        >
+        <div className="mp-select">
+          <select
+            aria-label="Filter Hasil Penilaian Bukti"
+            value={evidenceFilter}
+            onChange={(e) => setEvidenceFilter(e.target.value)}
+            className="mp-field"
+          >
           <option value="">Semua Bukti</option>
           <option value="Ada indikasi pendukung">Ada Indikasi</option>
           <option value="Belum ditemukan kecocokan">Belum Cocok</option>
           <option value="Belum dapat dinilai">Belum Dinilai</option>
-        </select>
-      </div>
+          </select>
+          <img src={arrowDropdown} className="mp-select__arrow" alt="" aria-hidden="true" />
+        </div>
+        </div>
+      </section>
 
-      {/* Konten Scroll List Laporan */}
-      <div className="detection-items-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+      <section className="mp-report-list-section" aria-label="Daftar laporan deforestasi">
+        <div className="mp-report-list__header">
+          <h2 className="mp-report-list__title">Laporan Deforestasi Partisipatif</h2>
+          <span className="mp-report-list__meta">{filteredReports.length} laporan</span>
+        </div>
+      <div className="mp-report-list">
+        <div className="mp-report-list__scroll">
         {filteredReports.length === 0 ? (
-          <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-              <LeafIcon size={28} color="#059669" />
-            </div>
+          <div className="mp-report-list__empty">
             <div style={{ fontWeight: 500 }}>Belum ada laporan deforestasi pada filter ini.</div>
             <div style={{ fontSize: '11px', marginTop: '4px' }}>
               Masyarakat dapat melaporkan indikasi penebangan liar, pembukaan lahan berhutan, atau perambahan kawasan lindung di Kalimantan.
             </div>
-            <button
-              type="button"
-              onClick={onOpenCreateModal}
-              className="btn-action"
-              style={{ marginTop: '12px', fontSize: '11px', padding: '6px 12px' }}
-            >
-              Kirim Laporan Deforestasi
-            </button>
           </div>
         ) : (
           filteredReports.map((r) => {
@@ -165,7 +140,7 @@ export const ReportList: React.FC<ReportListProps> = ({
               if (r.category === 'pembukaan_lahan') {
                 return <TractorIcon size={13} color="#D97706" />;
               }
-              if (r.category === 'perambahan_hutan') {
+              if (r.category === 'penambangan' || r.category === 'perambahan_hutan') {
                 return <PinIcon size={13} color="#7C3AED" />;
               }
               if (r.category === 'kebakaran' || r.category === 'kebakaran_hutan') {
@@ -257,11 +232,12 @@ export const ReportList: React.FC<ReportListProps> = ({
             );
           })
         )}
+        </div>
+        <div className="mp-report-list__footer">
+          Laporan warga adalah indikasi awal dan bukan konfirmasi perubahan tutupan hutan.
+        </div>
       </div>
-
-      <div className="detection-list-footer">
-        Platform informasi warga untuk memantau indikasi kebakaran dan tutupan pohon Kalimantan.
-      </div>
+      </section>
     </div>
   );
 };

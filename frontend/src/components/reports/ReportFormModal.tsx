@@ -7,12 +7,10 @@ import {
   CheckCircleIcon,
   AlertTriangleIcon,
   PlusIcon,
-  FlameIcon,
   TractorIcon,
   TreeIcon,
   PinIcon,
   MapPinIcon,
-  LeafIcon,
 } from '../common/SvgIcons';
 
 interface ReportFormModalProps {
@@ -342,22 +340,10 @@ export const ReportFormModal: React.FC<ReportFormModalProps> = ({
                       icon: (active: boolean) => <TractorIcon size={14} color={active ? '#fff' : '#D97706'} />,
                     },
                     {
-                      cat: 'perambahan_hutan',
-                      label: 'Perambahan Hutan',
-                      sub: 'Okupasi kawasan lindung',
+                      cat: 'penambangan',
+                      label: 'Penambangan',
+                      sub: 'Aktivitas pertambangan di kawasan hutan',
                       icon: (active: boolean) => <MapPinIcon size={14} color={active ? '#fff' : '#7C3AED'} />,
-                    },
-                    {
-                      cat: 'kebakaran',
-                      label: 'Kebakaran Pembukaan',
-                      sub: 'Slash & burn pembukaan lahan',
-                      icon: (active: boolean) => <FlameIcon size={14} color={active ? '#fff' : '#CC6F00'} />,
-                    },
-                    {
-                      cat: 'perubahan_tutupan',
-                      label: 'Kehilangan Kanopi',
-                      sub: 'Penurunan drastis tutupan kanopi',
-                      icon: (active: boolean) => <LeafIcon size={14} color={active ? '#fff' : '#059669'} />,
                     },
                   ] as const).map(({ cat, label, sub, icon }) => (
                     <button

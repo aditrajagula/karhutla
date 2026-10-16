@@ -743,7 +743,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           ${h.province ? `<div><b>Wilayah:</b> ${h.province}</div>` : ''}
           ${h.in_peat ? `<div style="color: #9333ea; font-weight: 600;"><b>Lahan Gambut:</b> ${h.peat_landform || 'Wilayah Gambut'}</div>` : ''}
           ${h.in_forest ? `<div style="color: #15803d; font-weight: 600;"><b>Kawasan Hutan:</b> ${h.forest_name || h.forest_fungsi || 'Kawasan Hutan'}</div>` : ''}
-          <div><b>Tingkat Keyakinan:</b> <span style="text-transform: capitalize; font-weight: 600; color: ${confidenceColor};">${h.confidence}</span></div>
+          <div><b>Tingkat Keyakinan:</b> <span style="font-weight: 600; color: ${confidenceColor};">${h.confidence === 'high' ? 'Tinggi' : h.confidence === 'nominal' ? 'Sedang' : 'Rendah'}</span></div>
           ${h.frp !== undefined ? `<div><b>Daya Termal (FRP):</b> ${h.frp.toFixed(1)} MW</div>` : ''}
           <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; paddingTop: 3px;">
             Indikasi panas permukaan bumi, bukan bukti otomatis kebakaran hutan terbuka.

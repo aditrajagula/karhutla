@@ -15,7 +15,7 @@ interface DetectionListProps {
 
 const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
   high: 'Tinggi',
-  nominal: 'Normal',
+  nominal: 'Sedang',
   low: 'Rendah',
 };
 
@@ -58,7 +58,7 @@ export const DetectionList: React.FC<DetectionListProps> = ({
                 key={h.id}
                 type="button"
                 onClick={() => onSelectHotspot(h)}
-                className={`mp-card ${selectedId === h.id ? 'is-selected' : ''}`}
+                className={`mp-card mp-card--hotspot ${selectedId === h.id ? 'is-selected' : ''}`}
               >
                 <span className="mp-card__info">
                   <span className="mp-card__row">
@@ -75,20 +75,26 @@ export const DetectionList: React.FC<DetectionListProps> = ({
                   </span>
                 </span>
                 <span className="mp-card__chips">
-                  {h.in_peat && (
-                    <span className="mp-chip" style={{ color: '#9333ea', borderColor: 'rgba(147, 51, 234, 0.4)' }}>
-                      Gambut
+                  {(h.in_peat || h.in_forest) && (
+                    <span className="mp-card__context">
+                      {h.in_peat && (
+                        <span className="mp-chip" style={{ color: '#9333ea', borderColor: 'rgba(147, 51, 234, 0.4)' }}>
+                          Gambut
+                        </span>
+                      )}
+                      {h.in_forest && (
+                        <span className="mp-chip" style={{ color: '#16a34a', borderColor: 'rgba(22, 163, 74, 0.4)' }}>
+                          Hutan
+                        </span>
+                      )}
                     </span>
                   )}
-                  {h.in_forest && (
-                    <span className="mp-chip" style={{ color: '#16a34a', borderColor: 'rgba(22, 163, 74, 0.4)' }}>
-                      Hutan
-                    </span>
-                  )}
-                  {h.frp !== undefined && h.frp !== null && (
-                    <span className="mp-chip">{h.frp} MW</span>
-                  )}
-                  <span className="mp-chip">{CONFIDENCE_LABEL[h.confidence] ?? h.confidence}</span>
+                  <span className="mp-card__metrics">
+                    {h.frp !== undefined && h.frp !== null && (
+                      <span className="mp-chip">{h.frp} MW</span>
+                    )}
+                    <span className="mp-chip">{CONFIDENCE_LABEL[h.confidence] ?? h.confidence}</span>
+                  </span>
                 </span>
               </button>
             ))

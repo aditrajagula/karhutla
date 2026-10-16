@@ -126,7 +126,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               type="button"
               className="mp-btn mp-btn--ghost"
               onClick={handleLogout}
-              style={{ fontSize: '12px', padding: '5px 10px' }}
               title="Keluar dari akun"
             >
               Keluar

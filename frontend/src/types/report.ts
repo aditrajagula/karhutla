@@ -5,6 +5,7 @@
 export type ReportCategory =
   | 'penebangan_liar'
   | 'pembukaan_lahan'
+  | 'penambangan'
   | 'perambahan_hutan'
   | 'kebakaran'
   | 'perubahan_tutupan'
@@ -96,8 +97,9 @@ export interface UpdateReportResponse {
 }
 
 export const CATEGORY_LABELS: Record<ReportCategory, string> = {
-  penebangan_liar: 'Penebangan Liar (Illegal Logging)',
-  pembukaan_lahan: 'Pembukaan Lahan (Land Clearing)',
+  penebangan_liar: 'Penebangan Liar',
+  pembukaan_lahan: 'Pembukaan Lahan',
+  penambangan: 'Penambangan',
   perambahan_hutan: 'Perambahan Kawasan Hutan',
   kebakaran: 'Kebakaran Pembukaan Lahan (Slash & Burn)',
   perubahan_tutupan: 'Perubahan Drastis Tutupan Kanopi',

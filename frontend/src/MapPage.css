@@ -557,6 +557,64 @@
   gap: 5px;
 }
 
+/* Konteks hutan dan gambut ditumpuk pada kartu hotspot agar tidak menimpa metadata. */
+.mp-card.mp-card--hotspot {
+  align-items: center;
+  height: auto;
+  min-height: 62px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+
+.mp-card--hotspot .mp-card__info {
+  flex: 1 1 auto;
+  max-width: none;
+  overflow: hidden;
+  align-self: center;
+}
+
+.mp-card--hotspot .mp-card__chips {
+  position: static;
+  top: auto;
+  transform: none;
+  flex: 0 0 116px;
+  min-width: 0;
+  margin-left: 8px;
+  margin-right: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mp-card--hotspot .mp-card__context {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.mp-card--hotspot .mp-card__metrics {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.mp-card--hotspot .mp-chip {
+  box-sizing: border-box;
+  width: 54px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 4px;
+}
+
 .mp-chip {
   min-width: 54px;
   height: 15px;
@@ -578,20 +636,406 @@
 }
 
 .mp-reports {
+  display: flex;
   flex: 1;
-  min-height: 300px;
-  border: 0.5px solid var(--mp-orange);
-  border-radius: 10px;
+  min-height: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mp-report-filter {
+  padding: 30px 20px;
+}
+
+.mp-report-filter__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.mp-report-filter .mp-filter__title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.mp-report-filter__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.mp-report-filter .mp-field {
+  height: 46px;
+  padding: 0 20px;
+  font-size: 16px;
+}
+
+.mp-report-filter .mp-select__arrow {
+  top: 12px;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  filter: brightness(0) saturate(100%) invert(37%) sepia(85%) saturate(1120%) hue-rotate(7deg) brightness(94%) contrast(101%);
+}
+
+.mp-report-list-section {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.mp-report-list {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
   overflow: hidden;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 10px;
+  background: var(--mp-card);
+}
+
+.mp-report-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--mp-text);
+}
+
+.mp-report-list__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mp-report-list__meta {
+  color: var(--mp-orange);
+  font-size: 10px;
+}
+
+.mp-report-list__scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 460px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 4px 6px 0;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.mp-report-list__empty {
+  flex: 1;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.mp-report-list__footer {
+  padding: 9px 12px;
+  border-top: 1px solid var(--mp-card-border);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 /* ---------- Hotspot Prediksi Model Harian ---------- */
+.risk-modal-backdrop {
+  background: rgba(17, 16, 13, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.risk-modal {
+  width: min(680px, 100%);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 10px;
+  background: var(--mp-bg);
+  color: var(--mp-text);
+}
+
+.risk-modal__header,
+.risk-modal__footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.risk-modal__header {
+  border-bottom: 1px solid var(--mp-card-border);
+}
+
+.risk-modal__header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.risk-modal__header p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.risk-modal__close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mp-orange);
+  cursor: pointer;
+}
+
+.risk-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+
+.risk-modal__location {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 8px;
+  background: var(--mp-card);
+}
+
+.risk-modal__location-info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.risk-modal__eyebrow {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.risk-modal__coordinates {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-modal__muted {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.risk-modal__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.risk-modal__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.risk-modal__message {
+  padding: 12px 14px;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 8px;
+  background: var(--mp-card);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.risk-modal__message p { margin: 4px 0 0; }
+
+.risk-modal__message--error {
+  border-color: #B45309;
+}
+
+.risk-modal__message--notice {
+  border-color: var(--mp-orange);
+  color: var(--mp-text);
+}
+
+.risk-modal__samples {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+  color: var(--mp-text);
+  font-size: 11px;
+}
+
+.risk-modal__samples > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.risk-modal__samples button {
+  padding: 5px 9px;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--mp-orange);
+  font: inherit;
+  cursor: pointer;
+}
+
+.risk-modal__result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--mp-card-border);
+  border-left: 3px solid var(--mp-orange);
+  border-radius: 8px;
+  background: var(--mp-card);
+}
+
+.risk-modal__result--tinggi { border-left-color: #B45309; }
+.risk-modal__result--sedang { border-left-color: #CC6F00; }
+.risk-modal__result--rendah { border-left-color: #64748B; }
+
+.risk-modal__level {
+  display: block;
+  margin-top: 3px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.risk-modal__score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.risk-modal__score strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-modal__score span {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+.risk-modal__disclaimer {
+  margin: -6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.risk-modal__measurements {
+  padding: 12px 14px;
+  border: 1px solid var(--mp-card-border);
+  border-radius: 8px;
+  background: var(--mp-card);
+}
+
+.risk-modal__measurements h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.risk-modal__measurements dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+  margin: 0;
+}
+
+.risk-modal__measurements dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--mp-card-border);
+}
+
+.risk-modal__measurements dt {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.risk-modal__measurements dd {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.risk-modal__footer {
+  border-top: 1px solid var(--mp-card-border);
+}
+
+@media (max-width: 560px) {
+  .risk-modal__header,
+  .risk-modal__footer { padding: 12px 14px; }
+  .risk-modal__body { padding: 14px; }
+  .risk-modal__measurements dl { grid-template-columns: 1fr; }
+  .risk-modal__location { align-items: flex-start; flex-direction: column; }
+}
+
 .mp-predictive-pane {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
   flex: 1;
   min-height: 0;
+}
+
+.mp-prediction-filter .mp-filter__title {
+  margin-bottom: 30px;
+}
+
+.mp-prediction-filter .mp-filter__group {
+  margin-bottom: 14px;
+}
+
+.mp-prediction-filter__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .mp-predictive-banner {

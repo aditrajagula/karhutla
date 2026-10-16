@@ -441,17 +441,11 @@ export function App() {
                 selectedId={selectedPredictiveHotspot?.id}
               />
             ) : (
-              <div className="mp-reports">
-                <ReportList
-                  reports={reports}
-                  onSelectReport={(r) => setSelectedReport(r)}
-                  selectedId={selectedReport?.id}
-                  onOpenCreateModal={isPetugas() ? undefined : () => {
-                    setPickedCoords(null);
-                    setIsReportFormOpen(true);
-                  }}
-                />
-              </div>
+              <ReportList
+                reports={reports}
+                onSelectReport={(r) => setSelectedReport(r)}
+                selectedId={selectedReport?.id}
+              />
             )}
 
             <footer className="mp-sidebar__footer">

@@ -55,9 +55,10 @@ async def _firms_auto_refresh_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(_firms_auto_refresh_loop())
+    task = asyncio.create_task(_firms_auto_refresh_loop()) if REFRESH_INTERVAL_SECONDS > 0 else None
     yield
-    task.cancel()
+    if task:
+        task.cancel()
 
 
 app = FastAPI(

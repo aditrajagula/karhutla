@@ -295,6 +295,8 @@ export function App() {
           setPickedCoords(null);
           setIsReportFormOpen(true);
         }}
+        onCheckNearbyRisk={handleCheckNearbyRisk}
+        isLocatingNearby={isLocatingNearby}
       />
 
       <main className="mp-main">

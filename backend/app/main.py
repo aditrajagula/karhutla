@@ -58,7 +58,13 @@ from .glad_forest_reader import (
 logger = logging.getLogger(__name__)
 PEATLAND_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_big_official.geojson")
 PEATLAND_DISPLAY_GEOJSON_PATH = Path(__file__).with_name("peat_kalimantan_display.geojson")
-CLASSIFIED_HOTSPOTS_GEOJSON_PATH = Path(__file__).with_name("hotspots_kalimantan_final.geojson")
+FOREST_AREA_GEOJSON_PATH = Path(__file__).with_name("kawasan_hutan_kalimantan.geojson")
+FOREST_AREA_DISPLAY_GEOJSON_PATH = Path(__file__).with_name("kawasan_hutan_kalimantan_display.geojson")
+CLASSIFIED_HOTSPOTS_GEOJSON_PATH = (
+    Path(__file__).with_name("final_hotspots_segmentation.geojson")
+    if Path(__file__).with_name("final_hotspots_segmentation.geojson").is_file()
+    else Path(__file__).with_name("hotspots_kalimantan_final.geojson")
+)
 FIRMS_MANIFEST_PATH = Path(__file__).with_name("firms_manifest.json")
 FOREST_OVERLAY_PNG_PATH = GLAD_FOREST_DIR / "kalimantan" / "kalteng_forest_overlay.png"
 FOREST_SUBSET_TIF_PATH = GLAD_FOREST_DIR / "kalimantan" / "GLAD_Forest_extent_2020_00N_110E_kalteng_demo.tif"
@@ -68,10 +74,12 @@ REFRESH_INTERVAL_SECONDS = int(os.getenv("FIRMS_REFRESH_INTERVAL_SECONDS", "1800
 
 
 async def _firms_auto_refresh_loop() -> None:
-    # ponytail: single-process asyncio loop, pakai OS cron jika multi-worker
+    # Tunggu satu interval sebelum auto-refresh pertama agar start-up server instan
+    if REFRESH_INTERVAL_SECONDS > 0:
+        await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
     while True:
         try:
-            await asyncio.to_thread(pipeline_instance.run, total_days=5, force_snapshot=False)
+            await asyncio.to_thread(pipeline_instance.run, total_days=2, force_snapshot=False)
         except Exception as exc:
             logger.warning("Auto-refresh FIRMS gagal: %s", exc)
         await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
@@ -208,6 +216,107 @@ class ProvenanceStatusResponse(BaseModel):
 
 
 # ==============================================================================
+# Spatial Filter Gambut & Kawasan Hutan
+# ==============================================================================
+
+@lru_cache(maxsize=1)
+def _get_known_segmentation_map() -> Dict[Tuple[int, int], Dict[str, Any]]:
+    """Map cepat (lat_round, lon_round) -> properties dari final_hotspots_segmentation.geojson"""
+    fast_map: Dict[Tuple[int, int], Dict[str, Any]] = {}
+    if CLASSIFIED_HOTSPOTS_GEOJSON_PATH.is_file():
+        try:
+            with CLASSIFIED_HOTSPOTS_GEOJSON_PATH.open(encoding="utf-8") as f:
+                data = json.load(f)
+                for ft in data.get("features", []):
+                    coords = ft.get("geometry", {}).get("coordinates", [0, 0])
+                    key = (round(float(coords[1]), 4), round(float(coords[0]), 4))
+                    props = ft.get("properties", {})
+                    fast_map[key] = {
+                        "in_peat": bool(props.get("in_peat", False)),
+                        "peat_landform": props.get("peat_landform"),
+                        "in_forest": bool(props.get("in_forest", False)),
+                        "forest_fungsi": props.get("forest_fungsi"),
+                        "forest_name": props.get("forest_name"),
+                        "is_focus_hotspot": bool(props.get("is_focus_hotspot", False)),
+                    }
+        except Exception as exc:
+            logger.warning("Gagal memuat known_segmentation_map: %s", exc)
+    return fast_map
+
+
+@lru_cache(maxsize=1)
+def _get_segmentation_tree():
+    from shapely.strtree import STRtree
+    from shapely.geometry import shape
+
+    peat_path = PEATLAND_DISPLAY_GEOJSON_PATH if PEATLAND_DISPLAY_GEOJSON_PATH.is_file() else PEATLAND_GEOJSON_PATH
+    forest_path = FOREST_AREA_DISPLAY_GEOJSON_PATH if FOREST_AREA_DISPLAY_GEOJSON_PATH.is_file() else FOREST_AREA_GEOJSON_PATH
+
+    peat_geoms = []
+    peat_props = []
+    if peat_path.is_file():
+        with peat_path.open(encoding="utf-8") as pf:
+            for ft in json.load(pf).get("features", []):
+                peat_geoms.append(shape(ft["geometry"]))
+                peat_props.append(ft.get("properties", {}))
+
+    forest_geoms = []
+    forest_props = []
+    if forest_path.is_file():
+        with forest_path.open(encoding="utf-8") as ff:
+            for ft in json.load(ff).get("features", []):
+                forest_geoms.append(shape(ft["geometry"]))
+                forest_props.append(ft.get("properties", {}))
+
+    all_geoms = peat_geoms + forest_geoms
+    tree = STRtree(all_geoms) if all_geoms else None
+    return tree, peat_geoms, peat_props, forest_geoms, forest_props
+
+
+def check_hotspot_segmentation(lon: float, lat: float) -> Tuple[bool, bool, Optional[str], Optional[str], Optional[str]]:
+    """Mengembalikan (in_peat, in_forest, peat_landform, forest_fungsi, forest_name)."""
+    # 1. Cek fast precomputed map terlebih dahulu (0 ms)
+    fast_map = _get_known_segmentation_map()
+    key = (round(float(lat), 4), round(float(lon), 4))
+    if key in fast_map:
+        m = fast_map[key]
+        return m["in_peat"], m["in_forest"], m["peat_landform"], m["forest_fungsi"], m["forest_name"]
+
+    # 2. Jika titik baru dari NASA FIRMS live API, uji via STRtree
+    tree, peat_geoms, peat_props, forest_geoms, forest_props = _get_segmentation_tree()
+    if not tree:
+        return False, False, None, None, None
+
+    from shapely.geometry import Point
+    pt = Point(lon, lat)
+    candidate_indices = tree.query(pt)
+    in_peat = False
+    in_forest = False
+    peat_landform = None
+    forest_fungsi = None
+    forest_name = None
+    num_peat = len(peat_geoms)
+
+    for idx in candidate_indices:
+        if idx < num_peat:
+            if not in_peat and peat_geoms[idx].contains(pt):
+                in_peat = True
+                p = peat_props[idx]
+                peat_landform = p.get("landform") or p.get("namobj") or "Lahan Gambut"
+        else:
+            f_idx = idx - num_peat
+            if not in_forest and forest_geoms[f_idx].contains(pt):
+                in_forest = True
+                f = forest_props[f_idx]
+                forest_name = f.get("nkws") or f.get("namobj") or "Kawasan Hutan"
+                forest_fungsi = f.get("fungsitap") or f.get("fungsi")
+        if in_peat and in_forest:
+            break
+
+    return in_peat, in_forest, peat_landform, forest_fungsi, forest_name
+
+
+# ==============================================================================
 # Endpoints
 # ==============================================================================
 
@@ -219,7 +328,8 @@ def get_hotspots(
     confidence: Optional[str] = Query(None, description="Filter tingkat confidence: low, nominal, high (atau l, n, h)"),
     min_frp: Optional[float] = Query(None, ge=0.0, description="Ambang batas minimum Fire Radiative Power (MW)"),
     province: Optional[str] = Query(None, description="Filter nama provinsi daratan Indonesia (case-insensitive)"),
-    region: Optional[str] = Query(None, description="Filter cakupan wilayah: 'kalimantan' untuk membatasi 5 provinsi Kalimantan"),
+    region: Optional[str] = Query("kalimantan", description="Filter cakupan wilayah: 'kalimantan' untuk membatasi 5 provinsi Kalimantan"),
+    focus_segmentation: bool = Query(True, description="Filter hanya hotspot di kawasan hutan atau lahan gambut"),
     force_snapshot: bool = Query(False, description="Paksa membaca snapshot tim lokal tanpa menghubungi live API"),
     mode: Optional[str] = Query(None, description="Mode sumber data ('live' atau 'snapshot')"),
     start_date: Optional[str] = Query(None, description="Filter tanggal awal observasi (YYYY-MM-DD)"),
@@ -288,13 +398,48 @@ def get_hotspots(
             if f["properties"].get("province") and prov_target in f["properties"]["province"].lower()
         ]
 
+    # Filter 1: Fokus wilayah Pulau Kalimantan
     if region and region.strip().lower() == "kalimantan":
         kalimantan_names = {p.lower() for p in KALIMANTAN_PROVINCES}
-        features = [
-            f for f in features
-            if f["properties"].get("province") and f["properties"]["province"].strip().lower() in kalimantan_names
-        ]
+        kalimantan_features = []
+        for f in features:
+            coords = f["geometry"]["coordinates"]
+            lon, lat = coords[0], coords[1]
+            prov = str(f["properties"].get("province") or "").strip().lower()
+            if prov in kalimantan_names:
+                kalimantan_features.append(f)
+            else:
+                in_kal, _ = pipeline_instance.spatial_filter.is_inside_kalimantan(lon, lat)
+                if in_kal:
+                    kalimantan_features.append(f)
+        features = kalimantan_features
 
+    # Filter 2: Hanya tampilkan titik di segmentasi Kawasan Hutan ATAU Lahan Gambut
+    if focus_segmentation:
+        segmented_features = []
+        for f in features:
+            coords = f["geometry"]["coordinates"]
+            lon, lat = coords[0], coords[1]
+            has_peat_prop = f["properties"].get("in_peat")
+            has_forest_prop = f["properties"].get("in_forest")
+            if has_peat_prop is not None and has_forest_prop is not None:
+                in_peat = bool(has_peat_prop)
+                in_forest = bool(has_forest_prop)
+            else:
+                in_peat, in_forest, peat_landform, forest_fungsi, forest_name = check_hotspot_segmentation(lon, lat)
+                f["properties"]["in_peat"] = in_peat
+                f["properties"]["in_forest"] = in_forest
+                if peat_landform:
+                    f["properties"]["peat_landform"] = peat_landform
+                if forest_fungsi:
+                    f["properties"]["forest_fungsi"] = forest_fungsi
+                if forest_name:
+                    f["properties"]["forest_name"] = forest_name
+                f["properties"]["is_focus_hotspot"] = in_peat or in_forest
+
+            if in_peat or in_forest:
+                segmented_features.append(f)
+        features = segmented_features
 
     # Susun kembali GeoJSON hasil filter dan payload list records
     is_snap = result.get("provenance", {}).get("is_snapshot", False) or effective_force_snapshot
@@ -308,7 +453,12 @@ def get_hotspots(
             "acq_date": f["properties"].get("acq_date"),
             "acq_time": f["properties"].get("acq_time"),
             "frp": f["properties"].get("frp"),
-            "province": f["properties"].get("province")
+            "province": f["properties"].get("province"),
+            "in_peat": bool(f["properties"].get("in_peat", False)),
+            "in_forest": bool(f["properties"].get("in_forest", False)),
+            "peat_landform": f["properties"].get("peat_landform"),
+            "forest_fungsi": f["properties"].get("forest_fungsi"),
+            "forest_name": f["properties"].get("forest_name"),
         }
         for f in features
     ]
@@ -445,6 +595,23 @@ def _peatland_display_geojson_bytes() -> bytes:
 def get_peatland_map_data() -> Response:
     return Response(
         content=_peatland_display_geojson_bytes(),
+        media_type="application/geo+json",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/api/v1/map-data/forest-area", summary="GeoJSON layer poligon kawasan hutan Kalimantan (KLHK / SatuPeta)")
+def get_forest_area_map_data() -> Response:
+    if FOREST_AREA_DISPLAY_GEOJSON_PATH.is_file():
+        return Response(
+            content=FOREST_AREA_DISPLAY_GEOJSON_PATH.read_bytes(),
+            media_type="application/geo+json",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    if not FOREST_AREA_GEOJSON_PATH.is_file():
+        raise HTTPException(status_code=503, detail="GeoJSON kawasan hutan belum tersedia.")
+    return FileResponse(
+        FOREST_AREA_GEOJSON_PATH,
         media_type="application/geo+json",
         headers={"Cache-Control": "public, max-age=86400"},
     )

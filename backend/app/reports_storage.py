@@ -219,19 +219,28 @@ class CitizenReportsRepository:
             elif effective_url.startswith("postgresql://"):
                 effective_url = effective_url.replace("postgresql://", "postgresql+psycopg2://", 1)
             self.db_url = effective_url
-            self.engine = create_engine(
-                self.db_url,
-                pool_pre_ping=True,
-                pool_recycle=300,
-            )
+            try:
+                self.engine = create_engine(
+                    self.db_url,
+                    pool_pre_ping=True,
+                    pool_recycle=300,
+                )
+                Base.metadata.create_all(bind=self.engine)
+            except Exception as exc:
+                logger.warning("Gagal inisialisasi database Postgres (%s), fallback ke SQLite lokal: %s", exc, self.db_path)
+                self.db_url = f"sqlite:///{self.db_path}"
+                self.engine = create_engine(
+                    self.db_url,
+                    connect_args={"check_same_thread": False},
+                )
+                Base.metadata.create_all(bind=self.engine)
         else:
             self.db_url = f"sqlite:///{self.db_path}"
             self.engine = create_engine(
                 self.db_url,
                 connect_args={"check_same_thread": False},
             )
-
-        Base.metadata.create_all(bind=self.engine)
+            Base.metadata.create_all(bind=self.engine)
         self.SessionLocal = sessionmaker(
             autocommit=False, autoflush=False, bind=self.engine
         )

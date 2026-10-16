@@ -39,6 +39,11 @@ interface GeoJSONFeature {
     frp?: number;
     daynight?: string;
     province?: string;
+    in_peat?: boolean;
+    in_forest?: boolean;
+    peat_landform?: string;
+    forest_fungsi?: string;
+    forest_name?: string;
   };
 }
 
@@ -77,6 +82,10 @@ export async function fetchHotspots(params?: HotspotFilterParams): Promise<Hotsp
   if (params?.endDate) query.append('end_date', params.endDate);
   if (params?.regionId) query.append('province', params.regionId);
   if (params?.minConfidence) query.append('confidence', params.minConfidence);
+
+  // Fokus Pulau Kalimantan dan hanya segmentasi Kawasan Hutan atau Lahan Gambut
+  query.append('region', 'kalimantan');
+  query.append('focus_segmentation', 'true');
 
   // Jika mode meminta snapshot secara paksa
   if (params?.mode === 'snapshot') {
@@ -120,6 +129,11 @@ export async function fetchHotspots(params?: HotspotFilterParams): Promise<Hotsp
         (provenance.is_snapshot ? 'LOCAL_TEAM_SNAPSHOT' : 'NASA_FIRMS_API'),
       province: props.province || undefined,
       brightness: props.bright_ti4 || undefined,
+      in_peat: Boolean(props.in_peat),
+      in_forest: Boolean(props.in_forest),
+      peat_landform: props.peat_landform ? String(props.peat_landform) : undefined,
+      forest_fungsi: props.forest_fungsi ? String(props.forest_fungsi) : undefined,
+      forest_name: props.forest_name ? String(props.forest_name) : undefined,
     };
   });
 
@@ -217,6 +231,16 @@ export async function fetchPeatlandGeoJSON(signal?: AbortSignal): Promise<Peatla
   const data: unknown = await fetchMapData('/map-data/peatland', signal);
   if (!isFeatureCollection(data)) {
     throw new Error('Format GeoJSON layer gambut tidak valid.');
+  }
+  return data;
+}
+
+export type ForestAreaGeoJSON = GeoJSON.FeatureCollection;
+
+export async function fetchForestAreaGeoJSON(signal?: AbortSignal): Promise<ForestAreaGeoJSON> {
+  const data: unknown = await fetchMapData('/map-data/forest-area', signal);
+  if (!isFeatureCollection(data)) {
+    throw new Error('Format GeoJSON kawasan hutan tidak valid.');
   }
   return data;
 }

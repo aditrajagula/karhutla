@@ -65,6 +65,22 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
               </span>
             </div>
           )}
+          {hotspot.in_peat && (
+            <div className="detail-row">
+              <span className="detail-label">Lahan Gambut:</span>
+              <span className="detail-val" style={{ color: '#9333ea', fontWeight: 600 }}>
+                {hotspot.peat_landform || 'Wilayah Gambut Kalimantan'}
+              </span>
+            </div>
+          )}
+          {hotspot.in_forest && (
+            <div className="detail-row">
+              <span className="detail-label">Kawasan Hutan:</span>
+              <span className="detail-val" style={{ color: '#16a34a', fontWeight: 600 }}>
+                {hotspot.forest_name ? `${hotspot.forest_name} (${hotspot.forest_fungsi || 'Kawasan Hutan'})` : (hotspot.forest_fungsi || 'Kawasan Hutan Kalimantan')}
+              </span>
+            </div>
+          )}
           <div className="detail-row">
             <span className="detail-label">Waktu Observasi:</span>
             <span className="detail-val">

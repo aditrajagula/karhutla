@@ -7,12 +7,11 @@ import { CATEGORY_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
 import {
   fetchKalimantanBoundaries,
   fetchPeatlandGeoJSON,
-  fetchForestExtentTiles,
-  getForestExtentTileOverlayUrl,
+  fetchForestAreaGeoJSON,
 } from '../../services/api';
 import type {
   PeatlandGeoJSON,
-  ForestExtentTilesResponse,
+  ForestAreaGeoJSON,
 } from '../../services/api';
 import kalimantanGeoJsonFallback from '../../assets/map/kalimantan_provinces.json';
 import { Icon } from '../common/Icon';
@@ -220,8 +219,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const peatlandLayerRef = useRef<L.GeoJSON | null>(null);
   const peatlandGeoJSONRef = useRef<PeatlandGeoJSON | null>(null);
-  const forestOverlaysRef = useRef<L.ImageOverlay[]>([]);
-  const forestTilesDataRef = useRef<ForestExtentTilesResponse | null>(null);
+  const forestLayerRef = useRef<L.GeoJSON | null>(null);
+  const forestGeoJSONRef = useRef<ForestAreaGeoJSON | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [kalimantanGeoJson, setKalimantanGeoJson] = useState<any>(kalimantanGeoJsonFallback);
@@ -232,9 +231,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const [showPeatland, setShowPeatland] = useState<boolean>(false);
   const [showForest, setShowForest] = useState<boolean>(false);
   const [peatlandFeatureCount, setPeatlandFeatureCount] = useState<number | null>(null);
+  const [forestFeatureCount, setForestFeatureCount] = useState<number | null>(null);
   const [peatlandStatus, setPeatlandStatus] = useState<string | null>(null);
   const [forestStatus, setForestStatus] = useState<string | null>(null);
-  const [forestTilesData, setForestTilesData] = useState<ForestExtentTilesResponse | null>(null);
   const [layerError, setLayerError] = useState<string | null>(null);
   const [isMapMenuOpen, setIsMapMenuOpen] = useState<boolean>(false);
 
@@ -603,14 +602,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     };
   }, [showPeatland]);
 
-  // Layer Raster Tutupan Hutan GLAD Forest Extent 2020 (Multi-Tile ImageOverlay Kalimantan)
+  // Layer Kawasan Hutan Kalimantan (Layer Poligon Resmi KLHK / SatuPeta)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (forestOverlaysRef.current.length > 0) {
-      forestOverlaysRef.current.forEach((ov) => map.removeLayer(ov));
-      forestOverlaysRef.current = [];
+    if (forestLayerRef.current) {
+      map.removeLayer(forestLayerRef.current);
+      forestLayerRef.current = null;
     }
 
     if (!showForest) return;
@@ -620,62 +619,55 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     const loadForest = async () => {
       try {
-        const tilesData =
-          forestTilesDataRef.current ||
-          (await fetchForestExtentTiles(controller.signal));
+        const geojson =
+          forestGeoJSONRef.current ||
+          (await fetchForestAreaGeoJSON(controller.signal));
         if (!isSubscribed || !mapInstanceRef.current) return;
-        forestTilesDataRef.current = tilesData;
-        setForestTilesData(tilesData);
+        forestGeoJSONRef.current = geojson;
 
-        const newOverlays: L.ImageOverlay[] = [];
+        const layer = L.geoJSON(geojson, {
+          pane: 'forestPane',
+          style: {
+            color: '#059669',
+            weight: 1.2,
+            fillColor: '#10B981',
+            fillOpacity: 0.28,
+          },
+          onEachFeature: (feature, featureLayer) => {
+            const properties = feature.properties || {};
+            const forestName = escapeHtml(properties.nkws || properties.namobj || 'Kawasan Hutan');
+            const fungsiLabel = escapeHtml(properties.fungsi_label || properties.fungsitap || 'Kawasan Hutan');
+            const nosk = escapeHtml(properties.nosktap || '-');
+            const objectId = escapeHtml(properties.objectid || properties.id || '-');
 
-        for (const tile of tilesData.tiles) {
-          if (!tile.available) continue;
-
-          const overlayUrl = getForestExtentTileOverlayUrl(tile.tile_id);
-          const bounds = L.latLngBounds(
-            [tile.leaflet_bounds[0][0], tile.leaflet_bounds[0][1]],
-            [tile.leaflet_bounds[1][0], tile.leaflet_bounds[1][1]]
-          );
-
-          const overlay = L.imageOverlay(overlayUrl, bounds, {
-            pane: 'forestPane',
-            opacity: 0.85,
-            interactive: true,
-            attribution: 'Tutupan Hutan © University of Maryland',
-          });
-
-          overlay.bindPopup(`
-            <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 230px;">
-              <div style="font-weight: 700; color: #047857; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-                <span style="display:inline-block; width:10px; height:10px; background:#10B981; border:1px solid #059669; border-radius:2px;"></span>
-                Tutupan Hutan (${escapeHtml(tile.tile_id)})
+            featureLayer.bindPopup(`
+              <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 220px;">
+                <div style="font-weight: 700; color: #047857; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                  <span style="display:inline-block; width:10px; height:10px; background:#10B981; border:1px solid #059669; border-radius:2px;"></span>
+                  Kawasan Hutan Kalimantan
+                </div>
+                <div><b>Nama Kawasan:</b> ${forestName}</div>
+                <div><b>Fungsi:</b> ${fungsiLabel}</div>
+                <div><b>SK Penetapan:</b> ${nosk}</div>
+                <div><b>ID Objek:</b> ${objectId}</div>
+                <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; padding-top: 4px;">
+                  Sumber: Peta Kawasan Hutan Resmi (KLHK / SatuPeta BIG)
+                </div>
               </div>
-              <div><b>Wilayah:</b> ${escapeHtml(tile.region)}</div>
-              <div><b>Provinsi:</b> ${escapeHtml(tile.province)}</div>
-              <div><b>Status Cakupan:</b> Cakupan Parsial (Subset Sampel ${tile.sample_area_sq_deg || 0.25}°²)</div>
-              <div><b>Resolusi:</b> ${tile.resolution_meters}m (${tile.resolution_degrees}°)</div>
-              <div><b>Persentase Hutan:</b> ${tile.pixel_statistics.forest_percentage}% (${tile.pixel_statistics.forest_pixels.toLocaleString('id-ID')} piksel)</div>
-              <div><b>Non-Hutan:</b> ${tile.pixel_statistics.non_forest_pixels.toLocaleString('id-ID')} piksel</div>
-              <div><b>Ukuran Overlay:</b> ${Math.round(tile.overlay_size_bytes / 1024)} KB</div>
-              <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; padding-top: 4px;">
-                ${escapeHtml(tilesData.caveat)}
-              </div>
-            </div>
-          `);
+            `);
+          },
+        });
 
-          overlay.addTo(map);
-          newOverlays.push(overlay);
-        }
-
-        forestOverlaysRef.current = newOverlays;
+        layer.addTo(map);
+        forestLayerRef.current = layer;
+        setForestFeatureCount(geojson.features.length);
         setForestStatus(
-          `Layer tutupan hutan aktif (Cakupan parsial: 4 zona sampel di Kalteng, Kalbar, Kaltim - resolusi 30m).`
+          `${geojson.features.length.toLocaleString('id-ID')} poligon kawasan hutan Kalimantan aktif ditampilkan.`
         );
       } catch (error: unknown) {
         if (!isSubscribed) return;
         setLayerError(
-          error instanceof Error ? error.message : 'Layer tutupan hutan gagal dimuat.'
+          error instanceof Error ? error.message : 'Layer kawasan hutan gagal dimuat.'
         );
         setForestStatus(null);
       }
@@ -685,9 +677,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     return () => {
       isSubscribed = false;
       controller.abort();
-      if (mapInstanceRef.current && forestOverlaysRef.current.length > 0) {
-        forestOverlaysRef.current.forEach((ov) => mapInstanceRef.current?.removeLayer(ov));
-        forestOverlaysRef.current = [];
+      if (forestLayerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(forestLayerRef.current);
+        forestLayerRef.current = null;
       }
     };
   }, [showForest]);
@@ -702,9 +694,17 @@ export const MapContainer: React.FC<MapContainerProps> = ({
     layerGroup.clearLayers();
     if (!showHotspots) return;
 
+    // Filter ketat: Hanya tampilkan titik di Kawasan Hutan atau Lahan Gambut Pulau Kalimantan
+    const targetHotspots = hotspots.filter((h) => {
+      if (h.in_peat !== undefined || h.in_forest !== undefined) {
+        return Boolean(h.in_peat || h.in_forest);
+      }
+      return true;
+    });
+
     // Urutkan agar titik yang terpilih dirender paling akhir (di atas titik lain di Canvas)
-    const unselected = hotspots.filter((h) => h.id !== selectedHotspot?.id);
-    const selected = hotspots.find((h) => h.id === selectedHotspot?.id);
+    const unselected = targetHotspots.filter((h) => h.id !== selectedHotspot?.id);
+    const selected = targetHotspots.find((h) => h.id === selectedHotspot?.id);
     const ordered = selected ? [...unselected, selected] : unselected;
 
     ordered.forEach((h) => {
@@ -720,7 +720,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       } as CanvasMarkerOptions);
 
       const popupContent = `
-        <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 180px;">
+        <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 190px;">
           <div style="font-weight: 700; color: #CC6F00; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CC6F00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
             Anomali Termal Satelit
@@ -729,6 +729,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           <div><b>Waktu:</b> ${h.acq_date} pk. ${h.acq_time} UTC</div>
           <div><b>Koordinat:</b> ${h.latitude.toFixed(3)}°, ${h.longitude.toFixed(3)}°</div>
           ${h.province ? `<div><b>Wilayah:</b> ${h.province}</div>` : ''}
+          ${h.in_peat ? `<div style="color: #9333ea; font-weight: 600;"><b>Lahan Gambut:</b> ${h.peat_landform || 'Wilayah Gambut'}</div>` : ''}
+          ${h.in_forest ? `<div style="color: #15803d; font-weight: 600;"><b>Kawasan Hutan:</b> ${h.forest_name || h.forest_fungsi || 'Kawasan Hutan'}</div>` : ''}
           <div><b>Tingkat Keyakinan:</b> <span style="text-transform: capitalize; font-weight: 600; color: ${confidenceColor};">${h.confidence}</span></div>
           ${h.frp !== undefined ? `<div><b>Daya Termal (FRP):</b> ${h.frp.toFixed(1)} MW</div>` : ''}
           <div style="margin-top: 6px; font-size: 10px; color: #64748B; border-top: 1px solid #E2E8F0; paddingTop: 3px;">
@@ -1043,11 +1045,11 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           className="mp-toggle mp-toggle--forest"
           onClick={() => {
             if (!showForest) {
-              setForestStatus('Memuat segmentasi tutupan hutan (Cakupan parsial: 4 zona sampel)...');
+              setForestStatus('Memuat kawasan hutan Kalimantan...');
             }
             setShowForest((v) => !v);
           }}
-          title="Tampilkan Layer Segmentasi Tutupan Hutan (Cakupan Parsial: 4 Zona Sampel Kalimantan)"
+          title="Tampilkan Poligon Kawasan Hutan Kalimantan (KLHK / SatuPeta)"
         >
           <span className={`mp-checkbox ${showForest ? 'is-checked' : ''}`} aria-hidden="true">
             {showForest && <CheckMark />}
@@ -1063,7 +1065,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
               flexShrink: 0,
             }}
           />
-          <span>Hutan</span>
+          <span>Hutan{forestFeatureCount ? ` (${forestFeatureCount})` : ''}</span>
         </button>
 
         <span className="mp-controls__divider" aria-hidden="true" />
@@ -1124,53 +1126,24 @@ export const MapContainer: React.FC<MapContainerProps> = ({
                 flexShrink: 0,
               }}
             />
-            <span>Poligon Gambut (Layer Tematik)</span>
+            <span>Poligon Gambut (Layer Tematik BIG)</span>
           </div>
         )}
         {showForest && (
-          <>
-            <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#10B981' }}>
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#10B981',
-                  border: '1.2px solid #059669',
-                  borderRadius: '2px',
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              />
-              <span>Hutan (Kanopi ≥ 5m)</span>
-            </div>
-            <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#94A3B8' }}>
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#94A3B8',
-                  border: '1.2px solid #64748B',
-                  borderRadius: '2px',
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              />
-              <span>Bukan Hutan</span>
-            </div>
-            {forestTilesData && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: isDark ? '#94A3B8' : '#64748B',
-                  paddingLeft: '16px',
-                  marginTop: '-2px',
-                  marginBottom: '4px',
-                }}
-              >
-                Cakupan parsial: 4 zona sampel Kalimantan ({forestTilesData.overall_forest_percentage}% tutupan pada zona sampel: Palangka Raya, Ketapang, Pontianak, Samarinda)
-              </div>
-            )}
-          </>
+          <div className="mp-legend__row" style={{ ['--legend-color' as string]: '#10B981' }}>
+            <span
+              style={{
+                width: '12px',
+                height: '12px',
+                background: '#10B981',
+                border: '1.2px solid #059669',
+                borderRadius: '2px',
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span>Kawasan Hutan (Layer Resmi KLHK)</span>
+          </div>
         )}
         {(peatlandStatus || forestStatus || layerError) && (
           <div

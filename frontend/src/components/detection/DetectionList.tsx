@@ -75,6 +75,16 @@ export const DetectionList: React.FC<DetectionListProps> = ({
                   </span>
                 </span>
                 <span className="mp-card__chips">
+                  {h.in_peat && (
+                    <span className="mp-chip" style={{ color: '#9333ea', borderColor: 'rgba(147, 51, 234, 0.4)' }}>
+                      Gambut
+                    </span>
+                  )}
+                  {h.in_forest && (
+                    <span className="mp-chip" style={{ color: '#16a34a', borderColor: 'rgba(22, 163, 74, 0.4)' }}>
+                      Hutan
+                    </span>
+                  )}
                   {h.frp !== undefined && h.frp !== null && (
                     <span className="mp-chip">{h.frp} MW</span>
                   )}

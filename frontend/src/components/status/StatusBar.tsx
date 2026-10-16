@@ -14,6 +14,8 @@ interface StatusBarProps {
   totalCount?: number;
   reportsCount?: number;
   onOpenReportModal?: () => void;
+  onCheckNearbyRisk?: () => void;
+  isLocatingNearby?: boolean;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -22,6 +24,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   isDark,
   onToggleTheme,
   onOpenReportModal,
+  onCheckNearbyRisk,
+  isLocatingNearby = false,
 }) => {
   const user = getCurrentUser();
 
@@ -30,8 +34,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     window.history.pushState(null, '', '/login');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
-
-  const isOfficer = !user || user.role === 'petugas';
 
   return (
     <header className="mp-header">
@@ -45,8 +47,18 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       <div className="mp-header__actions">
-        {/* Tombol aksi pelaporan deforestasi: hanya untuk akun warga, disembunyikan di bagian admin / petugas */}
-        {!isOfficer && onOpenReportModal && (
+        {onCheckNearbyRisk && (
+          <button
+            type="button"
+            className="mp-btn mp-btn--ghost"
+            onClick={onCheckNearbyRisk}
+            title="Deteksi posisi GPS perangkat dan cek estimasi risiko kebakaran di sekitar Anda"
+          >
+            {isLocatingNearby ? 'Mencari GPS...' : 'Prediksi Risiko'}
+          </button>
+        )}
+
+        {onOpenReportModal && (
           <button
             type="button"
             className="mp-btn mp-btn--solid"

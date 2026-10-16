@@ -14,6 +14,11 @@ export interface Hotspot {
   source_provenance: string; // 'NASA_FIRMS_API' | 'LOCAL_TEAM_SNAPSHOT' | 'JOINTS_BENCHMARK_SNAPSHOT'
   province?: string;
   brightness?: number;
+  in_peat?: boolean;
+  in_forest?: boolean;
+  peat_landform?: string;
+  forest_fungsi?: string;
+  forest_name?: string;
 }
 
 export interface HotspotFilterParams {

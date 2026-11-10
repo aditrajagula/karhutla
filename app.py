@@ -1,19 +1,21 @@
-# PENTING HUGGING FACE ZEROGPU: 'import spaces' HARUS berada di paling atas sebelum library lain!
+import os
+
+# Matikan SSR mode Gradio agar tidak membajak port 7860 sebelum Uvicorn bind
+os.environ["GRADIO_SSR_MODE"] = "false"
+
+# Syarat Hugging Face ZeroGPU
 try:
     import spaces
 
     @spaces.GPU
     def _zerogpu_init_probe():
-        """Probe inisialisasi agar Hugging Face ZeroGPU mengizinkan container aktif."""
         return "ZeroGPU Ready"
 except Exception:
     pass
 
-import os
 import gradio as gr
 from backend.app.main import app as fastapi_app
 
-# Antarmuka status sederhana agar Hugging Face mengenali service Gradio
 with gr.Blocks(title="JagaBorneo API Service") as demo:
     gr.Markdown(
         """
@@ -22,15 +24,16 @@ with gr.Blocks(title="JagaBorneo API Service") as demo:
         
         - **Status:** 🟢 Online
         - **API Endpoint:** `/api/v1/hotspots`
-        - **Swagger UI Documentation:** [Buka /docs](/docs)
-        - **Health Check:** [Buka /health](/health)
+        - **Swagger UI:** [/docs](/docs)
+        - **Health Check:** [/health](/health)
         """
     )
 
-# Hubungkan Gradio ke FastAPI (semua route FastAPI /api/v1 dan /docs tetap utuh)
+# Hubungkan antarmuka Gradio ke FastAPI backend
 app = gr.mount_gradio_app(fastapi_app, demo, path="/dashboard")
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 7860))
+    port = int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", 7860)))
+    print(f"Memulai Uvicorn server pada 0.0.0.0:{port}")
     uvicorn.run(app, host="0.0.0.0", port=port)

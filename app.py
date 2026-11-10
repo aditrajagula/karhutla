@@ -31,7 +31,20 @@ with gr.Blocks(title="JagaBorneo API Service") as demo:
     gpu_output = gr.Textbox(visible=False)
     gpu_check_btn.click(fn=check_zerogpu_status, outputs=gpu_output)
 
-# Mount Gradio pada root "/" agar health check Hugging Face selalu menerima HTTP 200 OK
+# Sediakan endpoint /api/config yang diminta probe scanner Gradio agar tidak menghasilkan 404
+@fastapi_app.get("/api/config", include_in_schema=False)
+def get_gradio_config_alias():
+    if hasattr(demo, "config") and demo.config:
+        return demo.config
+    if hasattr(demo, "get_config_file"):
+        try:
+            return demo.get_config_file()
+        except Exception:
+            pass
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/config")
+
+# Hubungkan antarmuka Gradio ke FastAPI backend
 app = gr.mount_gradio_app(fastapi_app, demo, path="/")
 
 if __name__ == "__main__":

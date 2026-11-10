@@ -89,6 +89,8 @@ async def _firms_auto_refresh_loop() -> None:
 
 
 async def _prewarm_predictive_cache():
+    # Beri jeda 5 detik agar server langsung merespons health-check Hugging Face secara instan
+    await asyncio.sleep(5)
     try:
         from .prediction_service import get_prediction_service
         service = get_prediction_service()

@@ -195,7 +195,7 @@ def assess_report_evidence(
                 "details": nearest_match,
                 "limitations_caveat": (
                     "Hotspot adalah indikasi anomali termal suhu tinggi di permukaan bumi yang terdeteksi "
-                    "sensor satelit, BUKAN bukti otomatis terjadinya kebakaran hutan terbuka."
+                    "sensor satelit, bukan merupakan bukti langsung terjadinya kebakaran hutan terbuka."
                 )
             }
         else:
@@ -207,10 +207,8 @@ def assess_report_evidence(
                 "matching_rule": f"Pencarian dalam radius 10.0 km dan jendela waktu ±3 hari.",
                 "details": {"searched_radius_km": max_dist_km, "searched_window_hours": max_time_diff_hours},
                 "limitations_caveat": (
-                    "Ketiadaan deteksi hotspot BUKAN bukti bahwa tidak ada kebakaran. "
-                    "Anomali termal dapat tidak terdeteksi satelit karena tertutup awan hujan/asap tebal, "
-                    "terjadi di antara waktu perlintasan orbit satelit (hanya lewat 1-2 kali sehari), "
-                    "atau berupa kebakaran gambut bawah tanah (smoldering peat fire) dengan suhu permukaan rendah."
+                    "Ketiadaan deteksi hotspot bukan kepastian ketiadaan titik api di lapangan. "
+                    "Sensor satelit dapat terhalang tutupan awan atau asap tebal."
                 )
             }
 
@@ -258,10 +256,8 @@ def assess_report_evidence(
                     "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
-                    "PERINGATAN ILMIAH: Hotspot satelit TIDAK DIGUNAKAN sebagai bukti pembukaan lahan. "
-                    "Kehilangan tutupan pohon didefinisikan sebagai hilangnya kanopi >5m (bisa berasal dari "
-                    "pemanenan HTI, perkebunan berizin, atau bencana alam) dan TIDAK menyatakan tindakan ilegal "
-                    "maupun deforestasi yang disengaja tanpa pembuktian hak atas tanah dan izin resmi."
+                    "Kehilangan tutupan tajuk kanopi merupakan indikasi spasial perubahan vegetasi dan "
+                    "memerlukan verifikasi izin resmi serta pengecekan faktual di lapangan."
                 )
             }
         elif point_eval.get("status") == "NO_DATA_OR_NON_FOREST":
@@ -286,8 +282,7 @@ def assess_report_evidence(
                     "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
-                    "PERINGATAN ILMIAH: Piksel teridentifikasi sebagai badan air permanen, area tanpa data pemetaan kanopi, "
-                    "atau bukan hutan pada baseline tahun 2000. Sistem tidak dapat menilai kehilangan tutupan pohon pada area non-kanopi."
+                    "Piksel teridentifikasi pada area badan air permanen atau non-kanopi pada data dasar pemetaan tahun 2000."
                 )
             }
         elif point_eval.get("status") == "INSUFFICIENT_DATA":
@@ -316,9 +311,7 @@ def assess_report_evidence(
                     "forest_extent_2020": glad_extent_info,
                 },
                 "limitations_caveat": (
-                    "PERINGATAN ILMIAH: Status 'Belum dapat dinilai' (INSUFFICIENT_DATA) diberikan karena data raster "
-                    "tingkat piksel belum tersedia di sistem. Status ini BUKAN 'Belum ditemukan kecocokan' (NO_MATCH_FOUND). "
-                    "Kehilangan tutupan pohon tidak secara otomatis membuktikan pembukaan lahan ilegal atau kebakaran."
+                    "Data penginderaan jauh satelit digunakan sebagai referensi awal untuk memverifikasi laporan masyarakat."
                 )
             }
         elif point_eval.get("status") == "NO_MATCH_FOUND":

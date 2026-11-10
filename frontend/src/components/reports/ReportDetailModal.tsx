@@ -3,17 +3,12 @@ import type { CitizenReport, ReportStatus } from '../../types/report';
 import { CATEGORY_LABELS, STATUS_LABELS, EVIDENCE_BADGE_CONFIG } from '../../types/report';
 import { BACKEND_ORIGIN, fetchFireRiskPrediction, updateReportStatus } from '../../services/api';
 import { isPetugas } from '../../services/dummyAuth';
+import { isInsideKalimantan } from '../../services/kalimantanLocation';
 import {
   CloseIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
-  PinIcon,
-  SatelliteIcon,
-  ClockIcon,
   FlameIcon,
-  BookIcon,
-  RulerIcon,
-  CalendarIcon,
   InfoCircleIcon,
   HourglassIcon,
   ZapIcon,
@@ -244,7 +239,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             </div>
           )}
 
-          {/* PANEL UTAMA: HASIL PENILAIAN BUKTI ILMIAH */}
+          {/* PANEL UTAMA: HASIL EVALUASI CITRA SATELIT & TUTUPAN HUTAN */}
           <div
             style={{
               backgroundColor: 'var(--color-bg-subtle)',
@@ -256,7 +251,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-main)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Hasil Penilaian Bukti Tutupan Hutan & Deforestasi
+                Evaluasi Citra Satelit & Tutupan Hutan
               </span>
               <span
                 style={{
@@ -278,101 +273,134 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             </div>
 
             <p style={{ fontSize: '13px', margin: '6px 0', color: 'var(--color-text-main)', lineHeight: 1.5 }}>
-              {evidence?.summary || 'Menunggu pemrosesan pencocokan data penginderaan jauh.'}
+              {!isInsideKalimantan(report.latitude, report.longitude)
+                ? 'Titik pengamatan berada di luar wilayah operasional 5 provinsi Pulau Kalimantan.'
+                : (evidence?.summary || 'Menunggu pemrosesan pencocokan data penginderaan jauh satelit.')}
             </p>
 
-            {evidence?.matching_rule && (
-              <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
-                <b>Aturan Pencocokan:</b> {evidence.matching_rule}
+            {/* Kriteria Analisis (hanya tampil jika valid di Kalimantan dan bukan repetisi summary) */}
+            {evidence?.matching_rule &&
+              isInsideKalimantan(report.latitude, report.longitude) &&
+              !evidence.matching_rule.toLowerCase().includes('di luar cakupan') && (
+              <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                <b>Kriteria Analisis:</b> {evidence.matching_rule}
               </div>
             )}
 
-            {/* Rincian Tambahan jika Ada */}
-            {evidence?.details && (
-              <div
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 10px',
-                  borderRadius: '4px',
-                  backgroundColor: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border)',
-                  fontSize: '11px',
-                  lineHeight: 1.6,
-                }}
-              >
-                {report.category === 'kebakaran' && Boolean(evidence.details['distance_km'] !== undefined) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <PinIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Jarak ke Titik Panas Terdekat:</b> {String(evidence.details['distance_km'])} km</span>
+            {/* Grid Spesifikasi Teknis Analisis */}
+            {(() => {
+              const details = evidence?.details;
+              if (report.category === 'kebakaran' && details && details['distance_km'] !== undefined) {
+                return (
+                  <div
+                    style={{
+                      marginTop: '10px',
+                      padding: '10px 12px',
+                      borderRadius: '6px',
+                      backgroundColor: 'var(--color-bg-card)',
+                      border: '1px solid var(--color-border)',
+                      fontSize: '11px',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: '8px 12px',
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Titik Panas Terdekat</span>
+                      <span style={{ fontWeight: 600 }}>{String(details['distance_km'])} km</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <SatelliteIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Sensor Satelit:</b> {String(evidence.details['satellite'] || 'VIIRS')} ({String(evidence.details['instrument'] || 'VIIRS')})</span>
+                    <div>
+                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Sensor Satelit</span>
+                      <span style={{ fontWeight: 600 }}>{String(details['satellite'] || 'VIIRS')} ({String(details['instrument'] || 'VIIRS')})</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <ClockIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Waktu Deteksi Satelit:</b> {String(evidence.details['acq_date'])} pk. {String(evidence.details['acq_time'])} UTC</span>
+                    <div>
+                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Waktu Akuisisi</span>
+                      <span style={{ fontWeight: 600 }}>{String(details['acq_date'])} pk. {String(details['acq_time'])} UTC</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <FlameIcon size={13} color="#CC6F00" />
-                      <span><b>Daya Panas:</b> {String(evidence.details['frp_mw'] ?? '-')} MW | <b>Tingkat Keyakinan:</b> {String(evidence.details['confidence'] ?? '-')}</span>
-                    </div>
-                  </div>
-                )}
-                {report.category !== 'kebakaran' && (Boolean(evidence.details['dataset']) || Boolean(evidence.details['forest_extent_2020'])) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <BookIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Dataset Evaluasi:</b> Hansen GFC 2025 v1.13</span>
-                    </div>
-                    {Boolean(evidence.details['forest_extent_2020']) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <TreeIcon size={13} color="#059669" />
-                        <span>
-                          <b>Klasifikasi Tutupan Hutan:</b>{' '}
-                          {(evidence.details['forest_extent_2020'] as any)?.classification === 'FOREST'
-                            ? 'Hutan Kanopi >= 5m (Terkonfirmasi)'
-                            : (evidence.details['forest_extent_2020'] as any)?.classification === 'NON_FOREST'
-                            ? 'Bukan Hutan'
-                            : 'Di Luar Cakupan Raster'}
-                        </span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <RulerIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Cakupan Analisis:</b> Sekitar ~{String(evidence.details['pixel_area_ha'] ?? '0.08')} hektare per titik observasi</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CalendarIcon size={13} color="var(--color-text-muted)" />
-                      <span><b>Periode Analisis:</b> {String(evidence.details['data_period'] ?? '2000–2025')}</span>
+                    <div>
+                      <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Daya Panas & Keyakinan</span>
+                      <span style={{ fontWeight: 600 }}>{String(details['frp_mw'] ?? '-')} MW • {String(details['confidence'] ?? '-')}</span>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-
-
-            {/* Catatan Keterbatasan Ilmiah */}
-            {evidence?.limitations_caveat && (
-              <div
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 10px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  fontSize: '11px',
-                  color: 'var(--color-text-main)',
-                  lineHeight: 1.45,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <InfoCircleIcon size={14} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
-                  <span><b>Keterbatasan Ilmiah:</b> {evidence.limitations_caveat}</span>
+                );
+              }
+              return (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--color-bg-card)',
+                    border: '1px solid var(--color-border)',
+                    fontSize: '11px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '8px 12px',
+                  }}
+                >
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Dataset Evaluasi</span>
+                    <span style={{ fontWeight: 600 }}>Hansen GFC 2025 v1.13</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Klasifikasi Tutupan</span>
+                    <span style={{ fontWeight: 600 }}>
+                      {!isInsideKalimantan(report.latitude, report.longitude)
+                        ? 'Di Luar Batas Kalimantan'
+                        : (details?.['forest_extent_2020'] as any)?.classification === 'FOREST'
+                        ? 'Hutan Kanopi (≥ 5m)'
+                        : (details?.['forest_extent_2020'] as any)?.classification === 'NON_FOREST'
+                        ? 'Non-Hutan / Area Terbuka'
+                        : 'Data Piksel Tersedia'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Resolusi Analisis</span>
+                    <span style={{ fontWeight: 600 }}>Piksel 30 × 30 meter (~0,08 ha)</span>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'block', fontSize: '10px' }}>Periode Data</span>
+                    <span style={{ fontWeight: 600 }}>Tahun 2000–2025</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
+
+            {/* Catatan Verifikasi Bersih & Profesional */}
+            <div
+              style={{
+                marginTop: '10px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                fontSize: '11px',
+                color: 'var(--color-text-main)',
+                lineHeight: 1.45,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}
+            >
+              <InfoCircleIcon size={14} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
+              <span>
+                {canVerify ? (
+                  !isInsideKalimantan(report.latitude, report.longitude) ? (
+                    <>
+                      <b>Catatan Petugas:</b> Koordinat laporan terdeteksi berada di luar cakupan operasional Pulau Kalimantan. Petugas posko dapat menolak laporan ini (status <i>Ditolak</i>) pada panel verifikasi di bawah atau memberikan catatan tindak lanjut.
+                    </>
+                  ) : (
+                    <>
+                      <b>Catatan Petugas:</b> Citra satelit dan data tutupan pohon berfungsi sebagai referensi awal. Keputusan verifikasi laporan dapat diputuskan berdasarkan fakta lapangan dan dokumentasi pendukung.
+                    </>
+                  )
+                ) : (
+                  <>
+                    <b>Catatan Informasi:</b> Data tutupan pohon bersumber dari citra satelit resolusi 30 meter dan bertindak sebagai referensi awal untuk memverifikasi laporan masyarakat.
+                  </>
+                )}
+              </span>
+            </div>
           </div>
 
           {/* PANEL ESTIMASI RISIKO KEBAKARAN (Hanya untuk pelapor/warga jika data tersedia, disembunyikan pada sesi petugas) */}

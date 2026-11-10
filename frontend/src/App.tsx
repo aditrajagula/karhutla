@@ -23,6 +23,7 @@ import { ReportList } from './components/reports/ReportList';
 import { ForestLossModal } from './components/forest/ForestLossModal';
 import { NearbyFireRiskModal } from './components/prediction/NearbyFireRiskModal';
 import { ErrorBanner } from './components/common/ErrorBanner';
+import { isInsideKalimantan } from './services/kalimantanLocation';
 import { useTheme } from './hooks/useTheme';
 import './App.css';
 import './MapPage.css';
@@ -71,6 +72,7 @@ export function App() {
   const [nearbyGpsError, setNearbyGpsError] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number; accuracy?: number } | null>(null);
   const [nearbyPrediction, setNearbyPrediction] = useState<FireRiskPrediction | null>(null);
+  const [focusTargetCoords, setFocusTargetCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -492,6 +494,7 @@ export function App() {
             }
             onOpenNearbyModal={() => setIsNearbyModalOpen(true)}
             pickedCoords={pickedCoords}
+            focusTargetCoords={focusTargetCoords}
           />
         </section>
       </main>
@@ -541,7 +544,12 @@ export function App() {
         reports={reports}
         onRefreshGps={handleCheckNearbyRisk}
         onSelectSampleLocation={handleSelectSampleLocation}
-        onFocusMap={() => setIsNearbyModalOpen(false)}
+        onFocusMap={() => {
+          if (userCoords && isInsideKalimantan(userCoords.lat, userCoords.lon)) {
+            setFocusTargetCoords({ lat: userCoords.lat, lng: userCoords.lon });
+          }
+          setIsNearbyModalOpen(false);
+        }}
         isDark={isDark}
       />
     </div>

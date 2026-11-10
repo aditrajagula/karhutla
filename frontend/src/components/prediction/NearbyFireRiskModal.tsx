@@ -4,6 +4,7 @@ import type { Hotspot } from '../../types/hotspot';
 import type { CitizenReport } from '../../types/report';
 import { CloseIcon, MapPinIcon, RefreshIcon } from '../common/SvgIcons';
 import { TelegramAlertCard } from './TelegramAlertCard';
+import { isInsideKalimantan } from '../../services/kalimantanLocation';
 
 interface NearbyFireRiskModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
   const riskPercent = prediction?.risk_percentage;
   const isSuccessful = prediction?.status === 'SUCCESS';
   const isUnavailable = prediction && ['OUT_OF_SCOPE', 'INSUFFICIENT_DATA', 'UNAVAILABLE'].includes(prediction.status);
+  const isUserInKalimantan = userCoords ? isInsideKalimantan(userCoords.lat, userCoords.lon) : false;
 
   const measurements = [
     { label: 'Suhu udara', value: features?.t2m !== undefined ? `${features.t2m} °C` : null },
@@ -92,7 +94,11 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
                 {userCoords ? `${userCoords.lat.toFixed(4)}°, ${userCoords.lon.toFixed(4)}°` : 'Mencari lokasi perangkat…'}
               </strong>
               <span className="risk-modal__muted">
-                {prediction?.province || 'Kalimantan'}
+                {userCoords
+                  ? isUserInKalimantan
+                    ? (prediction?.province || 'Kalimantan')
+                    : 'Di luar wilayah Kalimantan'
+                  : 'Menunggu GPS'}
                 {userCoords?.accuracy ? ` · Akurasi ±${Math.round(userCoords.accuracy)} m` : ''}
               </span>
             </div>
@@ -101,6 +107,32 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
               {isLoading ? 'Memproses…' : 'Perbarui lokasi'}
             </button>
           </section>
+
+          {userCoords && !isUserInKalimantan && (
+            <div className="risk-modal__message risk-modal__message--notice" role="alert">
+              <strong>📍 GPS Terdeteksi di Luar Pulau Kalimantan</strong>
+              <p style={{ marginTop: '4px', fontSize: '12px', lineHeight: 1.5 }}>
+                Lokasi perangkat Anda ({userCoords.lat.toFixed(4)}°, {userCoords.lon.toFixed(4)}°) berada di luar batas Pulau Kalimantan.
+                Sistem JagaBorneo dan model analitik ini berfokus khusus pada Pulau Kalimantan. Untuk keperluan demonstrasi atau pengujian, silakan pilih salah satu kota contoh di bawah ini:
+              </p>
+              {onSelectSampleLocation && (
+                <div className="risk-modal__samples" style={{ marginTop: '10px' }}>
+                  <span>Pilih lokasi simulasi demo:</span>
+                  <div>
+                    {SAMPLE_LOCATIONS.map((location) => (
+                      <button
+                        type="button"
+                        key={location.name}
+                        onClick={() => onSelectSampleLocation(location.lat, location.lon, `${location.name} (${location.province})`)}
+                      >
+                        {location.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="risk-modal__message risk-modal__message--error" role="alert">
@@ -130,7 +162,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
             </div>
           )}
 
-          {!isLoading && isUnavailable && (
+          {!isLoading && isUnavailable && isUserInKalimantan && (
             <div className="risk-modal__message">
               <strong>{prediction.risk_label || 'Risiko belum dapat dinilai'}</strong>
               <p>{prediction.message || 'Data yang tersedia belum cukup untuk menghitung risiko di lokasi ini.'}</p>
@@ -179,7 +211,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
             </>
           )}
 
-          {userCoords && (
+          {userCoords && isUserInKalimantan && (
             <TelegramAlertCard
               lat={userCoords.lat}
               lon={userCoords.lon}
@@ -189,7 +221,7 @@ export const NearbyFireRiskModal: React.FC<NearbyFireRiskModalProps> = ({
         </div>
 
         <footer className="risk-modal__footer">
-          {onFocusMap && userCoords ? (
+          {onFocusMap && userCoords && isUserInKalimantan ? (
             <button
               type="button"
               className="mp-btn mp-btn--solid risk-modal__button"

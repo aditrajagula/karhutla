@@ -60,14 +60,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           </button>
         )}
 
-        {onDemoKalimantan && user?.role === 'warga' && (
+        {onDemoKalimantan && (
           <button
             type="button"
             className="mp-btn mp-btn--ghost"
             onClick={onDemoKalimantan}
-            title="Demo: simulasikan GPS pengguna berada di Palangka Raya, Kalimantan"
+            title="Demo: simulasikan lokasi di Palangka Raya, Kalimantan Tengah"
           >
-            Demo GPS Kalimantan
+            Demo Kalimantan
           </button>
         )}
 

@@ -160,8 +160,9 @@ export const ReportList: React.FC<ReportListProps> = ({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'stretch',
-                  padding: '9px 12px',
-                  gap: '4px',
+                  flexShrink: 0,
+                  padding: '10px 12px',
+                  gap: '6px',
                   textAlign: 'left',
                 }}
               >

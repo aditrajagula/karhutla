@@ -4,6 +4,7 @@ import locationIcon from '../../assets/map/location.svg';
 import pinIcon from '../../assets/map/pin.svg';
 import timeIcon from '../../assets/map/time.svg';
 import { Icon } from '../common/Icon';
+import { getKalimantanLocationDetail } from '../../services/kalimantanLocation';
 
 interface DetectionListProps {
   hotspots: Hotspot[];
@@ -53,27 +54,32 @@ export const DetectionList: React.FC<DetectionListProps> = ({
               )}
             </div>
           ) : (
-            hotspots.slice(0, MAX_ROWS).map((h) => (
-              <button
-                key={h.id}
-                type="button"
-                onClick={() => onSelectHotspot(h)}
-                className={`mp-card mp-card--hotspot ${selectedId === h.id ? 'is-selected' : ''}`}
-              >
-                <span className="mp-card__info">
-                  <span className="mp-card__row">
-                    <Icon src={locationIcon} size={10} />
-                    {h.province || 'Kalimantan'}
+            hotspots.slice(0, MAX_ROWS).map((h) => {
+              const loc = getKalimantanLocationDetail(h.latitude, h.longitude, h.province);
+              return (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => onSelectHotspot(h)}
+                  className={`mp-card mp-card--hotspot ${selectedId === h.id ? 'is-selected' : ''}`}
+                >
+                  <span className="mp-card__info">
+                    <span className="mp-card__row" style={{ fontWeight: 600, color: 'var(--color-text-primary, #0F172A)' }}>
+                      <Icon src={locationIcon} size={10} />
+                      {loc.kabupaten}
+                    </span>
+                    <span className="mp-card__row" style={{ fontSize: '11px', color: 'var(--color-text-secondary, #64748B)' }}>
+                      ±{Math.round(loc.distanceKm)} km arah {loc.compassDirection} dari {loc.nearestCenter}
+                    </span>
+                    <span className="mp-card__row">
+                      <Icon src={pinIcon} size={10} />
+                      {h.latitude.toFixed(4)}, {h.longitude.toFixed(4)} ({h.province || loc.subRegion})
+                    </span>
+                    <span className="mp-card__row">
+                      <Icon src={timeIcon} size={10} />
+                      {h.acq_date} {h.acq_time} UTC
+                    </span>
                   </span>
-                  <span className="mp-card__row">
-                    <Icon src={pinIcon} size={10} />
-                    {h.latitude.toFixed(5)}, {h.longitude.toFixed(5)}
-                  </span>
-                  <span className="mp-card__row">
-                    <Icon src={timeIcon} size={10} />
-                    {h.acq_date} {h.acq_time} UTC
-                  </span>
-                </span>
                 <span className="mp-card__chips">
                   {(h.in_peat || h.in_forest) && (
                     <span className="mp-card__context">
@@ -97,8 +103,9 @@ export const DetectionList: React.FC<DetectionListProps> = ({
                   </span>
                 </span>
               </button>
-            ))
-          )}
+            );
+          })
+        )}
         </div>
       </div>
       {!isLoading && hotspots.length > MAX_ROWS && (

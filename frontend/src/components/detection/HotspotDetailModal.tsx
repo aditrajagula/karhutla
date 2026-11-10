@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import type { Hotspot } from '../../types/hotspot';
 import { FlameIcon, CloseIcon } from '../common/SvgIcons';
+import { getKalimantanLocationDetail } from '../../services/kalimantanLocation';
 
 interface HotspotDetailModalProps {
   hotspot: Hotspot | null;
@@ -51,6 +52,31 @@ export const HotspotDetailModal: React.FC<HotspotDetailModalProps> = ({
         </div>
 
         <div className="modal-body">
+          {(() => {
+            const loc = getKalimantanLocationDetail(hotspot.latitude, hotspot.longitude, hotspot.province);
+            return (
+              <>
+                <div className="detail-row">
+                  <span className="detail-label">Daerah / Kabupaten:</span>
+                  <span className="detail-val font-semibold" style={{ color: '#0F172A' }}>
+                    {loc.kabupatenFull}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Lokasi Terdekat:</span>
+                  <span className="detail-val">
+                    ±{Math.round(loc.distanceKm)} km arah {loc.compassDirection} dari {loc.nearestCenter}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Bagian Wilayah:</span>
+                  <span className="detail-val" style={{ color: '#0369A1', fontWeight: 600 }}>
+                    {loc.subRegion}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
           <div className="detail-row">
             <span className="detail-label">Koordinat:</span>
             <span className="detail-val font-mono">

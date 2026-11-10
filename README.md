@@ -1,3 +1,16 @@
+---
+title: Jagaborneo Backend
+emoji: 🌲
+colorFrom: green
+colorTo: purple
+sdk: gradio
+sdk_version: 6.31.0
+python_version: '3.11'
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # JagaBorneo
 
 > **JAGABORNEO: GEOSPATIAL PLATFORM FOR FOREST AND PEATLAND WILDFIRE MONITORING AND DEFORESTATION SURVEILLANCE**  

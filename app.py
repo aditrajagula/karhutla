@@ -1,11 +1,17 @@
-"""
-Entrypoint untuk Hugging Face Spaces (Gradio SDK).
-Menyediakan antarmuka ringkas sekaligus menjalankan seluruh backend FastAPI JagaBorneo.
-"""
+# PENTING HUGGING FACE ZEROGPU: 'import spaces' HARUS berada di paling atas sebelum library lain!
+try:
+    import spaces
+
+    @spaces.GPU
+    def _zerogpu_init_probe():
+        """Probe inisialisasi agar Hugging Face ZeroGPU mengizinkan container aktif."""
+        return "ZeroGPU Ready"
+except Exception:
+    pass
 
 import os
 import gradio as gr
-from backend.app.main import app
+from backend.app.main import app as fastapi_app
 
 # Antarmuka status sederhana agar Hugging Face mengenali service Gradio
 with gr.Blocks(title="JagaBorneo API Service") as demo:
@@ -21,8 +27,8 @@ with gr.Blocks(title="JagaBorneo API Service") as demo:
         """
     )
 
-# Hubungkan Gradio ke FastAPI
-app = gr.mount_gradio_app(app, demo, path="/")
+# Hubungkan Gradio ke FastAPI (semua route FastAPI /api/v1 dan /docs tetap utuh)
+app = gr.mount_gradio_app(fastapi_app, demo, path="/dashboard")
 
 if __name__ == "__main__":
     import uvicorn

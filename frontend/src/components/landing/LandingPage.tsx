@@ -23,7 +23,7 @@ export function LandingPage({ onEnter }: LandingPageProps) {
 
         <p className="landing__desc">
           Apa itu JagaBorneo? Platform geospasial terpadu untuk pemantauan kebakaran hutan dan
-          lahan (karhutla) serta deforestasi di Pulau Kalimantan secara real-time. JagaBorneo
+          lahan (karhutla) serta deforestasi di Pulau Kalimantan secara near-time. JagaBorneo
           mengintegrasikan deteksi anomali termal satelit NASA FIRMS, analisis kehilangan tutupan
           pohon, peta kawasan hutan dan kesatuan hidrologis gambut, serta estimasi risiko berbasis
           cuaca untuk mendukung pemantauan dini dan pelaporan lingkungan yang akurat.

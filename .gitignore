@@ -35,6 +35,12 @@ ENV/
 .coverage
 htmlcov/
 .ruff_cache/
+pytest.ini
+backend/pytest.ini
+*.ps1
+run_tests.ps1
+Procfile
+nixpacks.toml
 
 # IDE
 .vscode/
